@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.fs": "glsl",
+        "cstdio": "cpp"
+    }
+}

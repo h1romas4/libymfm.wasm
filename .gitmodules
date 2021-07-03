@@ -1,0 +1,3 @@
+[submodule "components/ymfm"]
+	path = components/ymfm
+	url = https://github.com/aaronsgiles/ymfm.git

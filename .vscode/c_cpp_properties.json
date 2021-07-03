@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "emcc",
+            "intelliSenseMode": "clang-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "includePath": [
+                "${workspaceFolder}/src/**",
+                "${workspaceFolder}/components/ymfm/**",
+                "${env:EMSDK}/upstream/**"
+            ],
+            "defines": [
+            ],
+            "compilerPath": "${env:EMSDK}/upstream/emscripten/emcc"        }
+    ],
+    "version": 4
+}
