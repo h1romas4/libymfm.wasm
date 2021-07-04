@@ -1,5 +1,11 @@
 # libymfm.wasm
 
+This repository is an experimental WebAssembly build of the [ymfm](https://github.com/aaronsgiles/ymfm) Yamaha FM sound cores library.
+
+> [aaronsgiles / ymfm](https://github.com/aaronsgiles/ymfm)
+>
+> BSD-licensed Yamaha FM sound cores (OPM, OPN, OPL, and others)
+
 ## Play
 
 Install [Wasmer](https://wasmer.io/) runtime
