@@ -30,4 +30,5 @@ make -j4
 
 ```
 wasmer run ../dist/libymfm.wasi --mapdir /:../docs/vgm/ -- /ym2612.vgm -o ym2612.pcm
+ffplay ../docs/vgm/ym2612.pcm
 ```
