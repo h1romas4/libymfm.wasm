@@ -2,5 +2,5 @@ build/
 *.vgm
 *.vgz
 *.pcm
-*.a
+*.wav
 !docs/vgm/ym2612.vgm
