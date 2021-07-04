@@ -2,23 +2,32 @@
 
 ## require
 
-Emscripten
+wasi-sdk
 
 ```
-$ emcc -v
-emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 2.0.24 (416685fb964c14cde4be3e8a45ad26d75bac3e33)
-clang version 13.0.0 (https://github.com/llvm/llvm-project 91f147792e815d401ae408989992f3c1530cc18a)
-Target: wasm32-unknown-emscripten
+$ echo ${WASI_SDK_PATH}
+/home/hiromasa/devel/toolchain/wasi-sdk-12.0
+$ ls -lAF ${WASI_SDK_PATH}
+drwxr-xr-x 2 hiromasa hiromasa 4096 12月  3  2020 bin/
+drwxr-xr-x 3 hiromasa hiromasa 4096 12月  3  2020 lib/
+drwxr-xr-x 6 hiromasa hiromasa 4096 12月  3  2020 share/
+$ ${WASI_SDK_PATH}/bin/clang -v
+clang version 11.0.0 (https://github.com/llvm/llvm-project 176249bd6732a8044d457092ed932768724a6f06)
+Target: wasm32-unknown-wasi
 Thread model: posix
-InstalledDir: /home/hiromasa/devel/toolchain/emsdk/upstream/bin
+InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-12.0/bin
 ```
 
 ## build
 
-Emscripten
-
 ```
 mkdir build && cd build
-emcmake cmake ..
-emmake make -j4
+cmake ..
+make -j4
+```
+
+## run
+
+```
+wasmer run ../dist/libymfm.wasi --mapdir /:../docs/vgm/ -- /ym2612.vgm -o ym2612.pcm
 ```

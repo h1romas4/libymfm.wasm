@@ -1,9 +1,6 @@
 build/
-target/
 *.vgm
 *.vgz
 *.pcm
 *.a
 !docs/vgm/ym2612.vgm
-!lib/libymfm.wasm
-!lib/libymfm.js

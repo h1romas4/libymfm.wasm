@@ -1,18 +1,17 @@
 {
     "configurations": [
         {
-            "name": "emcc",
+            "name": "wasi-sdk",
             "intelliSenseMode": "clang-x64",
             "cStandard": "c11",
             "cppStandard": "c++17",
             "includePath": [
                 "${workspaceFolder}/src/**",
-                "${workspaceFolder}/components/ymfm/**",
-                "${env:EMSDK}/upstream/**"
+                "${workspaceFolder}/components/ymfm/**"
             ],
             "defines": [
-            ],
-            "compilerPath": "${env:EMSDK}/upstream/emscripten/emcc"        }
+            ]
+        }
     ],
     "version": 4
 }
