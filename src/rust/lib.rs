@@ -1,11 +1,8 @@
-use wasm_bindgen::prelude::*;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
+extern crate serde_json;
 
-#[link(name = "ymfm")]
-extern {
-    fn ffi_test(count: i32) -> i32;
-}
-
-#[wasm_bindgen]
-pub fn test() {
-    unsafe { ffi_test(10); }
-}
+pub mod sound;
+pub mod driver;
+pub mod wasm;

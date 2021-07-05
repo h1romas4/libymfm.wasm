@@ -2,6 +2,8 @@
     "files.associations": {
         "*.fs": "glsl",
         "cstdio": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "*.tcc": "cpp"
     },
+    "git.ignoreLimitWarning": true,
 }

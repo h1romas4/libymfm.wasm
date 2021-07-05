@@ -1,0 +1,23 @@
+[target.wasm32-unknown-unknown]
+linker = "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/bin/lld"
+rustflags = [
+  "-L", "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/share/wasi-sysroot/lib/wasm32-wasi",
+  "-lc++",
+  "-lc++abi",
+  # "-lc-printscan-long-double",
+  # "-lc-printscan-no-floating-point",
+  "-lc",
+  "-lcrypt",
+  "-ldl",
+  "-lm",
+  "-lpthread",
+  "-lresolv",
+  "-lrt",
+  "-lutil",
+  "-lwasi-emulated-mman",
+  "-lwasi-emulated-signal",
+  "-lxnet"
+]
+
+[build]
+target = "wasm32-unknown-unknown"

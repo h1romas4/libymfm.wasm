@@ -49,3 +49,10 @@ mkdir build && cd build
 cmake ..
 make -j4
 ```
+
+wasm-pack
+
+``
+$ cat .cargo/config # fix linker path
+wasm-pack build
+```
