@@ -1,4 +1,6 @@
 build/
+target/
+pkg/
 *.vgm
 *.vgz
 *.pcm
