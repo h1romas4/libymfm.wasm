@@ -15,14 +15,14 @@ $ wasmer -v
 wasmer 2.0.0
 ```
 
-Play vgm file (This repository includes pre-build `dist/libymfm.wasi` and sample vgm file)
+Play vgm file (This repository includes pre-build `dist/vgmrender.wasi` and sample vgm file)
 
 ```
-wasmer run ./dist/libymfm.wasi --mapdir /:./docs/vgm/ -- /ym2612.vgm -o ym2612.wav
+wasmer run ./dist/vgmrender.wasi --mapdir /:./docs/vgm/ -- /ym2612.vgm -o ym2612.wav
 ffplay ./docs/vgm/ym2612.wav
 ```
 
-## Build `libymfm.wasi`
+## Build `vgmrender.wasi`
 
 Setup [wasi-sdk-12](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-12)
 

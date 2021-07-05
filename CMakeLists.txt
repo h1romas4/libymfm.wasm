@@ -20,7 +20,7 @@ set(CMAKE_C_COMPILER_TARGET    ${triple})
 set(CMAKE_CXX_COMPILER_TARGET  ${triple})
 
 include(./cmake/macros.cmake)
-project(libymfm.wasi C CXX)
+project(ymfm C CXX)
 
 header_directories(
     ./components/ymfm/src
@@ -49,9 +49,6 @@ add_source_files(
     ./components/ymfm/src/ymfm_pcm.h
     ./components/ymfm/src/ymfm_ssg.cpp
     ./components/ymfm/src/ymfm_ssg.h
-    ./src/em_inflate.cpp
-    ./src/vgmrender.cpp
-    ./src/wasmymfm.cpp
 )
 
 add_compile_flags(CXX
@@ -67,4 +64,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../dist)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../dist)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../dist)
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+add_executable(
+    vgmrender.wasi
+    ${SOURCE_FILES}
+    ./src/cpp/vgmrender/em_inflate.cpp
+    ./src/cpp/vgmrender/vgmrender.cpp
+)
+
+add_library(
+    ymfm
+    STATIC
+    ${SOURCE_FILES}
+    ./src/cpp/ffi/ymfmffi.cpp
+)
