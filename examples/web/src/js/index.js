@@ -1,21 +1,27 @@
 import { WgmPlay } from "libymfm";
 import { memory } from "libymfm/libymfm_bg.wasm";
 
-// vgm setting
+/**
+ * vgm setting
+ */
 const MAX_SAMPLING_BUFFER = 4096;
 const SAMPLING_RATE = 44100;
 const LOOP_MAX_COUNT = 2;
 const FEED_OUT_SECOND = 2;
 const FEED_OUT_REMAIN = (SAMPLING_RATE * FEED_OUT_SECOND) / MAX_SAMPLING_BUFFER;
 
-// canvas settings
+/**
+ * canvas settings
+ */
 const CANVAS_WIDTH = 768;
 const CANVAS_HEIGHT = 576;
 const COLOR_MD_GREEN = '#00a040';
 const COLOR_MD_RED = '#e60012';
 const FONT_MAIN_STYLE = '16px sans-serif';
 
-// vgm member
+/**
+ * vgm member
+ */
 let wgmplay = null;
 let seqdata;
 let samplingBufferL;
@@ -26,7 +32,7 @@ let totalPlaylistCount;
 let music_meta;
 
 /**
- * audio context
+ * audio contect
  */
 let audioContext = null;
 let audioNode = null;
@@ -35,12 +41,16 @@ let audioAnalyser;
 let audioAnalyserBuffer;
 let audioAnalyserBufferLength;
 
-// canvas member
+/**
+ * canvas member
+ */
 let canvas;
 let canvasContext;
 let animId = null;
 
-// canvas setting
+/**
+ * canvas setting
+ */
 canvas = document.getElementById('screen');
 canvas.setAttribute('width', CANVAS_WIDTH);
 canvas.setAttribute('height', CANVAS_HEIGHT);
@@ -58,6 +68,7 @@ fetch('./vgm/ym2612.vgm')
     .then(response => response.arrayBuffer())
     .then(bytes => { init(bytes); })
     .then(() => {
+        // enable UI
         canvas.addEventListener('click', play, false);
         canvas.addEventListener('dragover', function(e) {
             prevent(e);
@@ -85,17 +96,20 @@ fetch('./vgm/ym2612.vgm')
     });
 
 /**
- * fillTextCenterd
+ * fill text center
+ *
+ * @param {*} str
+ * @param {*} height
  */
-let fillTextCenterd = function(str, height) {
+const fillTextCenterd = function(str, height) {
     let left = (CANVAS_WIDTH - canvasContext.measureText(str).width) / 2;
     canvasContext.fillText(str, left, height);
 }
 
 /**
- * startScreen
+ * draw start screen
  */
-let startScreen = function() {
+const startScreen = function() {
     canvasContext.fillStyle = 'rgb(0, 0, 0)';
     canvasContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     canvasContext.font = '20px sans-serif';
@@ -106,16 +120,21 @@ let startScreen = function() {
 
 /**
  * event prevent
+ *
+ * @param {*} e
  */
-let prevent = function(e) {
+const prevent = function(e) {
     e.preventDefault();
     e.stopPropagation();
 };
 
 /**
  * Drag and Drop
+ *
+ * @param {*} ev
+ * @returns false (prevent event)
  */
-let onDrop = function(ev) {
+const onDrop = function(ev) {
     prevent(ev);
     canvas.removeEventListener('drop', onDrop, false);
     canvas.style.border = 'none';
@@ -143,7 +162,7 @@ let onDrop = function(ev) {
 /**
  * play next playlist
  */
-let next = function() {
+const next = function() {
     if(playlist.length <= 0) return;
     if(init(playlist.shift())) {
         play();
@@ -152,7 +171,13 @@ let next = function() {
     }
 }
 
-let createGd3meta = function(meta) {
+/**
+ * create GD3 meta
+ *
+ * @param {*} meta
+ * @returns
+ */
+const createGd3meta = function(meta) {
     meta.game_track_name = [meta.game_name, meta.track_name].filter(str => str != "").join(" | ");
     meta.game_track_name_j = [meta.game_name_j, meta.track_name_j].filter(str => str != "").join(" / ");
     meta.track_author_full = [meta.track_author, meta.track_author_j].filter(str => str != "").join(" - ");
@@ -165,15 +190,16 @@ let createGd3meta = function(meta) {
 
 /**
  * init
- * @param ArrayBuffer bytes
+ *
+ * @param ArrayBuffer vgmfile
  */
-let init = function(bytes) {
+const init = function(vgmfile) {
     if(wgmplay != null) wgmplay.free();
     // create wasm instanse
-    wgmplay = new WgmPlay(SAMPLING_RATE, MAX_SAMPLING_BUFFER, bytes.byteLength);
+    wgmplay = new WgmPlay(SAMPLING_RATE, MAX_SAMPLING_BUFFER, vgmfile.byteLength);
     // set vgmdata
-    seqdata = new Uint8Array(memory.buffer, wgmplay.get_seq_data_ref(), bytes.byteLength);
-    seqdata.set(new Uint8Array(bytes));
+    seqdata = new Uint8Array(memory.buffer, wgmplay.get_seq_data_ref(), vgmfile.byteLength);
+    seqdata.set(new Uint8Array(vgmfile));
     // init player
     if(!wgmplay.init()) return false;
     samplingBufferL = new Float32Array(memory.buffer, wgmplay.get_sampling_l_ref(), MAX_SAMPLING_BUFFER);
@@ -187,7 +213,7 @@ let init = function(bytes) {
 /**
  * disconnect
  */
-let disconnect = function() {
+const disconnect = function() {
     if(audioAnalyser != null) audioAnalyser.disconnect();
     if(audioGain != null) audioGain.disconnect();
     if(audioNode != null) audioNode.disconnect();
@@ -202,7 +228,7 @@ let disconnect = function() {
 /**
  * play
  */
-let play = function() {
+const play = function() {
     canvas.removeEventListener('click', play, false);
     // recreate audio context for prevent memory leak.
     disconnect();
@@ -255,7 +281,10 @@ let play = function() {
     draw();
 };
 
-let draw = function() {
+/**
+ * draw
+ */
+const draw = function() {
     animId = window.requestAnimationFrame(draw);
     canvasContext.fillStyle = 'rgb(0, 0, 0)';
     canvasContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);

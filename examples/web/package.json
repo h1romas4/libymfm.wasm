@@ -1,7 +1,7 @@
 {
-    "name": "wasm-synth-player",
+    "name": "wasm-vgm-player",
     "version": "0.1.0",
-    "description": "wasm-synth-player",
+    "description": "wasm-vgm-player",
     "license": "GPL-2.0-or-later",
     "dependencies": {
         "libymfm": "file:../../pkg",
