@@ -515,17 +515,17 @@ mod tests {
 
     #[test]
     fn sn76489_1() {
-        play("../docs/vgm/sn76489.vgm")
+        play("./docs/vgm/sn76489.vgm")
     }
 
     #[test]
     fn ym2612_1() {
-        play("../docs/vgm/ym2612.vgm")
+        play("./docs/vgm/ym2612.vgm")
     }
 
     #[test]
     fn segapcm_1() {
-        play("../docs/vgm/segapcm.vgm")
+        play("./docs/vgm/segapcm.vgm")
     }
 
     fn play(filepath: &str) {
