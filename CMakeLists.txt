@@ -11,27 +11,15 @@ header_directories(
 )
 
 add_source_files(
-    ./components/ymfm/src/ymfm.h
     ./components/ymfm/src/ymfm_adpcm.cpp
-    ./components/ymfm/src/ymfm_adpcm.h
-    ./components/ymfm/src/ymfm_fm.h
-    ./components/ymfm/src/ymfm_fm.ipp
     ./components/ymfm/src/ymfm_misc.cpp
-    ./components/ymfm/src/ymfm_misc.h
     ./components/ymfm/src/ymfm_opl.cpp
-    ./components/ymfm/src/ymfm_opl.h
     ./components/ymfm/src/ymfm_opm.cpp
-    ./components/ymfm/src/ymfm_opm.h
     ./components/ymfm/src/ymfm_opn.cpp
-    ./components/ymfm/src/ymfm_opn.h
     ./components/ymfm/src/ymfm_opq.cpp
-    ./components/ymfm/src/ymfm_opq.h
     ./components/ymfm/src/ymfm_opz.cpp
-    ./components/ymfm/src/ymfm_opz.h
     ./components/ymfm/src/ymfm_pcm.cpp
-    ./components/ymfm/src/ymfm_pcm.h
     ./components/ymfm/src/ymfm_ssg.cpp
-    ./components/ymfm/src/ymfm_ssg.h
 )
 
 add_compile_flags(CXX
