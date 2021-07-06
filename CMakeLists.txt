@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 
+project(ymfm C CXX)
+
 include(./cmake/wasi.cmake)
 include(./cmake/macros.cmake)
-project(ymfm C CXX)
 
 header_directories(
     ./components/ymfm/src
