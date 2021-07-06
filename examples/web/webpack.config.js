@@ -5,10 +5,8 @@ module.exports = {
     entry: "./src/js/bootstrap.js",
     output: {
         path: path.resolve(__dirname, "./dist"), // eslint-disable-line
-        filename: "bootstrap.js",
-        webassemblyModuleFilename: "[hash].wasm",
+        filename: "bootstrap.js"
     },
-    mode: "development",
     plugins: [
         new CopyPlugin({ patterns: ['./src/www/index.html', './src/www/style.css'] })
     ],
