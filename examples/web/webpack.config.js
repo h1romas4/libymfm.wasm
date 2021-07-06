@@ -35,7 +35,7 @@ module.exports = {
             "node_modules"
         ],
         alias: {
-            'env': './env.js'
-        },
+            "wasi_snapshot_preview1": path.resolve(__dirname, './src/js/wasi_snapshot_preview1.js'), // eslint-disable-line
+        }
     },
 };
