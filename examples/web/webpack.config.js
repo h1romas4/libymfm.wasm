@@ -37,6 +37,10 @@ module.exports = {
     alias: {
       // Import "fd_seek" from "wasi_snapshot_preview1" with Non-JS-compatible Func Signature (i64 as parameter)
       //  can only be used for direct wasm to wasm dependencies
+      // webpack/lib/wasm-sync/WebAssemblyParser.js
+      //  const JS_COMPAT_TYPES = new Set(["i32", "f32", "f64"]);
+      // build for workaround patch examples/web/node_modules/webpack/lib/wasm-sync/WebAssemblyParser.js
+      //  const JS_COMPAT_TYPES = new Set(["i32", "i64", "f32", "f64"]);
       "wasi_snapshot_preview1": path.resolve(__dirname, './src/js/wasi_snapshot_preview1.js'), // eslint-disable-line
     }
   },
