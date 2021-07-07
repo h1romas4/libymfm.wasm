@@ -1,16 +1,6 @@
 use wasm_bindgen::prelude::*;
 use crate::driver::VgmPlay;
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-}
-
-#[allow(unused_macros)]
-macro_rules! console_log {
-    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
-}
+use crate::set_panic_hook;
 
 #[wasm_bindgen]
 pub struct WgmPlay {
@@ -81,9 +71,4 @@ impl WgmPlay {
     pub fn play(&mut self) -> usize {
         self.vgmplay.play(true)
     }
-}
-
-pub fn set_panic_hook() {
-    #[cfg(feature = "console_error_panic_hook")]
-    console_error_panic_hook::set_once();
 }
