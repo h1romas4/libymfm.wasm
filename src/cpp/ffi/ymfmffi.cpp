@@ -202,41 +202,102 @@ protected:
     std::vector<std::pair<uint32_t, uint8_t>> m_queue;
 };
 
-// vgm_chip_base *ym2149;
-// vgm_chip_base *ym2203;
-// vgm_chip_base *ym2413;
-// vgm_chip_base *ym2608;
-// vgm_chip_base *ym2610;
-// vgm_chip_base *ym2612;
-// vgm_chip_base *ym3526;
-// vgm_chip_base *ym3812;
+// global list of active chips
+std::list<vgm_chip_base *> active_chips;
 
-vgm_chip_base *ym2151;
-vgm_chip_base *ym2203;
+template<typename ChipType>
+void add_chips(uint32_t clock, chip_type type, char const *chipname)
+{
+    uint32_t clockval = clock & 0x3fffffff;
+    int numchips = (clock & 0x40000000) ? 2 : 1;
+    printf("Adding %s%s @ %dHz\n", (numchips == 2) ? "2 x " : "", chipname, clockval);
+    for (int index = 0; index < numchips; index++)
+    {
+        char name[100];
+        sprintf(name, "%s #%d", chipname, index);
+        active_chips.push_back(new vgm_chip<ChipType>(clockval, type, chipname));
+    }
 
+    if (type == CHIP_YM2608)
+    {
+        FILE *rom = fopen("ym2608_adpcm_rom.bin", "rb");
+        if (rom == nullptr)
+            fprintf(stderr, "Warning: YM2608 enabled but ym2608_adpcm_rom.bin not found\n");
+        else
+        {
+            fseek(rom, 0, SEEK_END);
+            uint32_t size = ftell(rom);
+            fseek(rom, 0, SEEK_SET);
+            std::vector<uint8_t> temp(size);
+            fread(&temp[0], 1, size, rom);
+            fclose(rom);
+            for (auto chip : active_chips)
+                if (chip->type() == type)
+                    chip->write_data(ymfm::ACCESS_ADPCM_A, 0, size, &temp[0]);
+        }
+    }
+}
+
+vgm_chip_base *find_chip(chip_type type, uint8_t index)
+{
+	for (auto chip : active_chips)
+		if (chip->type() == type && index-- == 0)
+			return chip;
+	return nullptr;
+}
+
+//*********************************************************
+//  FFI interface
+//*********************************************************
 extern "C"
 {
-    void ym2151_init(uint32_t clock) {
-        ym2151 = new vgm_chip<ymfm::ym2151>(clock, CHIP_YM2151, "YM2151");
+    void ymfm_add_chip(uint16_t chip_num, uint32_t clock)
+    {
+        switch(chip_num)
+        {
+            case CHIP_YM2149:
+                add_chips<ymfm::ym2149>(clock, static_cast<chip_type>(chip_num), "YM2149");
+            case CHIP_YM2151:
+                add_chips<ymfm::ym2151>(clock, static_cast<chip_type>(chip_num), "YM2151");
+            case CHIP_YM2203:
+                add_chips<ymfm::ym2203>(clock, static_cast<chip_type>(chip_num), "YM2203");
+            case CHIP_YM2413:
+                add_chips<ymfm::ym2413>(clock, static_cast<chip_type>(chip_num), "YM2413");
+            case CHIP_YM2608:
+                add_chips<ymfm::ym2608>(clock, static_cast<chip_type>(chip_num), "YM2608");
+            case CHIP_YM2610:
+                add_chips<ymfm::ym2610>(clock, static_cast<chip_type>(chip_num), "YM2610");
+            case CHIP_YM2612:
+                add_chips<ymfm::ym2612>(clock, static_cast<chip_type>(chip_num), "YM2612");
+            case CHIP_YM3526:
+                add_chips<ymfm::ym3526>(clock, static_cast<chip_type>(chip_num), "YM3526");
+            case CHIP_Y8950:
+                add_chips<ymfm::y8950>(clock, static_cast<chip_type>(chip_num), "Y8950");
+            case CHIP_YM3812:
+                add_chips<ymfm::ym3812>(clock, static_cast<chip_type>(chip_num), "YM3812");
+            case CHIP_YMF262:
+                add_chips<ymfm::ymf262>(clock, static_cast<chip_type>(chip_num), "YMF262");
+            case CHIP_YMF278B:
+                add_chips<ymfm::ymf278b>(clock, static_cast<chip_type>(chip_num), "CHIP_YMF278B");
+        }
     }
 
-    void ym2151_write(uint32_t reg, uint8_t data) {
-        ym2151->write(reg, data);
+    void ymfm_write(uint16_t chip_num, uint32_t reg, uint8_t data)
+    {
+        vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), 0); // TODO: 0
+        chip->write(reg, data);
     }
 
-    void ym2151_generate(int64_t emulated_time, int64_t output_step, int32_t* buffer) {
-        ym2151->generate(emulated_time, output_step, buffer);
+    void ymfm_generate(uint16_t chip_num, int64_t output_start, int64_t output_step, int32_t *buffer)
+    {
+        vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), 0); // TODO: 0
+        chip->generate(output_start, output_step, buffer);
     }
 
-    void ym2203_init(uint32_t clock) {
-        ym2203 = new vgm_chip<ymfm::ym2203>(clock, CHIP_YM2203, "YM2203");
-    }
-
-    void ym2203_write(uint32_t reg, uint8_t data) {
-        ym2203->write(reg, data);
-    }
-
-    void ym2203_generate(int64_t emulated_time, int64_t output_step, int32_t* buffer) {
-        ym2203->generate(emulated_time, output_step, buffer);
+    void ymfm_remove_chip(uint16_t chip_num)
+    {
+        // TODO:
+        vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), 0); // TODO: 0
+        // free & remove list
     }
 }

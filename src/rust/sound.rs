@@ -2,7 +2,7 @@ mod pwm;
 mod segapcm;
 mod sn76489;
 mod ym3438;
-mod ym2151;
+mod ymfm;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -11,20 +11,8 @@ pub use crate::sound::pwm::PWM;
 pub use crate::sound::segapcm::SEGAPCM;
 pub use crate::sound::sn76489::SN76489;
 pub use crate::sound::ym3438::YM3438;
-pub use crate::sound::ym2151::YM2151;
-
-///
-/// import ymfm library
-///
-#[link(name = "ymfm")]
-extern {
-    fn ym2151_init(clock: u32);
-    fn ym2151_write(reg: u32, dat: u8);
-    fn ym2151_generate(emulated_time: i64, output_step: i64, buffer: *mut i32);
-    // fn ym2203_init(clock: u32);
-    // fn ym2203_write(reg: u32, dat: u8);
-    // fn ym2203_generate(emulated_time: i64, output_step: i64, buffer: *mut i32);
-}
+pub use crate::sound::ymfm::YmFm;
+pub use crate::sound::ymfm::ChipType;
 
 ///
 /// Device Name
@@ -37,6 +25,7 @@ pub enum SoundDeviceName {
     SEGAPCM,
     YM2151,
     YM2203,
+    YmFm,
 }
 
 ///

@@ -10,14 +10,15 @@ use crate::driver::metadata::Gd3;
 use crate::driver::metadata::Jsonlize;
 use crate::driver::metadata::VgmHeader;
 
-use crate::sound::{RomDevice, RomSet, SoundDevice, PWM, SEGAPCM, SN76489, YM3438, YM2151};
+use crate::sound::{RomDevice, RomSet, SoundDevice, PWM, SEGAPCM, SN76489, YM3438, YmFm };
+use crate::sound::ChipType;
 
 pub struct VgmPlay {
     sound_device_ym3438: YM3438,
     sound_device_sn76489: SN76489,
     sound_device_pwm: PWM,
     sound_device_segapcm: SEGAPCM,
-    sound_device_ym2151: YM2151,
+    sound_device_ym2151: YmFm,
     sound_romset: HashMap<usize, Rc<RefCell<RomSet>>>,
     sample_rate: u32,
     vgm_pos: usize,
@@ -56,7 +57,7 @@ impl VgmPlay {
             sound_device_sn76489: SN76489::new(),
             sound_device_pwm: PWM::new(),
             sound_device_segapcm: SEGAPCM::new(),
-            sound_device_ym2151: YM2151::new(),
+            sound_device_ym2151: YmFm::from(ChipType::CHIP_YM2151),
             sound_romset: HashMap::new(),
             sample_rate,
             vgm_pos: 0,
@@ -264,6 +265,16 @@ impl VgmPlay {
                         buffer_pos,
                     );
                 }
+                if self.vgm_header.clock_ym2151 != 0 {
+                    SoundDevice::update(
+                        &mut self.sound_device_ym2151,
+                        &mut self.sampling_l,
+                        &mut self.sampling_r,
+                        1,
+                        buffer_pos,
+                    );
+                }
+
                 if self.remain_frame_size > 0 {
                     self.remain_frame_size -= 1;
                 }
