@@ -52,8 +52,7 @@ make -j4
 
 wasm-pack
 
-``
-export LD_LIBRARY_PATH=$(pwd)/dist
+```
 $ cat .cargo/config # fix linker path
 wasm-pack build
 ```
