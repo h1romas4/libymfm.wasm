@@ -51,19 +51,44 @@ impl YmFm {
     }
 
     fn init(&mut self, sampling_rate: u32, clock: u32) {
-        match &self.chip_type {
-            ChipType::CHIP_YM2149 => unsafe { ymfm_add_chip(ChipType::CHIP_YM2149 as u16, clock) },
-            ChipType::CHIP_YM2151 => unsafe { ymfm_add_chip(ChipType::CHIP_YM2151 as u16, clock) },
-            ChipType::CHIP_YM2203 => unsafe { ymfm_add_chip(ChipType::CHIP_YM2203 as u16, clock) },
-            ChipType::CHIP_YM2413 => unsafe { ymfm_add_chip(ChipType::CHIP_YM2413 as u16, clock) },
-            ChipType::CHIP_YM2608 => unsafe { ymfm_add_chip(ChipType::CHIP_YM2608 as u16, clock) },
-            ChipType::CHIP_YM2610 => unsafe { ymfm_add_chip(ChipType::CHIP_YM2610 as u16, clock) },
-            ChipType::CHIP_YM2612 => unsafe { ymfm_add_chip(ChipType::CHIP_YM2612 as u16, clock) },
-            ChipType::CHIP_YM3526 => unsafe { ymfm_add_chip(ChipType::CHIP_YM3526 as u16, clock) },
-            ChipType::CHIP_Y8950 => unsafe { ymfm_add_chip(ChipType::CHIP_Y8950 as u16, clock) },
-            ChipType::CHIP_YM3812 => unsafe { ymfm_add_chip(ChipType::CHIP_YM3812 as u16, clock) },
-            ChipType::CHIP_YMF262 => unsafe { ymfm_add_chip(ChipType::CHIP_YMF262 as u16, clock) },
-            ChipType::CHIP_YMF278B => unsafe { ymfm_add_chip(ChipType::CHIP_YMF278B as u16, clock) },
+        // TODO: ?
+        match self.chip_type {
+            ChipType::CHIP_YM2149 => {
+                unsafe { ymfm_add_chip(ChipType::CHIP_YM2149 as u16, clock) }
+            },
+            ChipType::CHIP_YM2151 => {
+                unsafe { ymfm_add_chip(ChipType::CHIP_YM2151 as u16, clock) }
+            },
+            ChipType::CHIP_YM2203 => {
+                unsafe { ymfm_add_chip(ChipType::CHIP_YM2203 as u16, clock) }
+            },
+            ChipType::CHIP_YM2413 => {
+                unsafe { ymfm_add_chip(ChipType::CHIP_YM2413 as u16, clock) }
+            },
+            ChipType::CHIP_YM2608 => {
+                unsafe { ymfm_add_chip(ChipType::CHIP_YM2608 as u16, clock) }
+            },
+            ChipType::CHIP_YM2610 => {
+                unsafe { ymfm_add_chip(ChipType::CHIP_YM2610 as u16, clock) }
+            },
+            ChipType::CHIP_YM2612 => {
+                unsafe { ymfm_add_chip(ChipType::CHIP_YM2612 as u16, clock) }
+            },
+            ChipType::CHIP_YM3526 => {
+                unsafe { ymfm_add_chip(ChipType::CHIP_YM3526 as u16, clock) }
+            },
+            ChipType::CHIP_Y8950 => {
+                unsafe { ymfm_add_chip(ChipType::CHIP_Y8950 as u16, clock) }
+            },
+            ChipType::CHIP_YM3812 => {
+                unsafe { ymfm_add_chip(ChipType::CHIP_YM3812 as u16, clock) }
+            },
+            ChipType::CHIP_YMF262 => {
+                unsafe { ymfm_add_chip(ChipType::CHIP_YMF262 as u16, clock) }
+            },
+            ChipType::CHIP_YMF278B => {
+                unsafe { ymfm_add_chip(ChipType::CHIP_YMF278B as u16, clock) }
+            },
         }
         self.sampling_rate = sampling_rate;
         self.clock = clock;

@@ -535,6 +535,11 @@ mod tests {
     }
 
     #[test]
+    fn ym2151_1() {
+        play("./docs/vgm/ym2151.vgm")
+    }
+
+    #[test]
     fn segapcm_1() {
         play("./docs/vgm/segapcm.vgm")
     }

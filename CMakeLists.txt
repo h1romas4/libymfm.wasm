@@ -26,6 +26,7 @@ add_compile_flags(CXX
     -std=c++14
     -fno-exceptions
     -Wno-array-bounds
+    -fPIC
 )
 
 add_compile_flags(LD
