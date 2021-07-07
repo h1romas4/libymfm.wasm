@@ -520,7 +520,7 @@ impl VgmPlay {
 mod tests {
     use super::VgmPlay;
     use std::fs::File;
-    use std::io::Read;
+    use std::io::{Read, Write};
 
     const MAX_SAMPLING_SIZE: usize = 4096;
 
@@ -565,8 +565,22 @@ mod tests {
 
         // init & sample
         vgmplay.init().unwrap();
+        let sampling_l = vgmplay.get_sampling_l_ref();
+        let sampling_r = vgmplay.get_sampling_r_ref();
+
+        let mut pcm = File::create("output.pcm").expect("file open error.");
         // play
+        // ffplay -f f32le -ar 44100 -ac 2 output.pcm
         #[allow(clippy::absurd_extreme_comparisons)]
-        while vgmplay.play(false) <= 0 {}
+        while vgmplay.play(false) <= 0 {
+            for i in 0..MAX_SAMPLING_SIZE {
+                unsafe {
+                    let slice_l = std::slice::from_raw_parts(sampling_l.add(i) as *const u8, 4);
+                    let slice_r = std::slice::from_raw_parts(sampling_r.add(i) as *const u8, 4);
+                    pcm.write_all(slice_l).expect("stdout error");
+                    pcm.write_all(slice_r).expect("stdout error");
+                }
+            }
+        }
     }
 }
