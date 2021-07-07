@@ -51,7 +51,6 @@ impl YmFm {
     }
 
     fn init(&mut self, sampling_rate: u32, clock: u32) {
-        // TODO: ?
         match self.chip_type {
             ChipType::CHIP_YM2149 => {
                 unsafe { ymfm_add_chip(ChipType::CHIP_YM2149 as u16, clock) }

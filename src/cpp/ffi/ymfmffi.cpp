@@ -257,28 +257,40 @@ extern "C"
         {
             case CHIP_YM2149:
                 add_chips<ymfm::ym2149>(clock, static_cast<chip_type>(chip_num), "YM2149");
+                break;
             case CHIP_YM2151:
                 add_chips<ymfm::ym2151>(clock, static_cast<chip_type>(chip_num), "YM2151");
+                break;
             case CHIP_YM2203:
                 add_chips<ymfm::ym2203>(clock, static_cast<chip_type>(chip_num), "YM2203");
+                break;
             case CHIP_YM2413:
                 add_chips<ymfm::ym2413>(clock, static_cast<chip_type>(chip_num), "YM2413");
+                break;
             case CHIP_YM2608:
                 add_chips<ymfm::ym2608>(clock, static_cast<chip_type>(chip_num), "YM2608");
+                break;
             case CHIP_YM2610:
                 add_chips<ymfm::ym2610>(clock, static_cast<chip_type>(chip_num), "YM2610");
+                break;
             case CHIP_YM2612:
                 add_chips<ymfm::ym2612>(clock, static_cast<chip_type>(chip_num), "YM2612");
+                break;
             case CHIP_YM3526:
                 add_chips<ymfm::ym3526>(clock, static_cast<chip_type>(chip_num), "YM3526");
+                break;
             case CHIP_Y8950:
                 add_chips<ymfm::y8950>(clock, static_cast<chip_type>(chip_num), "Y8950");
+                break;
             case CHIP_YM3812:
                 add_chips<ymfm::ym3812>(clock, static_cast<chip_type>(chip_num), "YM3812");
+                break;
             case CHIP_YMF262:
                 add_chips<ymfm::ymf262>(clock, static_cast<chip_type>(chip_num), "YMF262");
+                break;
             case CHIP_YMF278B:
                 add_chips<ymfm::ymf278b>(clock, static_cast<chip_type>(chip_num), "CHIP_YMF278B");
+                break;
         }
     }
 
