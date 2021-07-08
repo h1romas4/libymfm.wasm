@@ -105,7 +105,7 @@ impl YmFm {
         buffer[0] = generate_buffer[0];
         buffer[1] = generate_buffer[1];
 
-        // vgm == sampling_rate == 44100KHz
+        // vgm == sampling_rate == 44100Hz
         if self.output_pos as u64 + self.output_step as u64 > i64::MAX as u64 {
            self.output_pos = ((self.output_pos as u64 + self.output_step as u64) - i64::MAX as u64) as i64;
         } else {
