@@ -64,7 +64,7 @@ canvasContext = canvas.getContext('2d');
 /**
  * load sample vgm data
  */
-fetch('./vgm/ym2612.vgm')
+fetch('./vgm/ym2151.vgm')
     .then(response => response.arrayBuffer())
     .then(bytes => { init(bytes); })
     .then(() => {
