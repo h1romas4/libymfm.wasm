@@ -98,6 +98,6 @@ npm run start
 - [ ] Add direct ymfm intarfece.
 - [ ] Use yfmf's YM2612 chip and other.
 - [ ] It is not a BSD license.
-- [ ] YM2141 clock worng?
+- [x] YM2141 clock worng?
 - [ ] Fix segapcm.
 - [ ] Refactoring.

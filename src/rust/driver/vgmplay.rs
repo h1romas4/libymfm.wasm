@@ -199,11 +199,15 @@ impl VgmPlay {
             );
         }
         if self.vgm_header.clock_ay8910 != 0 {
-            // TODO: AY8910
+            // TODO: AY8910 clock hack
+            let clock_ay8910 = match self.vgm_header.clock_ay8910 {
+                1789772 | 1789773 | 2000000 => self.vgm_header.clock_ay8910 * 2,
+                _ => self.vgm_header.clock_ay8910
+            };
             SoundDevice::init(
                 &mut self.sound_device_ym2149,
                 self.sample_rate,
-                self.vgm_header.clock_ay8910,
+                clock_ay8910,
             );
         }
 
