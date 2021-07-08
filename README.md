@@ -6,7 +6,27 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 >
 > BSD-licensed Yamaha FM sound cores (OPM, OPN, OPL, and others)
 
-## Play
+## WebAssembly example
+
+[WebAssembly VGM Player](https://h1romas4.github.io/libymfm.wasm/)
+
+[![](https://raw.githubusercontent.com/h1romas4/libymfm.wasm/main/docs/assets/example-web-01.png)](https://h1romas4.github.io/libymfm.wasm/)
+
+|chip|from|note|
+|----|----|----|
+|YM2151|ymfm||
+|YM2203|ymfm||
+|YM2149|ymfm|vgmplayer needs clock hack?|
+|YM2612|Nuked-OPN2|for demo|
+|PWM|vgmplay|for demo|
+|SN76489|vgmplay|for demo|
+|segapcm|mame|for demo (wrong sound. my port miss)|
+
+example source code:
+
+> [https://github.com/h1romas4/libymfm.wasm/tree/wasm](https://github.com/h1romas4/libymfm.wasm/tree/wasm)
+
+## WASI vgm2wav render
 
 Install [Wasmer](https://wasmer.io/) runtime
 
