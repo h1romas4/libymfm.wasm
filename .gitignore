@@ -1,4 +1,8 @@
 build/
+target/
+pkg/
+examples/web/dist/
+examples/web/node_modules/
 *.vgm
 *.vgz
 *.pcm
