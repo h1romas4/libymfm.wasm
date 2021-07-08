@@ -17,7 +17,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |YM2151|ymfm||
 |YM2203|ymfm||
 |YM2149|ymfm|vgmplayer needs clock hack?|
-|YM2612|Nuked-OPN2|for demo|
+|YM2612|ymfm||
 |PWM|vgmplay|for demo|
 |SN76489|vgmplay|for demo|
 |segapcm|mame|for demo (wrong sound. my port miss)|
