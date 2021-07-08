@@ -16,7 +16,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |----|----|----|
 |YM2151|ymfm||
 |YM2203|ymfm||
-|YM2149|ymfm|wrong clock? (probably my port miss)|
+|YM2149|ymfm||
 |YM2612|Nuked-OPN2|for demo|
 |PWM|vgmplay|for demo|
 |SN76489|vgmplay|for demo|
