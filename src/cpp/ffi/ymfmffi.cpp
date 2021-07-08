@@ -301,7 +301,7 @@ extern "C"
                 add_chips<ymfm::ymf262>(clock, static_cast<chip_type>(chip_num), "YMF262");
                 break;
             case CHIP_YMF278B:
-                add_chips<ymfm::ymf278b>(clock, static_cast<chip_type>(chip_num), "CHIP_YMF278B");
+                add_chips<ymfm::ymf278b>(clock, static_cast<chip_type>(chip_num), "YMF278B");
                 break;
         }
     }

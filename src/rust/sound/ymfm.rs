@@ -116,7 +116,9 @@ impl YmFm {
 
 impl Drop for YmFm {
     fn drop(&mut self) {
-        unsafe { ymfm_remove_chip(self.chip_type as u16) }
+        if self.clock != 0 {
+            unsafe { ymfm_remove_chip(self.chip_type as u16) }
+        }
     }
 }
 
