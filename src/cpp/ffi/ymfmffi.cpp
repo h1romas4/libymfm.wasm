@@ -246,6 +246,17 @@ vgm_chip_base *find_chip(chip_type type, uint8_t index)
 	return nullptr;
 }
 
+void remove_chip(chip_type type, uint8_t index)
+{
+    vgm_chip_base *chip = find_chip(type, index);
+    if(chip != nullptr)
+    {
+        printf("remove chip\n");
+        active_chips.remove(chip);
+        delete chip;
+    }
+}
+
 //*********************************************************
 //  FFI interface
 //*********************************************************
@@ -253,6 +264,13 @@ extern "C"
 {
     void ymfm_add_chip(uint16_t chip_num, uint32_t clock)
     {
+        // TODO:
+        vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), 0); // TODO: 0
+        if(chip != nullptr) {
+            printf("ymfmffi: already loded chip!\n");
+            return;
+        }
+        // add ymfm chip
         switch(chip_num)
         {
             case CHIP_YM2149:
@@ -308,8 +326,7 @@ extern "C"
 
     void ymfm_remove_chip(uint16_t chip_num)
     {
-        // TODO:
-        vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), 0); // TODO: 0
-        // free & remove list
+        printf("ymfmffi: ymfm_remove_chip!\n");
+        remove_chip(static_cast<chip_type>(chip_num), 0); // TODO: 0
     }
 }

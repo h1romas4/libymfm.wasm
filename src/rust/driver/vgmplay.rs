@@ -536,7 +536,10 @@ mod tests {
 
     #[test]
     fn ym2151_1() {
-        play("./docs/vgm/ym2151.vgm")
+        println!("1st vgm instance");
+        play("./docs/vgm/ym2151.vgm");
+        println!("2nd vgm instance(drop and create)");
+        play("./docs/vgm/ym2151.vgm");
     }
 
     #[test]
@@ -545,6 +548,7 @@ mod tests {
     }
 
     fn play(filepath: &str) {
+        println!("Play start!");
         // load sn76489 vgm file
         let mut file = File::open(filepath).unwrap();
         let mut buffer = Vec::new();
@@ -582,5 +586,6 @@ mod tests {
                 }
             }
         }
+        println!("Play end! (vgm instance drop)");
     }
 }
