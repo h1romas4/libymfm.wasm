@@ -265,13 +265,6 @@ extern "C"
 {
     void ymfm_add_chip(uint16_t chip_num, uint32_t clock)
     {
-        // TODO:
-        vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), 0); // TODO: 0
-        if(chip != nullptr) {
-            printf("ymfmffi: already loded chip!\n");
-            return;
-        }
-        // add ymfm chip
         switch(chip_num)
         {
             case CHIP_YM2149:

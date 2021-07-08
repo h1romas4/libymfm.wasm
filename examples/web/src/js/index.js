@@ -64,7 +64,7 @@ canvasContext = canvas.getContext('2d');
 /**
  * load sample vgm data
  */
-fetch('./vgm/ym2151.vgm')
+fetch('./vgm/ym2612.vgm')
     .then(response => response.arrayBuffer())
     .then(bytes => { init(bytes); })
     .then(() => {
@@ -114,8 +114,9 @@ const startScreen = function() {
     canvasContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     canvasContext.font = '20px sans-serif';
     canvasContext.fillStyle = COLOR_MD_GREEN;
-    fillTextCenterd("DRAG AND DROP MEGADRIVE/GENESIS VGM(vgm/vgz) HEAR!", CANVAS_HEIGHT / 2 - 64);
-    fillTextCenterd("OR CLICK TO PLAY SAMPLE VGM.", CANVAS_HEIGHT / 2 - 32);
+    fillTextCenterd("🎮 WebAssembly VGM Player 🎮", CANVAS_HEIGHT / 2 - 114);
+    fillTextCenterd("DRAG AND DROP VGM(vgm/vgz) HEAR!", CANVAS_HEIGHT / 2 - 64);
+    fillTextCenterd("OR CLICK TO PLAY SAMPLE VGM.", CANVAS_HEIGHT / 2 - 16);
 };
 
 /**
