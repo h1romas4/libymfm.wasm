@@ -54,6 +54,7 @@ public:
         m_name(name)
     {
     }
+    virtual ~vgm_chip_base() {}
 
     // simple getters
     chip_type type() const { return m_type; }
