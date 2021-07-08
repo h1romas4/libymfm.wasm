@@ -14,11 +14,13 @@ use crate::sound::{RomDevice, RomSet, SoundDevice, PWM, SEGAPCM, SN76489, YM3438
 use crate::sound::ChipType;
 
 pub struct VgmPlay {
-    sound_device_ym3438: YM3438,
+    sound_device_ym2151: YmFm,
+    sound_device_ym2203: YmFm,
+    sound_device_ym2149: YmFm,
+    sound_device_ym2612: YM3438,
     sound_device_sn76489: SN76489,
     sound_device_pwm: PWM,
     sound_device_segapcm: SEGAPCM,
-    sound_device_ym2151: YmFm,
     sound_romset: HashMap<usize, Rc<RefCell<RomSet>>>,
     sample_rate: u32,
     vgm_pos: usize,
@@ -53,11 +55,13 @@ impl VgmPlay {
     pub fn new(sample_rate: u32, max_sampling_size: usize, vgm_file_size: usize) -> Self {
         VgmPlay {
             // TODO: vectorize sound device
-            sound_device_ym3438: YM3438::new(),
+            sound_device_ym2151: YmFm::from(ChipType::CHIP_YM2151),
+            sound_device_ym2203: YmFm::from(ChipType::CHIP_YM2203),
+            sound_device_ym2149: YmFm::from(ChipType::CHIP_YM2149),
+            sound_device_ym2612: YM3438::new(),
             sound_device_sn76489: SN76489::new(),
             sound_device_pwm: PWM::new(),
             sound_device_segapcm: SEGAPCM::new(),
-            sound_device_ym2151: YmFm::from(ChipType::CHIP_YM2151),
             sound_romset: HashMap::new(),
             sample_rate,
             vgm_pos: 0,
@@ -158,7 +162,7 @@ impl VgmPlay {
         if self.vgm_header.clock_ym2612 != 0 {
             // 7_670_453
             SoundDevice::init(
-                &mut self.sound_device_ym3438,
+                &mut self.sound_device_ym2612,
                 self.sample_rate,
                 self.vgm_header.clock_ym2612,
             );
@@ -185,6 +189,21 @@ impl VgmPlay {
                 &mut self.sound_device_ym2151,
                 self.sample_rate,
                 self.vgm_header.clock_ym2151,
+            );
+        }
+        if self.vgm_header.clock_ym2203 != 0 {
+            SoundDevice::init(
+                &mut self.sound_device_ym2203,
+                self.sample_rate,
+                self.vgm_header.clock_ym2203,
+            );
+        }
+        if self.vgm_header.clock_ay8910 != 0 {
+            // TODO: AY8910
+            SoundDevice::init(
+                &mut self.sound_device_ym2149,
+                self.sample_rate,
+                self.vgm_header.clock_ay8910,
             );
         }
 
@@ -240,7 +259,7 @@ impl VgmPlay {
                 }
                 if self.vgm_header.clock_ym2612 != 0 {
                     SoundDevice::update(
-                        &mut self.sound_device_ym3438,
+                        &mut self.sound_device_ym2612,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
                         1,
@@ -268,6 +287,24 @@ impl VgmPlay {
                 if self.vgm_header.clock_ym2151 != 0 {
                     SoundDevice::update(
                         &mut self.sound_device_ym2151,
+                        &mut self.sampling_l,
+                        &mut self.sampling_r,
+                        1,
+                        buffer_pos,
+                    );
+                }
+                if self.vgm_header.clock_ym2203 != 0 {
+                    SoundDevice::update(
+                        &mut self.sound_device_ym2203,
+                        &mut self.sampling_l,
+                        &mut self.sampling_r,
+                        1,
+                        buffer_pos,
+                    );
+                }
+                if self.vgm_header.clock_ay8910 != 0 {
+                    SoundDevice::update(
+                        &mut self.sound_device_ym2149,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
                         1,
@@ -335,14 +372,20 @@ impl VgmPlay {
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
                 let port = u32::from(command & 0x01) << 1;
-                SoundDevice::write(&mut self.sound_device_ym3438, port, reg);
-                SoundDevice::write(&mut self.sound_device_ym3438, port + 1, dat);
+                SoundDevice::write(&mut self.sound_device_ym2612, port, reg);
+                SoundDevice::write(&mut self.sound_device_ym2612, port + 1, dat);
             }
             0x54 => {
                 // TODO: YM2151 write
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
                 SoundDevice::write(&mut self.sound_device_ym2151, reg as u32, dat);
+            }
+            0x55 => {
+                // TODO: YM22203 write
+                reg = self.get_vgm_u8();
+                dat = self.get_vgm_u8();
+                SoundDevice::write(&mut self.sound_device_ym2203, reg as u32, dat);
             }
             0x61 => {
                 wait = self.get_vgm_u16();
@@ -403,9 +446,9 @@ impl VgmPlay {
             0x80..=0x8f => {
                 // YM2612 PCM
                 wait = (command & 0x0f).into();
-                SoundDevice::write(&mut self.sound_device_ym3438, 0, 0x2a);
+                SoundDevice::write(&mut self.sound_device_ym2612, 0, 0x2a);
                 SoundDevice::write(
-                    &mut self.sound_device_ym3438,
+                    &mut self.sound_device_ym2612,
                     1,
                     self.vgm_data[self.data_pos + self.pcm_pos + self.pcm_offset],
                 );
@@ -455,6 +498,12 @@ impl VgmPlay {
                 self.get_vgm_u16();
                 self.get_vgm_u8();
             }
+            0xa0 => {
+                // TODO: AY8910, write
+                reg = self.get_vgm_u8();
+                dat = self.get_vgm_u8();
+                SoundDevice::write(&mut self.sound_device_ym2149, reg as u32, dat);
+            }
             0xb2 => {
                 // 0xB2 ad dd
                 // PWM, write value ddd to register a (d is MSB, dd is LSB)
@@ -492,9 +541,9 @@ impl VgmPlay {
     }
 
     fn update_dac(&mut self) {
-        SoundDevice::write(&mut self.sound_device_ym3438, 0, 0x2a);
+        SoundDevice::write(&mut self.sound_device_ym2612, 0, 0x2a);
         SoundDevice::write(
-            &mut self.sound_device_ym3438,
+            &mut self.sound_device_ym2612,
             1,
             self.vgm_data[self.data_pos + self.pcm_stream_pos + self.pcm_stream_offset],
         );
