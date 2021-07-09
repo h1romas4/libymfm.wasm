@@ -24,8 +24,6 @@ const FONT_MAIN_STYLE = '16px sans-serif';
  */
 let wgmplay = null;
 let seqdata;
-let samplingBufferL;
-let samplingBufferR;
 let feedOutCount = 0;
 let playlist = [];
 let totalPlaylistCount;
@@ -203,8 +201,6 @@ const init = function(vgmfile) {
     seqdata.set(new Uint8Array(vgmfile));
     // init player
     if(!wgmplay.init()) return false;
-    samplingBufferL = new Float32Array(memory.buffer, wgmplay.get_sampling_l_ref(), MAX_SAMPLING_BUFFER);
-    samplingBufferR = new Float32Array(memory.buffer, wgmplay.get_sampling_r_ref(), MAX_SAMPLING_BUFFER);
 
     music_meta = createGd3meta(JSON.parse(wgmplay.get_seq_gd3()));
 
@@ -244,7 +240,17 @@ const play = function() {
             next();
             return;
         }
-        let loop = wgmplay.play();
+        let loop;
+        try {
+            loop = wgmplay.play();
+        } catch(e) {
+            alert(`ymfm:\n\nAn unexpected error has occurred. System has stoped. Please reeload brwoser.\n\n${e}`);
+            stop = true;
+        }
+        // re-atach view every cycle
+        const samplingBufferL = new Float32Array(memory.buffer, wgmplay.get_sampling_l_ref(), MAX_SAMPLING_BUFFER);
+        const samplingBufferR = new Float32Array(memory.buffer, wgmplay.get_sampling_r_ref(), MAX_SAMPLING_BUFFER);
+        // set sampling buffer
         ev.outputBuffer.getChannelData(0).set(samplingBufferL);
         ev.outputBuffer.getChannelData(1).set(samplingBufferR);
         if(loop >= LOOP_MAX_COUNT) {
