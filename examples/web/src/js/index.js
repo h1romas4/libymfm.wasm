@@ -244,7 +244,7 @@ const play = function() {
         try {
             loop = wgmplay.play();
         } catch(e) {
-            alert(`ymfm:\n\nAn unexpected error has occurred. System has stoped. Please reeload brwoser.\n\n${e}`);
+            alert(`ymfm:\n\nAn unexpected error has occurred. System has stoped. Please reload brwoser.\n\n${e}`);
             stop = true;
         }
         // re-atach view every cycle
