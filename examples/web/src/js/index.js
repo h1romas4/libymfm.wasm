@@ -89,6 +89,8 @@ fetch('./vgm/ym2612.vgm')
             track_author: "@h1romas4",
             track_author_j: ""
         });
+        // for AudioContext opening is delayed on Linux.
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLING_RATE });
         // ready to go
         startScreen();
     });
@@ -200,7 +202,10 @@ const init = function(vgmfile) {
     seqdata = new Uint8Array(memory.buffer, wgmplay.get_seq_data_ref(), vgmfile.byteLength);
     seqdata.set(new Uint8Array(vgmfile));
     // init player
-    if(!wgmplay.init()) return false;
+    if(!wgmplay.init()) {
+        wgmplay.free();
+        return false;
+    }
 
     music_meta = createGd3meta(JSON.parse(wgmplay.get_seq_gd3()));
 
@@ -247,12 +252,9 @@ const play = function() {
             alert(`ymfm:\n\nAn unexpected error has occurred. System has stoped. Please reload brwoser.\n\n${e}`);
             stop = true;
         }
-        // re-atach view every cycle
-        const samplingBufferL = new Float32Array(memory.buffer, wgmplay.get_sampling_l_ref(), MAX_SAMPLING_BUFFER);
-        const samplingBufferR = new Float32Array(memory.buffer, wgmplay.get_sampling_r_ref(), MAX_SAMPLING_BUFFER);
-        // set sampling buffer
-        ev.outputBuffer.getChannelData(0).set(samplingBufferL);
-        ev.outputBuffer.getChannelData(1).set(samplingBufferR);
+        // set sampling buffer (re-attach view every cycle)
+        ev.outputBuffer.getChannelData(0).set(new Float32Array(memory.buffer, wgmplay.get_sampling_l_ref(), MAX_SAMPLING_BUFFER));
+        ev.outputBuffer.getChannelData(1).set(new Float32Array(memory.buffer, wgmplay.get_sampling_r_ref(), MAX_SAMPLING_BUFFER));
         if(loop >= LOOP_MAX_COUNT) {
             if(feedOutCount == 0 && loop > LOOP_MAX_COUNT) {
                 // no loop track
