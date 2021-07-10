@@ -30,14 +30,14 @@ impl WgmPlay {
     ///
     /// Return sampling_l buffer referance.
     ///
-    pub fn get_sampling_l_ref(&mut self) -> *mut f32 {
+    pub fn get_sampling_l_ref(&self) -> *const f32 {
         self.vgmplay.get_sampling_l_ref()
     }
 
     ///
     /// Return sampling_r buffer referance.
     ///
-    pub fn get_sampling_r_ref(&mut self) -> *mut f32 {
+    pub fn get_sampling_r_ref(&self) -> *const f32 {
         self.vgmplay.get_sampling_r_ref()
     }
 

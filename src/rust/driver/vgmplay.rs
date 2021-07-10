@@ -99,15 +99,15 @@ impl VgmPlay {
     ///
     /// Return sampling_l buffer referance.
     ///
-    pub fn get_sampling_l_ref(&mut self) -> *mut f32 {
-        self.sampling_l.as_mut_ptr()
+    pub fn get_sampling_l_ref(&self) -> *const f32 {
+        self.sampling_l.as_ptr()
     }
 
     ///
     /// Return sampling buffer referance.
     ///
-    pub fn get_sampling_r_ref(&mut self) -> *mut f32 {
-        self.sampling_r.as_mut_ptr()
+    pub fn get_sampling_r_ref(&self) -> *const f32 {
+        self.sampling_r.as_ptr()
     }
 
     ///
@@ -585,7 +585,10 @@ mod tests {
 
     #[test]
     fn ym2612_1() {
-        play("./docs/vgm/ym2612.vgm")
+        println!("1st vgm instance");
+        play("./docs/vgm/ym2612.vgm");
+        println!("2nd vgm instance(drop and create)");
+        play("./docs/vgm/ym2612-ng.vgz")
     }
 
     #[test]
