@@ -156,16 +156,16 @@ public:
             int32_t out1 = m_output.data[1 % ChipType::OUTPUTS];
             int32_t out2 = m_output.data[2 % ChipType::OUTPUTS];
             int32_t out3 = m_output.data[3 % ChipType::OUTPUTS];
-            *buffer++ += out0 + out1 + out2 + out3;
-            *buffer++ += out0 + out1 + out2 + out3;
+            *buffer++ += out0 + (out1 + out2 + out3) / 2;
+            *buffer++ += out0 + (out1 + out2 + out3) / 2;
         }
         else if (m_type == CHIP_YM2608 || m_type == CHIP_YM2610)
         {
             int32_t out0 = m_output.data[0];
             int32_t out1 = m_output.data[1 % ChipType::OUTPUTS];
             int32_t out2 = m_output.data[2 % ChipType::OUTPUTS];
-            *buffer++ += out0 + out2;
-            *buffer++ += out1 + out2;
+            *buffer++ += out0 + (out2 / 2);
+            *buffer++ += out1 + (out2 / 2);
         }
         else if (m_type == CHIP_YM2149)
         {
@@ -182,8 +182,8 @@ public:
         }
         else if (ChipType::OUTPUTS == 1)
         {
-            *buffer++ += m_output.data[0];
-            *buffer++ += m_output.data[0];
+            *buffer++ += m_output.data[0] / 2;
+            *buffer++ += m_output.data[0] / 2;
         }
         else
         {
