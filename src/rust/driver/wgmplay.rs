@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
+
 use crate::driver::VgmPlay;
-use crate::set_panic_hook;
 
 #[wasm_bindgen]
 pub struct WgmPlay {
@@ -14,7 +14,9 @@ impl WgmPlay {
     ///
     #[wasm_bindgen(constructor)]
     pub fn from(sample_rate: u32, max_sampling_size: usize, data_length: usize) -> Self {
-        set_panic_hook();
+        #[cfg(feature = "console_error_panic_hook")]
+        console_error_panic_hook::set_once();
+
         WgmPlay {
             vgmplay: VgmPlay::new(sample_rate, max_sampling_size, data_length)
         }

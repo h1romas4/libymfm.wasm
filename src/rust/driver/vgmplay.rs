@@ -5,6 +5,7 @@ use std::convert::TryInto;
 use std::io::prelude::*;
 use std::rc::Rc;
 
+use crate::console_log;
 use crate::driver::metadata::parse_vgm_meta;
 use crate::driver::metadata::Gd3;
 use crate::driver::metadata::Jsonlize;
@@ -529,18 +530,18 @@ impl VgmPlay {
                 self.pcm_offset = 0;
             }
             _ => {
-                // #[cfg(feature = "console_error_panic_hook")]
-                // console_log!(
-                //     "unknown cmd at {:x}: {:x}",
-                //     self.vgmpos - 1,
-                //     self.vgmdata[self.vgmpos - 1]
-                // );
-                // #[cfg(not(feature = "console_error_panic_hook"))]
-                // println!(
-                //     "unknown cmd at {:x}: {:x}",
-                //     self.vgm_pos - 1,
-                //     self.vgm_data[self.vgm_pos - 1]
-                // );
+                #[cfg(feature = "console_error_panic_hook")]
+                console_log!(
+                    "unknown cmd at {:x}: {:x}",
+                    self.vgm_pos - 1,
+                    self.vgm_data[self.vgm_pos - 1]
+                );
+                #[cfg(not(feature = "console_error_panic_hook"))]
+                println!(
+                    "unknown cmd at {:x}: {:x}",
+                    self.vgm_pos - 1,
+                    self.vgm_data[self.vgm_pos - 1]
+                );
             }
         }
         wait
