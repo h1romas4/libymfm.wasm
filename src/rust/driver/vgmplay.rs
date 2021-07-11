@@ -202,17 +202,16 @@ impl VgmPlay {
             );
         }
         if self.vgm_header.clock_ay8910 != 0 {
-            // TODO: AY8910 clock hack
+            // TODO: YM2149 - AY8910 clock hack (* 4 ?)
             let clock_ay8910: u32;
-            // clock hack ?
             if self.vgm_header.clock_ym2151 != 0  {
-                // TODO: X1 Turbo
+                // TODO: X1 Turbo sync YM2151
                 clock_ay8910 = self.vgm_header.clock_ym2151 * 4;
             } else if self.vgm_header.clock_ym2413 != 0 {
-                // TODO: MSX
+                // TODO: MSX sync YM2413
                 clock_ay8910 = self.vgm_header.clock_ym2413 * 4;
             } else {
-                clock_ay8910 = self.vgm_header.clock_ay8910;
+                clock_ay8910 = self.vgm_header.clock_ay8910 * 8;
             }
             SoundDevice::init(
                 &mut self.sound_device_ym2149,
