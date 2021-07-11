@@ -19,6 +19,7 @@ pub struct VgmPlay {
     sound_device_ym2203: YmFm,
     sound_device_ym2149: YmFm,
     sound_device_ym2612: YmFm,
+    sound_device_ym2413: YmFm,
     sound_device_sn76489: SN76489,
     sound_device_pwm: PWM,
     sound_device_segapcm: SEGAPCM,
@@ -60,6 +61,7 @@ impl VgmPlay {
             sound_device_ym2203: YmFm::from(ChipType::CHIP_YM2203),
             sound_device_ym2149: YmFm::from(ChipType::CHIP_YM2149),
             sound_device_ym2612: YmFm::from(ChipType::CHIP_YM2612),
+            sound_device_ym2413: YmFm::from(ChipType::CHIP_YM2413),
             sound_device_sn76489: SN76489::new(),
             sound_device_pwm: PWM::new(),
             sound_device_segapcm: SEGAPCM::new(),
@@ -202,20 +204,27 @@ impl VgmPlay {
         if self.vgm_header.clock_ay8910 != 0 {
             // TODO: AY8910 clock hack
             let clock_ay8910: u32;
-            // X1 Turbo
-            if self.vgm_header.clock_ym2151 != 0 {
-                // TODO: clock hack
+            // clock hack ?
+            if self.vgm_header.clock_ym2151 != 0  {
+                // TODO: X1 Turbo
                 clock_ay8910 = self.vgm_header.clock_ym2151 * 4;
+            } else if self.vgm_header.clock_ym2413 != 0 {
+                // TODO: MSX
+                clock_ay8910 = self.vgm_header.clock_ym2413 * 4;
             } else {
-                clock_ay8910 = match self.vgm_header.clock_ay8910 {
-                    1789772 | 1789773 | 2000000 => self.vgm_header.clock_ay8910 * 2,
-                    _ => self.vgm_header.clock_ay8910
-                };
+                clock_ay8910 = self.vgm_header.clock_ay8910;
             }
             SoundDevice::init(
                 &mut self.sound_device_ym2149,
                 self.sample_rate,
                 clock_ay8910,
+            );
+        }
+        if self.vgm_header.clock_ym2413 != 0 {
+            SoundDevice::init(
+                &mut self.sound_device_ym2413,
+                self.sample_rate,
+                self.vgm_header.clock_ym2413,
             );
         }
 
@@ -323,6 +332,15 @@ impl VgmPlay {
                         buffer_pos,
                     );
                 }
+                if self.vgm_header.clock_ym2413 != 0 {
+                    SoundDevice::update(
+                        &mut self.sound_device_ym2413,
+                        &mut self.sampling_l,
+                        &mut self.sampling_r,
+                        1,
+                        buffer_pos,
+                    );
+                }
 
                 if self.remain_frame_size > 0 {
                     self.remain_frame_size -= 1;
@@ -380,6 +398,12 @@ impl VgmPlay {
                 dat = self.get_vgm_u8();
                 SoundDevice::write(&mut self.sound_device_sn76489, 0, dat);
             }
+            0x51 => {
+                // TODO: YM2413 write
+                reg = self.get_vgm_u8();
+                dat = self.get_vgm_u8();
+                SoundDevice::write(&mut self.sound_device_ym2413, reg as u32, dat);
+            },
             0x52 => {
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
@@ -397,10 +421,55 @@ impl VgmPlay {
                 SoundDevice::write(&mut self.sound_device_ym2151, reg as u32, dat);
             }
             0x55 => {
-                // TODO: YM22203 write
+                // TODO: YM2203 write
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
                 SoundDevice::write(&mut self.sound_device_ym2203, reg as u32, dat);
+            }
+            0x56 => {
+                // TODO: YM2608 port 0 write
+                self.get_vgm_u8();
+                self.get_vgm_u8();
+            }
+            0x57 => {
+                // TODO: YM2608 port 1 write
+                self.get_vgm_u8();
+                self.get_vgm_u8();
+            }
+            0x58 => {
+                // TODO: YM2610 port 0 write
+                self.get_vgm_u8();
+                self.get_vgm_u8();
+            }
+            0x59 => {
+                // TODO: YM2610 port 1 write
+                self.get_vgm_u8();
+                self.get_vgm_u8();
+            }
+            0x5a => {
+                // TODO: YM3812 write
+                self.get_vgm_u8();
+                self.get_vgm_u8();
+            }
+            0x5b => {
+                // TODO: YM3528 write
+                self.get_vgm_u8();
+                self.get_vgm_u8();
+            }
+            0x5c => {
+                // TODO: Y8950 write
+                self.get_vgm_u8();
+                self.get_vgm_u8();
+            }
+            0x5e => {
+                // TODO: YMF262 port 0 write
+                self.get_vgm_u8();
+                self.get_vgm_u8();
+            }
+            0x5f => {
+                // TODO: YMF262 port 1 write
+                self.get_vgm_u8();
+                self.get_vgm_u8();
             }
             0x61 => {
                 wait = self.get_vgm_u16();
@@ -535,6 +604,51 @@ impl VgmPlay {
             0xe0 => {
                 self.pcm_pos = self.get_vgm_u32() as usize;
                 self.pcm_offset = 0;
+            }
+            // unsupport
+            0x30..=0x3f | 0x4f => {
+                // 0x4f: dd: Game Gear PSG stereo, write dd to port 0x06
+                self.get_vgm_u8();
+            }
+            0x40..=0x4e | 0x5d | 0xb0..=0xbf => {
+                // 0x5d: aa dd: YMZ280B, write value dd to register aa
+                // 0xb0: aa dd: RF5C68, write value dd to register aa
+                // 0xb1: aa dd: RF5C164, write value dd to register aa
+                // 0xb2: aa dd: PWM, write value ddd to register a (d is MSB, dd is LSB)
+                // 0xb3: aa dd: GameBoy DMG, write value dd to register aa
+                // 0xb4: aa dd: NES APU, write value dd to register aa
+                // 0xb5: aa dd: MultiPCM, write value dd to register aa
+                // 0xb6: aa dd: uPD7759, write value dd to register aa
+                // 0xb7: aa dd: OKIM6258, write value dd to register aa
+                // 0xb8: aa dd: OKIM6295, write value dd to register aa
+                // 0xb9: aa dd: HuC6280, write value dd to register aa
+                // 0xba: aa dd: K053260, write value dd to register aa
+                // 0xbb: aa dd: Pokey, write value dd to register aa
+                // 0xbc: aa dd: WonderSwan, write value dd to register aa
+                // 0xbd: aa dd: SAA1099, write value dd to register aa
+                // 0xbe: aa dd: ES5506, write value dd to register aa
+                // 0xbf: aa dd: GA20, write value dd to register aa
+                self.get_vgm_u8();
+                self.get_vgm_u8();
+            }
+            0xc9..=0xcf | 0xd7..=0xdf | 0xc1..=0xc8 | 0xd1..=0xd6 => {
+                // 0xc0: bbaa dd: Sega PCM, write value dd to memory offset aabb
+                // 0xc1: bbaa dd: RF5C68, write value dd to memory offset aabb
+                // 0xc2: bbaa dd: RF5C164, write value dd to memory offset aabb
+                // 0xc3: cc bbaa: MultiPCM, write set bank offset aabb to channel cc
+                // 0xc4: mmll rr: QSound, write value mmll to register rr (mm - data MSB, ll - data LSB)
+                // 0xc5: mmll dd: SCSP, write value dd to memory offset mmll (mm - offset MSB, ll - offset LSB)
+                // 0xc6: mmll dd: WonderSwan, write value dd to memory offset mmll (mm - offset MSB, ll - offset LSB)
+                // 0xc7: mmll dd: VSU, write value dd to memory offset mmll (mm - offset MSB, ll - offset LSB)
+                // 0xc8: mmll dd: X1-010, write value dd to memory offset mmll (mm - offset MSB, ll - offset LSB)
+                // 0xd1: pp aa dd: YMF271, port pp, write value dd to register aa
+                // 0xd2: pp aa dd: SCC1, port pp, write value dd to register aa
+                // 0xd3: pp aa dd: K054539, write value dd to register ppaa
+                // 0xd4: pp aa dd: C140, write value dd to register ppaa
+                // 0xd5: pp aa dd: ES5503, write value dd to register ppaa
+                // 0xd6: pp aa dd: ES5506, write value aadd to register pp
+                self.get_vgm_u16();
+                self.get_vgm_u8();
             }
             _ => {
                 #[cfg(feature = "console_error_panic_hook")]

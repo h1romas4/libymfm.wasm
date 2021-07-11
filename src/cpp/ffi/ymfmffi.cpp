@@ -180,6 +180,13 @@ public:
             *buffer++ += m_output.data[4];
             *buffer++ += m_output.data[5];
         }
+        else if (m_type == CHIP_YM2413)
+        {
+            int32_t out0 = m_output.data[0];
+            int32_t out1 = m_output.data[1 % ChipType::OUTPUTS];
+            *buffer++ += out0 + out1;
+            *buffer++ += out0 + out1;
+        }
         else if (ChipType::OUTPUTS == 1)
         {
             *buffer++ += m_output.data[0] / 2;
