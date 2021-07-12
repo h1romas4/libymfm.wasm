@@ -259,6 +259,7 @@ impl VgmPlay {
             if self.pcm_stream_pos_init == self.pcm_stream_pos && self.pcm_stream_length > 0 {
                 self.pcm_stream_sampling_pos = 0;
             }
+            let base_buffer_pos = buffer_pos;
             for _ in 0..update_frame_size {
                 // straming pcm update
                 if self.pcm_stream_length > 0
@@ -266,17 +267,7 @@ impl VgmPlay {
                 {
                     self.update_dac();
                 }
-                // mix each device 1 sampling
-                // TODO: vectorize sound device
-                if self.vgm_header.clock_sn76489 != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_sn76489,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        1,
-                        buffer_pos,
-                    );
-                }
+                // mix each YM2151 1 sampling
                 if self.vgm_header.clock_ym2612 != 0 {
                     SoundDevice::update(
                         &mut self.sound_device_ym2612,
@@ -286,66 +277,75 @@ impl VgmPlay {
                         buffer_pos,
                     );
                 }
-                if self.vgm_header.clock_pwm != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_pwm,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        1,
-                        buffer_pos,
-                    );
-                }
-                if self.vgm_header.sega_pcm_clock != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_segapcm,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        1,
-                        buffer_pos,
-                    );
-                }
-                if self.vgm_header.clock_ym2151 != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_ym2151,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        1,
-                        buffer_pos,
-                    );
-                }
-                if self.vgm_header.clock_ym2203 != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_ym2203,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        1,
-                        buffer_pos,
-                    );
-                }
-                if self.vgm_header.clock_ay8910 != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_ym2149,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        1,
-                        buffer_pos,
-                    );
-                }
-                if self.vgm_header.clock_ym2413 != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_ym2413,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        1,
-                        buffer_pos,
-                    );
-                }
-
                 if self.remain_frame_size > 0 {
                     self.remain_frame_size -= 1;
                 }
                 buffer_pos += 1;
                 self.pcm_stream_sampling_pos += 1;
+            }
+            // TODO: vectorize sound device
+            if self.vgm_header.clock_sn76489 != 0 {
+                SoundDevice::update(
+                    &mut self.sound_device_sn76489,
+                    &mut self.sampling_l,
+                    &mut self.sampling_r,
+                    update_frame_size,
+                    base_buffer_pos,
+                );
+            }
+            if self.vgm_header.clock_pwm != 0 {
+                SoundDevice::update(
+                    &mut self.sound_device_pwm,
+                    &mut self.sampling_l,
+                    &mut self.sampling_r,
+                    update_frame_size,
+                    base_buffer_pos,
+                );
+            }
+            if self.vgm_header.sega_pcm_clock != 0 {
+                SoundDevice::update(
+                    &mut self.sound_device_segapcm,
+                    &mut self.sampling_l,
+                    &mut self.sampling_r,
+                    update_frame_size,
+                    base_buffer_pos,
+                );
+            }
+            if self.vgm_header.clock_ym2151 != 0 {
+                SoundDevice::update(
+                    &mut self.sound_device_ym2151,
+                    &mut self.sampling_l,
+                    &mut self.sampling_r,
+                    update_frame_size,
+                    base_buffer_pos,
+                );
+            }
+            if self.vgm_header.clock_ym2203 != 0 {
+                SoundDevice::update(
+                    &mut self.sound_device_ym2203,
+                    &mut self.sampling_l,
+                    &mut self.sampling_r,
+                    update_frame_size,
+                    base_buffer_pos,
+                );
+            }
+            if self.vgm_header.clock_ay8910 != 0 {
+                SoundDevice::update(
+                    &mut self.sound_device_ym2149,
+                    &mut self.sampling_l,
+                    &mut self.sampling_r,
+                    update_frame_size,
+                    base_buffer_pos,
+                );
+            }
+            if self.vgm_header.clock_ym2413 != 0 {
+                SoundDevice::update(
+                    &mut self.sound_device_ym2413,
+                    &mut self.sampling_l,
+                    &mut self.sampling_r,
+                    update_frame_size,
+                    base_buffer_pos,
+                );
             }
             buffer_pos < self.max_sampling_size && !self.vgm_end
         } {}
