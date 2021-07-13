@@ -82,7 +82,7 @@ fetch('./vgm/ym2612.vgm')
         // for sample vgm
         totalPlaylistCount = 1;
         music_meta = createGd3meta({
-            track_name: "MEGADRIVE/GENESIS VGM(vgm/vgz) Player",
+            track_name: "WebAssembly 👾 VGM Player",
             track_name_j: "",
             game_name: "",
             game_name_j: "YM2612 sample VGM",
@@ -114,9 +114,10 @@ const startScreen = function() {
     canvasContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     canvasContext.font = '20px sans-serif';
     canvasContext.fillStyle = COLOR_MD_GREEN;
-    fillTextCenterd("WebAssembly 👾 VGM Player", CANVAS_HEIGHT / 2 - 114);
-    fillTextCenterd("DRAG AND DROP VGM(vgm/vgz) HEAR!", CANVAS_HEIGHT / 2 - 64);
-    fillTextCenterd("OR CLICK TO PLAY SAMPLE VGM.", CANVAS_HEIGHT / 2 - 16);
+    fillTextCenterd("WebAssembly 👾 VGM Player", CANVAS_HEIGHT / 2 - 32 * 4);
+    fillTextCenterd("YM2151 | YM2203 | YM2149 | YM2413 | YM2612 | SN76489(MD) | PWM(32x)", CANVAS_HEIGHT / 2 - 32 * 2);
+    fillTextCenterd("🎵 DRAG AND DROP VGM(vgm/vgz) HEAR", CANVAS_HEIGHT / 2 - 32 * 1);
+    fillTextCenterd("OR CLICK(TAP) TO PLAY SAMPLE VGM", CANVAS_HEIGHT / 2 + 32 * 1);
 };
 
 /**
