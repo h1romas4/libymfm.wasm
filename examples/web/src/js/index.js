@@ -89,8 +89,9 @@ fetch('./vgm/ym2612.vgm')
             track_author: "@h1romas4",
             track_author_j: ""
         });
-        // for AudioContext opening is delayed on Linux.
+        // hack for AudioContext opening is delayed on Linux.
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLING_RATE });
+        audioContext = null;
         // ready to go
         startScreen();
     });
@@ -222,12 +223,10 @@ const disconnect = function() {
     if(audioAnalyser != null) audioAnalyser.disconnect();
     if(audioGain != null) audioGain.disconnect();
     if(audioNode != null) audioNode.disconnect();
-    if(audioContext != null) audioContext.close();
     // force GC
     audioAnalyser = null;
     audioNode = null;
     audioGain = null;
-    audioContext = null;
 }
 
 /**
@@ -235,9 +234,12 @@ const disconnect = function() {
  */
 const play = function() {
     canvas.removeEventListener('click', play, false);
-    // recreate audio context for prevent memory leak.
+    // recreate audio node for prevent memory leak.
     disconnect();
-    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLING_RATE });
+    // iOS only sounds AudioContext that created by the click event.
+    if(audioContext == null) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLING_RATE });
+    }
     audioNode = audioContext.createScriptProcessor(MAX_SAMPLING_BUFFER, 2, 2);
     feedOutCount = 0;
     let stop = false;
