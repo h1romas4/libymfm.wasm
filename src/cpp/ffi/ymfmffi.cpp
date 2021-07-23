@@ -137,8 +137,8 @@ public:
         // write to the chip
         if (addr1 != 0xffff)
         {
-            if (LOG_WRITES)
-                printf("%10.5f: %s %03X=%02X\n", double(m_clocks) / double(m_chip.sample_rate(m_clock)), m_name.c_str(), data1, data2);
+            // if (LOG_WRITES)
+            //     printf("%10.5f: %s %03X=%02X\n", double(m_clocks) / double(m_chip.sample_rate(m_clock)), m_name.c_str(), data1, data2);
             m_chip.write(addr1, data1);
             m_chip.write(addr2, data2);
         }
@@ -226,7 +226,7 @@ void add_chips(uint32_t clock, chip_type type, char const *chipname)
 {
     uint32_t clockval = clock & 0x3fffffff;
     int numchips = (clock & 0x40000000) ? 2 : 1;
-    printf("Adding %s%s @ %dHz\n", (numchips == 2) ? "2 x " : "", chipname, clockval);
+    // printf("Adding %s%s @ %dHz\n", (numchips == 2) ? "2 x " : "", chipname, clockval);
     for (int index = 0; index < numchips; index++)
     {
         char name[100];
@@ -234,24 +234,24 @@ void add_chips(uint32_t clock, chip_type type, char const *chipname)
         active_chips.push_back(new vgm_chip<ChipType>(clockval, type, chipname));
     }
 
-    if (type == CHIP_YM2608)
-    {
-        FILE *rom = fopen("ym2608_adpcm_rom.bin", "rb");
-        if (rom == nullptr)
-            fprintf(stderr, "Warning: YM2608 enabled but ym2608_adpcm_rom.bin not found\n");
-        else
-        {
-            fseek(rom, 0, SEEK_END);
-            uint32_t size = ftell(rom);
-            fseek(rom, 0, SEEK_SET);
-            std::vector<uint8_t> temp(size);
-            fread(&temp[0], 1, size, rom);
-            fclose(rom);
-            for (auto chip : active_chips)
-                if (chip->type() == type)
-                    chip->write_data(ymfm::ACCESS_ADPCM_A, 0, size, &temp[0]);
-        }
-    }
+    // if (type == CHIP_YM2608)
+    // {
+    //     FILE *rom = fopen("ym2608_adpcm_rom.bin", "rb");
+    //     if (rom == nullptr)
+    //         fprintf(stderr, "Warning: YM2608 enabled but ym2608_adpcm_rom.bin not found\n");
+    //     else
+    //     {
+    //         fseek(rom, 0, SEEK_END);
+    //         uint32_t size = ftell(rom);
+    //         fseek(rom, 0, SEEK_SET);
+    //         std::vector<uint8_t> temp(size);
+    //         fread(&temp[0], 1, size, rom);
+    //         fclose(rom);
+    //         for (auto chip : active_chips)
+    //             if (chip->type() == type)
+    //                 chip->write_data(ymfm::ACCESS_ADPCM_A, 0, size, &temp[0]);
+    //     }
+    // }
 }
 
 vgm_chip_base *find_chip(chip_type type, uint8_t index)
@@ -267,7 +267,7 @@ void remove_chip(chip_type type, uint8_t index)
     vgm_chip_base *chip = find_chip(type, index);
     if(chip != nullptr)
     {
-        printf("remove chip\n");
+        // printf("remove chip\n");
         active_chips.remove(chip);
         delete chip;
     }
@@ -335,7 +335,7 @@ extern "C"
 
     void ymfm_remove_chip(uint16_t chip_num)
     {
-        printf("ymfmffi: ymfm_remove_chip!\n");
+        // printf("ymfmffi: ymfm_remove_chip!\n");
         remove_chip(static_cast<chip_type>(chip_num), 0); // TODO: 0
     }
 }
