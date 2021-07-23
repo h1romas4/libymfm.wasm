@@ -27,7 +27,7 @@ pub enum SoundChipType {
     YM2612,
     YM2413,
     YM2602,
-    SEGA315_5313,
+    SEGAPSG,
     PWM,
     SEGAPCM,
 }
@@ -77,7 +77,7 @@ impl SoundSlot {
             SoundChipType::YM2612 => Box::new(YmFm::new(SoundChipType::YM2612)),
             SoundChipType::YM2413 => Box::new(YmFm::new(SoundChipType::YM2413)),
             SoundChipType::YM2602 => todo!(),
-            SoundChipType::SEGA315_5313 => Box::new(SN76489::new(SoundChipType::SEGA315_5313)),
+            SoundChipType::SEGAPSG => Box::new(SN76489::new(SoundChipType::SEGAPSG)),
             SoundChipType::PWM => Box::new(PWM::new(SoundChipType::PWM)),
             SoundChipType::SEGAPCM => Box::new(SEGAPCM::new(SoundChipType::SEGAPCM)),
         };
@@ -93,12 +93,27 @@ impl SoundSlot {
     }
 
     #[inline]
-    pub fn find(&mut self, sound_device_name: SoundChipType, _no: usize) -> &mut dyn SoundChip {
-        &mut *self.sound_device.get_mut(&sound_device_name).expect("sound device not found.")[0].sound_chip
+    pub fn find(&mut self, sound_device_name: SoundChipType, no: usize) -> Option<&mut dyn SoundChip> {
+        let sound_chip = match self.sound_device.get_mut(&sound_device_name) {
+            None => None,
+            Some(vec) => {
+                if vec.len() < no {
+                    return None
+                }
+                Some(vec)
+            }
+        };
+        match sound_chip {
+            None => None,
+            Some(sound_chip) => Some(&mut *sound_chip[no].sound_chip)
+        }
     }
 
     pub fn write(&mut self, sound_device_name: SoundChipType, no: usize, port: u32, data: u32) {
-        self.find(sound_device_name, no).write(port, data);
+        match self.find(sound_device_name, no) {
+            None => { /* nothing to do */ },
+            Some(sound_chip) => sound_chip.write(port, data)
+        }
     }
 
     pub fn update(
@@ -110,7 +125,10 @@ impl SoundSlot {
         numsamples: usize,
         buffer_pos: usize,
     ) {
-        self.find(sound_device_name, no).update(buffer_l, buffer_r, numsamples, buffer_pos);
+        match self.find(sound_device_name, no) {
+            None => { /* nothing to do */ },
+            Some(sound_chip) => sound_chip.update(buffer_l, buffer_r, numsamples, buffer_pos)
+        }
     }
 
     // pub fn set_rom(&mut self, sound_device_name: SoundChipType, no: usize, rombank: RomBank) {

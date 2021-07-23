@@ -140,7 +140,7 @@ impl VgmPlay {
 
         if self.vgm_header.clock_sn76489 != 0 {
             self.sound_slot
-                .add(SoundChipType::SEGA315_5313, self.vgm_header.clock_sn76489);
+                .add(SoundChipType::SEGAPSG, self.vgm_header.clock_sn76489);
         }
         if self.vgm_header.clock_ym2612 != 0 {
             self.sound_slot
@@ -219,14 +219,18 @@ impl VgmPlay {
             }
             let base_buffer_pos = buffer_pos;
             for _ in 0..update_frame_size {
-                // straming pcm update
-                if self.pcm_stream_length > 0
-                    && (self.pcm_stream_sampling_pos % self.pcm_stream_sample_count) as usize == 0
-                {
-                    self.update_dac();
-                }
-                // mix each YM2151 1 sampling
+                // YM2612 straming pcm update
                 if self.vgm_header.clock_ym2612 != 0 {
+                    // pcm update
+                    if self.pcm_stream_length > 0
+                        && (self.pcm_stream_sampling_pos % self.pcm_stream_sample_count) as usize == 0 {
+                        self.sound_slot.write(
+                            SoundChipType::YM2612,0,0x2a, self.vgm_data[self.data_pos + self.pcm_stream_pos + self.pcm_stream_offset].into()
+                        );
+                        self.pcm_stream_length -= 1;
+                        self.pcm_stream_pos += 1;
+                    }
+                    // mix each YM2612 1 sampling
                     self.sound_slot.update(
                         SoundChipType::YM2612,0,&mut self.sampling_l, &mut self.sampling_r, 1, buffer_pos,
                     );
@@ -238,10 +242,9 @@ impl VgmPlay {
                 self.pcm_stream_sampling_pos += 1;
             }
             if update_frame_size != 0 {
-                // TODO: vectorize sound device
                 if self.vgm_header.clock_sn76489 != 0 {
                     self.sound_slot.update(
-                        SoundChipType::SEGA315_5313,0,&mut self.sampling_l, &mut self.sampling_r, update_frame_size, base_buffer_pos,
+                        SoundChipType::SEGAPSG,0,&mut self.sampling_l, &mut self.sampling_r, update_frame_size, base_buffer_pos,
                     );
                 }
                 if self.vgm_header.clock_pwm != 0 {
@@ -323,7 +326,7 @@ impl VgmPlay {
         match command {
             0x50 => {
                 dat = self.get_vgm_u8();
-                self.sound_slot.write(SoundChipType::SEGA315_5313,0,0, dat.into());
+                self.sound_slot.write(SoundChipType::SEGAPSG,0,0, dat.into());
             }
             0x51 => {
                 // TODO: YM2413 write
@@ -589,12 +592,6 @@ impl VgmPlay {
             }
         }
         wait
-    }
-
-    fn update_dac(&mut self) {
-        self.sound_slot.write(SoundChipType::YM2612,0,0x2a, self.vgm_data[self.data_pos + self.pcm_stream_pos + self.pcm_stream_offset].into());
-        self.pcm_stream_length -= 1;
-        self.pcm_stream_pos += 1;
     }
 
     fn add_rom(&self, index: usize, memory: &[u8], start_address: usize, end_address: usize) {
