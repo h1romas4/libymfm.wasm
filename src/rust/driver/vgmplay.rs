@@ -164,7 +164,7 @@ impl VgmPlay {
         }
         if self.vgm_header.clock_ym2203 != 0 {
             self.sound_slot
-                .add(SoundChipType::YM2151, self.vgm_header.clock_ym2203);
+                .add(SoundChipType::YM2203, self.vgm_header.clock_ym2203);
         }
         if self.vgm_header.clock_ym2413 != 0 {
             self.sound_slot
