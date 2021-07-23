@@ -1,4 +1,6 @@
-use crate::sound::{SoundDevice, SoundDeviceName, convert_sample_i2f};
+use crate::sound::{SoundChip, convert_sample_i2f};
+
+use super::SoundChipType;
 
 ///
 /// FFI interface
@@ -40,55 +42,8 @@ pub struct YmFm {
 }
 
 impl YmFm {
-    pub fn from(chip_type: ChipType) -> Self {
-        YmFm {
-            chip_type,
-            clock: 0,
-            sampling_rate: 0,
-            output_pos: 0,
-            output_step: 0
-        }
-    }
-
     fn init(&mut self, sampling_rate: u32, clock: u32) {
-        match self.chip_type {
-            ChipType::CHIP_YM2149 => {
-                unsafe { ymfm_add_chip(ChipType::CHIP_YM2149 as u16, clock) }
-            },
-            ChipType::CHIP_YM2151 => {
-                unsafe { ymfm_add_chip(ChipType::CHIP_YM2151 as u16, clock) }
-            },
-            ChipType::CHIP_YM2203 => {
-                unsafe { ymfm_add_chip(ChipType::CHIP_YM2203 as u16, clock) }
-            },
-            ChipType::CHIP_YM2413 => {
-                unsafe { ymfm_add_chip(ChipType::CHIP_YM2413 as u16, clock) }
-            },
-            ChipType::CHIP_YM2608 => {
-                unsafe { ymfm_add_chip(ChipType::CHIP_YM2608 as u16, clock) }
-            },
-            ChipType::CHIP_YM2610 => {
-                unsafe { ymfm_add_chip(ChipType::CHIP_YM2610 as u16, clock) }
-            },
-            ChipType::CHIP_YM2612 => {
-                unsafe { ymfm_add_chip(ChipType::CHIP_YM2612 as u16, clock) }
-            },
-            ChipType::CHIP_YM3526 => {
-                unsafe { ymfm_add_chip(ChipType::CHIP_YM3526 as u16, clock) }
-            },
-            ChipType::CHIP_Y8950 => {
-                unsafe { ymfm_add_chip(ChipType::CHIP_Y8950 as u16, clock) }
-            },
-            ChipType::CHIP_YM3812 => {
-                unsafe { ymfm_add_chip(ChipType::CHIP_YM3812 as u16, clock) }
-            },
-            ChipType::CHIP_YMF262 => {
-                unsafe { ymfm_add_chip(ChipType::CHIP_YMF262 as u16, clock) }
-            },
-            ChipType::CHIP_YMF278B => {
-                unsafe { ymfm_add_chip(ChipType::CHIP_YMF278B as u16, clock) }
-            },
-        }
+        unsafe { ymfm_add_chip(self.chip_type as u16, clock) }
         self.sampling_rate = sampling_rate;
         self.clock = clock;
         self.output_step = 0x100000000 / i64::from(sampling_rate);
@@ -122,24 +77,37 @@ impl Drop for YmFm {
     }
 }
 
-impl SoundDevice<u8> for YmFm {
-    fn new() -> Self {
-        YmFm::from(ChipType::CHIP_YM2149) // TODO: intarfece change
+impl SoundChip for YmFm {
+    fn new(sound_device_name: SoundChipType) -> Self {
+        let chip_type = match sound_device_name {
+            SoundChipType::YM2151 => ChipType::CHIP_YM2151,
+            SoundChipType::YM2203 => ChipType::CHIP_YM2203,
+            SoundChipType::YM2149 => ChipType::CHIP_YM2149,
+            SoundChipType::YM2612 => ChipType::CHIP_YM2612,
+            SoundChipType::YM2413 => ChipType::CHIP_YM2413,
+            _ => todo!(),
+        };
+        YmFm {
+            chip_type,
+            clock: 0,
+            sampling_rate: 0,
+            output_pos: 0,
+            output_step: 0
+        }
     }
 
-    fn init(&mut self, sample_rate: u32, clock: u32) {
-        self.init(sample_rate, clock);
-    }
-
-    fn get_name(&self) -> SoundDeviceName {
-        SoundDeviceName::YmFm // TODO: intarfece change
+    fn init(&mut self, clock: u32) -> u32 {
+        // TODO:
+        self.init(44100, clock);
+        // TODO:
+        44100
     }
 
     fn reset(&mut self) {
     }
 
-    fn write(&mut self, offset: u32, data: u8) {
-        self.write_chip(offset, data);
+    fn write(&mut self, offset: u32, data: u32) {
+        self.write_chip(offset, data as u8);
     }
 
     fn update(

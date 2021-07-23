@@ -55,7 +55,9 @@
 // 	0x00, 0x00, 0x80, 0x40
 // ];
 
-use crate::sound::{SoundDevice, SoundDeviceName, convert_sample_i2f};
+use crate::sound::{SoundChip, convert_sample_i2f};
+
+use super::SoundChipType;
 
 const CHIP_SAMPLING_MODE: u8 = 0x00;
 const CHIP_SAMPLE_RATE: i32 = 44100;
@@ -295,27 +297,25 @@ impl PWM {
     }
 }
 
-impl SoundDevice<u16> for PWM {
-    fn new() -> Self {
+impl SoundChip for PWM {
+    fn new(_sound_device_name: SoundChipType) -> Self {
         PWM {
             pwm_chip: [PWMChip::default(), PWMChip::default()]
         }
     }
 
-    fn init(&mut self, _: u32, clock: u32) {
+    fn init(&mut self,clock: u32) -> u32 {
         self.device_start_pwm(0, clock as i32);
-    }
-
-    fn get_name(&self) -> SoundDeviceName {
-        SoundDeviceName::PWM
+        // TODO: stream device upsampling
+        CHIP_SAMPLE_RATE as u32
     }
 
     fn reset(&mut self) {
         self.device_reset_pwm(0);
     }
 
-    fn write(&mut self, port: u32, data: u16) {
-        self.pwm_chn_w(0, port as u8, data);
+    fn write(&mut self, port: u32, data: u32) {
+        self.pwm_chn_w(0, port as u8, data as u16);
     }
 
     fn update(&mut self, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {

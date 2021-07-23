@@ -11,18 +11,11 @@ use crate::driver::metadata::Gd3;
 use crate::driver::metadata::Jsonlize;
 use crate::driver::metadata::VgmHeader;
 
-use crate::sound::{RomDevice, RomSet, SoundDevice, PWM, SEGAPCM, SN76489, YmFm };
-use crate::sound::ChipType;
+use crate::sound::SoundChipType;
+use crate::sound::{RomSet, SoundSlot};
 
 pub struct VgmPlay {
-    sound_device_ym2151: YmFm,
-    sound_device_ym2203: YmFm,
-    sound_device_ym2149: YmFm,
-    sound_device_ym2612: YmFm,
-    sound_device_ym2413: YmFm,
-    sound_device_sn76489: SN76489,
-    sound_device_pwm: PWM,
-    sound_device_segapcm: SEGAPCM,
+    sound_slot: SoundSlot,
     sound_romset: HashMap<usize, Rc<RefCell<RomSet>>>,
     sample_rate: u32,
     vgm_pos: usize,
@@ -42,7 +35,7 @@ pub struct VgmPlay {
     vgm_end: bool,
     vgm_file: Vec<u8>,
     vgm_data: Vec<u8>,
-    max_sampling_size: usize,
+    max_sample_size: usize,
     sampling_l: Vec<f32>,
     sampling_r: Vec<f32>,
     vgm_header: VgmHeader,
@@ -54,17 +47,9 @@ impl VgmPlay {
     ///
     /// Create sound driver.
     ///
-    pub fn new(sample_rate: u32, max_sampling_size: usize, vgm_file_size: usize) -> Self {
+    pub fn new(sample_rate: u32, max_sample_size: usize, vgm_file_size: usize) -> Self {
         VgmPlay {
-            // TODO: vectorize sound device
-            sound_device_ym2151: YmFm::from(ChipType::CHIP_YM2151),
-            sound_device_ym2203: YmFm::from(ChipType::CHIP_YM2203),
-            sound_device_ym2149: YmFm::from(ChipType::CHIP_YM2149),
-            sound_device_ym2612: YmFm::from(ChipType::CHIP_YM2612),
-            sound_device_ym2413: YmFm::from(ChipType::CHIP_YM2413),
-            sound_device_sn76489: SN76489::new(),
-            sound_device_pwm: PWM::new(),
-            sound_device_segapcm: SEGAPCM::new(),
+            sound_slot: SoundSlot::new(max_sample_size),
             sound_romset: HashMap::new(),
             sample_rate,
             vgm_pos: 0,
@@ -84,9 +69,9 @@ impl VgmPlay {
             vgm_end: false,
             vgm_file: vec![0; vgm_file_size],
             vgm_data: Vec::new(),
-            max_sampling_size,
-            sampling_l: vec![0_f32; max_sampling_size],
-            sampling_r: vec![0_f32; max_sampling_size],
+            max_sample_size,
+            sampling_l: vec![0_f32; max_sample_size],
+            sampling_r: vec![0_f32; max_sample_size],
             vgm_header: VgmHeader::default(),
             vgm_gd3: Gd3::default(),
         }
@@ -153,58 +138,42 @@ impl VgmPlay {
         self.vgm_loop_offset = (0x1c + self.vgm_header.offset_loop) as usize;
         self.vgm_pos = (0x34 + self.vgm_header.vgm_data_offset) as usize;
 
-        // TODO: vectorize sound device
         if self.vgm_header.clock_sn76489 != 0 {
-            // 3_579_545
-            SoundDevice::init(
-                &mut self.sound_device_sn76489,
-                self.sample_rate,
-                self.vgm_header.clock_sn76489,
-            );
+            self.sound_slot
+                .add(SoundChipType::SEGA315_5313, self.vgm_header.clock_sn76489);
         }
         if self.vgm_header.clock_ym2612 != 0 {
-            // 7_670_453
-            SoundDevice::init(
-                &mut self.sound_device_ym2612,
-                self.sample_rate,
-                self.vgm_header.clock_ym2612,
-            );
+            self.sound_slot
+                .add(SoundChipType::YM2612, self.vgm_header.clock_ym2612);
         }
         if self.vgm_header.clock_pwm != 0 {
-            // 23_011_360
-            SoundDevice::init(&mut self.sound_device_pwm, self.sample_rate, self.vgm_header.clock_pwm);
+            self.sound_slot
+                .add(SoundChipType::PWM, self.vgm_header.clock_pwm);
         }
         if self.vgm_header.sega_pcm_clock != 0 {
-            // 4_000_000
-            SoundDevice::init(
-                &mut self.sound_device_segapcm,
-                self.sample_rate,
-                self.vgm_header.sega_pcm_clock,
-            );
-            // init romset
-            let romset = Rc::new(RefCell::new(RomSet::new()));
-            RomDevice::set_rom(&mut self.sound_device_segapcm, Some(romset.clone()));
-            self.sound_romset.insert(0x80, romset); // 0x80 segapcm
+            self.sound_slot
+                .add(SoundChipType::SEGAPCM, self.vgm_header.sega_pcm_clock);
+            // TODO:
+            // let romset = Rc::new(RefCell::new(RomSet::new()));
+            // RomDevice::set_rom(&mut self.sound_device_segapcm, Some(romset.clone()));
+            // self.sound_romset.insert(0x80, romset); // 0x80 segapcm
         }
         if self.vgm_header.clock_ym2151 != 0 {
-            // 7_670_453
-            SoundDevice::init(
-                &mut self.sound_device_ym2151,
-                self.sample_rate,
-                self.vgm_header.clock_ym2151,
-            );
+            self.sound_slot
+                .add(SoundChipType::YM2151, self.vgm_header.clock_ym2151);
         }
         if self.vgm_header.clock_ym2203 != 0 {
-            SoundDevice::init(
-                &mut self.sound_device_ym2203,
-                self.sample_rate,
-                self.vgm_header.clock_ym2203,
-            );
+            self.sound_slot
+                .add(SoundChipType::YM2151, self.vgm_header.clock_ym2203);
+        }
+        if self.vgm_header.clock_ym2413 != 0 {
+            self.sound_slot
+                .add(SoundChipType::YM2413, self.vgm_header.clock_ym2413);
         }
         if self.vgm_header.clock_ay8910 != 0 {
             // TODO: YM2149 - AY8910 clock hack (* 4 ?)
             let clock_ay8910: u32;
-            if self.vgm_header.clock_ym2151 != 0  {
+            if self.vgm_header.clock_ym2151 != 0 {
                 // TODO: X1 Turbo sync YM2151
                 clock_ay8910 = self.vgm_header.clock_ym2151 * 4;
             } else if self.vgm_header.clock_ym2413 != 0 {
@@ -213,18 +182,7 @@ impl VgmPlay {
             } else {
                 clock_ay8910 = self.vgm_header.clock_ay8910 * 8;
             }
-            SoundDevice::init(
-                &mut self.sound_device_ym2149,
-                self.sample_rate,
-                clock_ay8910,
-            );
-        }
-        if self.vgm_header.clock_ym2413 != 0 {
-            SoundDevice::init(
-                &mut self.sound_device_ym2413,
-                self.sample_rate,
-                self.vgm_header.clock_ym2413,
-            );
+            self.sound_slot.add(SoundChipType::YM2149, clock_ay8910);
         }
 
         Ok(())
@@ -239,7 +197,7 @@ impl VgmPlay {
         let mut buffer_pos: usize;
 
         // clear buffer
-        for i in 0..self.max_sampling_size {
+        for i in 0..self.max_sample_size {
             self.sampling_l[i] = 0_f32;
             self.sampling_r[i] = 0_f32;
         }
@@ -251,10 +209,10 @@ impl VgmPlay {
             } else {
                 frame_size = self.parse_vgm(repeat) as usize;
             }
-            if buffer_pos + frame_size < self.max_sampling_size {
+            if buffer_pos + frame_size < self.max_sample_size {
                 update_frame_size = frame_size;
             } else {
-                update_frame_size = self.max_sampling_size - buffer_pos;
+                update_frame_size = self.max_sample_size - buffer_pos;
             }
             if self.pcm_stream_pos_init == self.pcm_stream_pos && self.pcm_stream_length > 0 {
                 self.pcm_stream_sampling_pos = 0;
@@ -269,12 +227,8 @@ impl VgmPlay {
                 }
                 // mix each YM2151 1 sampling
                 if self.vgm_header.clock_ym2612 != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_ym2612,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        1,
-                        buffer_pos,
+                    self.sound_slot.update(
+                        SoundChipType::YM2612,0,&mut self.sampling_l, &mut self.sampling_r, 1, buffer_pos,
                     );
                 }
                 if self.remain_frame_size > 0 {
@@ -286,70 +240,42 @@ impl VgmPlay {
             if update_frame_size != 0 {
                 // TODO: vectorize sound device
                 if self.vgm_header.clock_sn76489 != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_sn76489,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                    self.sound_slot.update(
+                        SoundChipType::SEGA315_5313,0,&mut self.sampling_l, &mut self.sampling_r, update_frame_size, base_buffer_pos,
                     );
                 }
                 if self.vgm_header.clock_pwm != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_pwm,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                    self.sound_slot.update(
+                        SoundChipType::PWM,0,&mut self.sampling_l, &mut self.sampling_r, update_frame_size, base_buffer_pos,
                     );
                 }
                 if self.vgm_header.sega_pcm_clock != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_segapcm,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                    self.sound_slot.update(
+                        SoundChipType::SEGAPCM,0,&mut self.sampling_l, &mut self.sampling_r, update_frame_size, base_buffer_pos,
                     );
                 }
                 if self.vgm_header.clock_ym2151 != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_ym2151,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                    self.sound_slot.update(
+                        SoundChipType::YM2151,0,&mut self.sampling_l, &mut self.sampling_r, update_frame_size, base_buffer_pos,
                     );
                 }
                 if self.vgm_header.clock_ym2203 != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_ym2203,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                    self.sound_slot.update(
+                        SoundChipType::YM2203,0,&mut self.sampling_l, &mut self.sampling_r, update_frame_size, base_buffer_pos,
                     );
                 }
                 if self.vgm_header.clock_ay8910 != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_ym2149,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                    self.sound_slot.update(
+                        SoundChipType::YM2149,0,&mut self.sampling_l, &mut self.sampling_r, update_frame_size, base_buffer_pos,
                     );
                 }
                 if self.vgm_header.clock_ym2413 != 0 {
-                    SoundDevice::update(
-                        &mut self.sound_device_ym2413,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                    self.sound_slot.update(
+                        SoundChipType::YM2413,0,&mut self.sampling_l, &mut self.sampling_r, update_frame_size, base_buffer_pos,
                     );
                 }
             }
-            buffer_pos < self.max_sampling_size && !self.vgm_end
+            buffer_pos < self.max_sample_size && !self.vgm_end
         } {}
         self.remain_frame_size = frame_size - update_frame_size;
 
@@ -397,35 +323,35 @@ impl VgmPlay {
         match command {
             0x50 => {
                 dat = self.get_vgm_u8();
-                SoundDevice::write(&mut self.sound_device_sn76489, 0, dat);
+                self.sound_slot.write(SoundChipType::SEGA315_5313,0,0, dat.into());
             }
             0x51 => {
                 // TODO: YM2413 write
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
-                SoundDevice::write(&mut self.sound_device_ym2413, reg as u32, dat);
-            },
+                self.sound_slot.write(SoundChipType::YM2413,0,reg as u32, dat.into());
+            }
             0x52 => {
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
-                SoundDevice::write(&mut self.sound_device_ym2612, reg as u32, dat);
-            },
+                self.sound_slot.write(SoundChipType::YM2612,0,reg as u32, dat.into());
+            }
             0x53 => {
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
-                SoundDevice::write(&mut self.sound_device_ym2612, reg as u32 | 0x100, dat);
+                self.sound_slot.write(SoundChipType::YM2612,0,reg as u32 | 0x100, dat.into());
             }
             0x54 => {
                 // TODO: YM2151 write
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
-                SoundDevice::write(&mut self.sound_device_ym2151, reg as u32, dat);
+                self.sound_slot.write(SoundChipType::YM2151,0,reg as u32, dat.into());
             }
             0x55 => {
                 // TODO: YM2203 write
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
-                SoundDevice::write(&mut self.sound_device_ym2203, reg as u32, dat);
+                self.sound_slot.write(SoundChipType::YM2203,0,reg as u32, dat.into());
             }
             0x56 => {
                 // TODO: YM2608 port 0 write
@@ -531,11 +457,7 @@ impl VgmPlay {
             0x80..=0x8f => {
                 // YM2612 PCM
                 wait = (command & 0x0f).into();
-                SoundDevice::write(
-                    &mut self.sound_device_ym2612,
-                    0x2a,
-                    self.vgm_data[self.data_pos + self.pcm_pos + self.pcm_offset]
-                );
+                self.sound_slot.write(SoundChipType::YM2612,0,0x2a, self.vgm_data[self.data_pos + self.pcm_pos + self.pcm_offset].into());
                 self.pcm_offset += 1;
             }
             0x90 => {
@@ -586,7 +508,7 @@ impl VgmPlay {
                 // TODO: AY8910, write
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
-                SoundDevice::write(&mut self.sound_device_ym2149, reg as u32, dat);
+                self.sound_slot.write(SoundChipType::YM2149,0,reg as u32, dat.into());
             }
             0xb2 => {
                 // 0xB2 ad dd
@@ -594,13 +516,13 @@ impl VgmPlay {
                 let raw1 = self.get_vgm_u8();
                 let raw2 = self.get_vgm_u8();
                 let channel = (raw1 & 0xf0) >> 4_u8;
-                let data: u16 = (raw1 as u16 & 0x0f) << 8 | raw2 as u16;
-                SoundDevice::write(&mut self.sound_device_pwm, channel as u32, data);
+                let dat: u16 = (raw1 as u16 & 0x0f) << 8 | raw2 as u16;
+                self.sound_slot.write(SoundChipType::PWM,0,channel as u32, dat.into());
             }
             0xc0 => {
                 let offset = self.get_vgm_u16();
                 let dat = self.get_vgm_u8();
-                SoundDevice::write(&mut self.sound_device_segapcm, u32::from(offset), dat);
+                self.sound_slot.write(SoundChipType::SEGAPCM,0,u32::from(offset), dat.into());
             }
             0xe0 => {
                 self.pcm_pos = self.get_vgm_u32() as usize;
@@ -670,11 +592,7 @@ impl VgmPlay {
     }
 
     fn update_dac(&mut self) {
-        SoundDevice::write(
-            &mut self.sound_device_ym2612,
-            0x2a,
-            self.vgm_data[self.data_pos + self.pcm_stream_pos + self.pcm_stream_offset]
-        );
+        self.sound_slot.write(SoundChipType::YM2612,0,0x2a, self.vgm_data[self.data_pos + self.pcm_stream_pos + self.pcm_stream_offset].into());
         self.pcm_stream_length -= 1;
         self.pcm_stream_pos += 1;
     }
@@ -699,7 +617,7 @@ mod tests {
     use std::fs::File;
     use std::io::{Read, Write};
 
-    const MAX_SAMPLING_SIZE: usize = 4096;
+    const MAX_SAMPLE_SIZE: usize = 4096;
 
     #[test]
     fn sn76489_1() {
@@ -736,7 +654,7 @@ mod tests {
 
         let mut vgmplay = VgmPlay::new(
             44100,
-            MAX_SAMPLING_SIZE,
+            MAX_SAMPLE_SIZE,
             file.metadata().unwrap().len() as usize,
         );
         // set vgmdata (Wasm simulation)
@@ -757,7 +675,7 @@ mod tests {
         // ffplay -f f32le -ar 44100 -ac 2 output.pcm
         #[allow(clippy::absurd_extreme_comparisons)]
         while vgmplay.play(false) <= 0 {
-            for i in 0..MAX_SAMPLING_SIZE {
+            for i in 0..MAX_SAMPLE_SIZE {
                 unsafe {
                     let slice_l = std::slice::from_raw_parts(sampling_l.add(i) as *const u8, 4);
                     let slice_r = std::slice::from_raw_parts(sampling_r.add(i) as *const u8, 4);

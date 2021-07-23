@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-use crate::sound::{convert_sample_i2f, RomDevice, RomSet, RomBank, SoundDevice, SoundDeviceName};
+use crate::sound::{convert_sample_i2f, RomDevice, RomSet, RomBank, SoundChip, SoundChipType};
 /**
  * Rust SEGAPCM emulation
  *  Hiromasa Tanaka <h1romas4@gmail.com>
@@ -24,7 +24,7 @@ pub struct SEGAPCM {
 }
 
 impl SEGAPCM {
-    fn new() -> Self {
+    fn from() -> Self {
         Self {
             clock: 0,
             bankshift: 12,
@@ -116,25 +116,22 @@ impl SEGAPCM {
     }
 }
 
-impl SoundDevice<u8> for SEGAPCM {
-    fn new() -> Self {
-        SEGAPCM::new()
+impl SoundChip for SEGAPCM {
+    fn new(_sound_device_name: SoundChipType) -> Self {
+        SEGAPCM::from()
     }
 
-    fn init(&mut self, _: u32, clock: u32) {
+    fn init(&mut self, clock: u32) -> u32 {
         self.init(clock);
-    }
-
-    fn get_name(&self) -> SoundDeviceName {
-        SoundDeviceName::SEGAPCM
+        self.clock / 128
     }
 
     fn reset(&mut self) {
         self.reset();
     }
 
-    fn write(&mut self, offset: u32, data: u8) {
-        self.write(offset, data);
+    fn write(&mut self, offset: u32, data: u32) {
+        self.write(offset, data as u8);
     }
 
     fn update(

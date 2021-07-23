@@ -33,7 +33,9 @@
 use std::f32;
 use std::i32;
 
-use crate::sound::{SoundDevice, SoundDeviceName, convert_sample_i2f};
+use crate::sound::{SoundChip, convert_sample_i2f};
+
+use super::SoundChipType;
 
 // More testing is needed to find and confirm feedback patterns for
 // SN76489 variants and compatible chips.
@@ -354,26 +356,25 @@ impl SN76489 {
     }
 }
 
-impl SoundDevice<u8> for SN76489 {
-    fn new() -> Self {
+impl SoundChip for SN76489 {
+    fn new(_sound_device_name: SoundChipType) -> Self {
         SN76489::default()
     }
 
-    fn init(&mut self, sample_rate: u32, clock: u32) {
-        self.init(clock as i32, sample_rate as i32);
+    fn init(&mut self, clock: u32) -> u32 {
+        // TODO: sampling rate
+        self.init(clock as i32, 44100_i32);
         self.reset();
-    }
-
-    fn get_name(&self) -> SoundDeviceName {
-        SoundDeviceName::SN76489
+        // TODO: sampling rate
+        44100_u32
     }
 
     fn reset(&mut self) {
         self.reset();
     }
 
-    fn write(&mut self, _: u32, data: u8) {
-        self.write(data);
+    fn write(&mut self, _: u32, data: u32) {
+        self.write(data as u8);
     }
 
     fn update(&mut self, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {

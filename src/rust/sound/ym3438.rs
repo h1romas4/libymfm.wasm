@@ -40,9 +40,11 @@
  * version: 1.0.9
  */
 
-use crate::sound::{SoundDevice, SoundDeviceName, convert_sample_i2f};
+use crate::sound::{SoundChip, convert_sample_i2f};
 
 use array_macro::*;
+
+use super::SoundChipType;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum YM3438Mode {
@@ -1886,29 +1888,24 @@ impl YM3438 {
     }
 }
 
-impl SoundDevice<u8> for YM3438 {
-    fn new() -> Self {
+impl SoundChip for YM3438 {
+    fn new(_sound_device_name: SoundChipType) -> Self {
         YM3438::default()
     }
 
-    fn init(&mut self, sample_rate: u32, clock: u32) {
-        self.reset(clock, sample_rate);
-    }
-
-    fn get_name(&self) -> SoundDeviceName {
-        if self.chip_type as u32 & YM3438Mode::YM2612 as u32 != 0 {
-            SoundDeviceName::YM2612
-        } else {
-            SoundDeviceName::YM3438
-        }
+    fn init(&mut self, clock: u32) -> u32 {
+        // TODO:
+        self.reset(clock, 44100);
+        // TODO:
+        44100
     }
 
     fn reset(&mut self) {
         self.reset(self.clock, self.sample_rate);
     }
 
-    fn write(&mut self, port: u32, data: u8) {
-        self.opn2_write_bufferd(port, data);
+    fn write(&mut self, port: u32, data: u32) {
+        self.opn2_write_bufferd(port, data as u8);
     }
 
     fn update(&mut self, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {
