@@ -162,9 +162,10 @@ impl SoundSlot {
         numsamples: usize,
         buffer_pos: usize,
     ) {
-        let number_of = self.sound_device.entry(sound_device_name).or_default().len();
-        for index in 0..number_of {
-            self.update(sound_device_name, index, buffer_l, buffer_r, numsamples, buffer_pos);
+        if self.sound_device.contains_key(&sound_device_name) {
+            for index in 0..self.sound_device.get(&sound_device_name).unwrap().len() {
+                self.update(sound_device_name, index, buffer_l, buffer_r, numsamples, buffer_pos);
+            }
         }
     }
 }
