@@ -1,9 +1,6 @@
 use flate2::read::GzDecoder;
-use std::cell::RefCell;
-use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io::prelude::*;
-use std::rc::Rc;
 
 use crate::console_log;
 use crate::driver::metadata::parse_vgm_meta;
@@ -11,8 +8,7 @@ use crate::driver::metadata::Gd3;
 use crate::driver::metadata::Jsonlize;
 use crate::driver::metadata::VgmHeader;
 
-use crate::sound::SoundChipType;
-use crate::sound::{RomSet, SoundSlot};
+use crate::sound::{SoundChipType, SoundSlot};
 
 pub struct VgmPlay {
     sound_slot: SoundSlot,
@@ -136,33 +132,33 @@ impl VgmPlay {
         self.vgm_loop_offset = (0x1c + self.vgm_header.offset_loop) as usize;
         self.vgm_pos = (0x34 + self.vgm_header.vgm_data_offset) as usize;
 
-        if self.vgm_header.clock_sn76489 != 0 {
-            self.sound_slot
-                .add_device(SoundChipType::SEGAPSG, self.vgm_header.clock_sn76489);
-        }
         if self.vgm_header.clock_ym2612 != 0 {
-            self.sound_slot
-                .add_device(SoundChipType::YM2612, self.vgm_header.clock_ym2612);
-        }
-        if self.vgm_header.clock_pwm != 0 {
-            self.sound_slot
-                .add_device(SoundChipType::PWM, self.vgm_header.clock_pwm);
-        }
-        if self.vgm_header.sega_pcm_clock != 0 {
-            self.sound_slot
-                .add_device(SoundChipType::SEGAPCM, self.vgm_header.sega_pcm_clock);
+            self.sound_slot.add_device(
+                SoundChipType::YM2612,
+                self.number_of_chip(self.vgm_header.clock_ym2612),
+                self.vgm_header.clock_ym2612,
+            );
         }
         if self.vgm_header.clock_ym2151 != 0 {
-            self.sound_slot
-                .add_device(SoundChipType::YM2151, self.vgm_header.clock_ym2151);
+            self.sound_slot.add_device(
+                SoundChipType::YM2151,
+                self.number_of_chip(self.vgm_header.clock_ym2151),
+                self.vgm_header.clock_ym2151,
+            );
         }
         if self.vgm_header.clock_ym2203 != 0 {
-            self.sound_slot
-                .add_device(SoundChipType::YM2203, self.vgm_header.clock_ym2203);
+            self.sound_slot.add_device(
+                SoundChipType::YM2203,
+                self.number_of_chip(self.vgm_header.clock_ym2203),
+                self.vgm_header.clock_ym2203,
+            );
         }
         if self.vgm_header.clock_ym2413 != 0 {
-            self.sound_slot
-                .add_device(SoundChipType::YM2413, self.vgm_header.clock_ym2413);
+            self.sound_slot.add_device(
+                SoundChipType::YM2413,
+                self.number_of_chip(self.vgm_header.clock_ym2413),
+                self.vgm_header.clock_ym2413,
+            );
         }
         if self.vgm_header.clock_ay8910 != 0 {
             // TODO: YM2149 - AY8910 clock hack (* 4 ?)
@@ -176,7 +172,23 @@ impl VgmPlay {
             } else {
                 clock_ay8910 = self.vgm_header.clock_ay8910 * 8;
             }
-            self.sound_slot.add_device(SoundChipType::YM2149, clock_ay8910);
+            self.sound_slot.add_device(
+                SoundChipType::YM2149,
+                self.number_of_chip(self.vgm_header.clock_ay8910),
+                clock_ay8910,
+            );
+        }
+        if self.vgm_header.clock_sn76489 != 0 {
+            self.sound_slot
+                .add_device(SoundChipType::SEGAPSG, 1, self.vgm_header.clock_sn76489);
+        }
+        if self.vgm_header.clock_pwm != 0 {
+            self.sound_slot
+                .add_device(SoundChipType::PWM, 1, self.vgm_header.clock_pwm);
+        }
+        if self.vgm_header.sega_pcm_clock != 0 {
+            self.sound_slot
+                .add_device(SoundChipType::SEGAPCM, 1, self.vgm_header.sega_pcm_clock);
         }
 
         Ok(())
@@ -248,40 +260,19 @@ impl VgmPlay {
                 self.pcm_stream_sampling_pos += 1;
             }
             if update_frame_size != 0 {
-                if self.vgm_header.clock_sn76489 != 0 {
+                if self.number_of_chip(self.vgm_header.clock_ym2612) == 2 {
                     self.sound_slot.update(
-                        SoundChipType::SEGAPSG,
-                        0,
+                        SoundChipType::YM2612,
+                        1,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
-                    );
-                }
-                if self.vgm_header.clock_pwm != 0 {
-                    self.sound_slot.update(
-                        SoundChipType::PWM,
-                        0,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
-                    );
-                }
-                if self.vgm_header.sega_pcm_clock != 0 {
-                    self.sound_slot.update(
-                        SoundChipType::SEGAPCM,
-                        0,
-                        &mut self.sampling_l,
-                        &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                        1,
+                        buffer_pos,
                     );
                 }
                 if self.vgm_header.clock_ym2151 != 0 {
-                    self.sound_slot.update(
+                    self.sound_slot.update_all(
                         SoundChipType::YM2151,
-                        0,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
                         update_frame_size,
@@ -289,9 +280,8 @@ impl VgmPlay {
                     );
                 }
                 if self.vgm_header.clock_ym2203 != 0 {
-                    self.sound_slot.update(
+                    self.sound_slot.update_all(
                         SoundChipType::YM2203,
-                        0,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
                         update_frame_size,
@@ -299,9 +289,8 @@ impl VgmPlay {
                     );
                 }
                 if self.vgm_header.clock_ay8910 != 0 {
-                    self.sound_slot.update(
+                    self.sound_slot.update_all(
                         SoundChipType::YM2149,
-                        0,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
                         update_frame_size,
@@ -309,9 +298,35 @@ impl VgmPlay {
                     );
                 }
                 if self.vgm_header.clock_ym2413 != 0 {
-                    self.sound_slot.update(
+                    self.sound_slot.update_all(
                         SoundChipType::YM2413,
-                        0,
+                        &mut self.sampling_l,
+                        &mut self.sampling_r,
+                        update_frame_size,
+                        base_buffer_pos,
+                    );
+                }
+                if self.vgm_header.clock_sn76489 != 0 {
+                    self.sound_slot.update_all(
+                        SoundChipType::SEGAPSG,
+                        &mut self.sampling_l,
+                        &mut self.sampling_r,
+                        update_frame_size,
+                        base_buffer_pos,
+                    );
+                }
+                if self.vgm_header.clock_pwm != 0 {
+                    self.sound_slot.update_all(
+                        SoundChipType::PWM,
+                        &mut self.sampling_l,
+                        &mut self.sampling_r,
+                        update_frame_size,
+                        base_buffer_pos,
+                    );
+                }
+                if self.vgm_header.sega_pcm_clock != 0 {
+                    self.sound_slot.update_all(
+                        SoundChipType::SEGAPCM,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
                         update_frame_size,
@@ -357,6 +372,14 @@ impl VgmPlay {
             + (u32::from(self.get_vgm_u8()) << 24)
     }
 
+    fn number_of_chip(&self, clock: u32) -> usize {
+        if clock & 0x40000000 != 0 {
+            2
+        } else {
+            1
+        }
+    }
+
     fn parse_vgm(&mut self, repeat: bool) -> u16 {
         let command: u8;
         let reg: u8;
@@ -370,80 +393,97 @@ impl VgmPlay {
                 self.sound_slot
                     .write(SoundChipType::SEGAPSG, 0, 0, dat.into());
             }
-            0x51 => {
-                // TODO: YM2413 write
+            0x51 | 0xa1 => {
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
-                self.sound_slot
-                    .write(SoundChipType::YM2413, 0, reg as u32, dat.into());
+                self.sound_slot.write(
+                    SoundChipType::YM2413,
+                    (command >> 7) as usize,
+                    reg as u32,
+                    dat.into(),
+                );
             }
-            0x52 => {
+            0x52 | 0xa2 => {
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
-                self.sound_slot
-                    .write(SoundChipType::YM2612, 0, reg as u32, dat.into());
+                self.sound_slot.write(
+                    SoundChipType::YM2612,
+                    (command >> 7) as usize,
+                    reg as u32,
+                    dat.into(),
+                );
             }
-            0x53 => {
+            0x53 | 0xa3 => {
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
-                self.sound_slot
-                    .write(SoundChipType::YM2612, 0, reg as u32 | 0x100, dat.into());
+                self.sound_slot.write(
+                    SoundChipType::YM2612,
+                    (command >> 7) as usize,
+                    reg as u32 | 0x100,
+                    dat.into(),
+                );
             }
-            0x54 => {
-                // TODO: YM2151 write
+            0x54 | 0xa4 => {
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
-                self.sound_slot
-                    .write(SoundChipType::YM2151, 0, reg as u32, dat.into());
+                self.sound_slot.write(
+                    SoundChipType::YM2151,
+                    (command >> 7) as usize,
+                    reg as u32,
+                    dat.into(),
+                );
             }
-            0x55 => {
-                // TODO: YM2203 write
+            0x55 | 0xa5 => {
                 reg = self.get_vgm_u8();
                 dat = self.get_vgm_u8();
-                self.sound_slot
-                    .write(SoundChipType::YM2203, 0, reg as u32, dat.into());
+                self.sound_slot.write(
+                    SoundChipType::YM2203,
+                    (command >> 7) as usize,
+                    reg as u32,
+                    dat.into(),
+                );
             }
-            0x56 => {
+            0x56 | 0xa6 => {
                 // TODO: YM2608 port 0 write
                 self.get_vgm_u8();
                 self.get_vgm_u8();
             }
-            0x57 => {
+            0x57 | 0xa7 => {
                 // TODO: YM2608 port 1 write
                 self.get_vgm_u8();
                 self.get_vgm_u8();
             }
-            0x58 => {
+            0x58 | 0xa8 => {
                 // TODO: YM2610 port 0 write
                 self.get_vgm_u8();
                 self.get_vgm_u8();
             }
-            0x59 => {
+            0x59 | 0xa9 => {
                 // TODO: YM2610 port 1 write
                 self.get_vgm_u8();
                 self.get_vgm_u8();
             }
-            0x5a => {
+            0x5a | 0xaa => {
                 // TODO: YM3812 write
                 self.get_vgm_u8();
                 self.get_vgm_u8();
             }
-            0x5b => {
+            0x5b | 0xab => {
                 // TODO: YM3528 write
                 self.get_vgm_u8();
                 self.get_vgm_u8();
             }
-            0x5c => {
+            0x5c | 0xac => {
                 // TODO: Y8950 write
                 self.get_vgm_u8();
                 self.get_vgm_u8();
             }
-            0x5e => {
+            0x5e | 0xae => {
                 // TODO: YMF262 port 0 write
                 self.get_vgm_u8();
                 self.get_vgm_u8();
             }
-            0x5f => {
+            0x5f | 0xaf => {
                 // TODO: YMF262 port 1 write
                 self.get_vgm_u8();
                 self.get_vgm_u8();

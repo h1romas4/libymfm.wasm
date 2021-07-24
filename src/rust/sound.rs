@@ -19,7 +19,7 @@ pub use crate::sound::ymfm::ChipType;
 /// Device Name
 ///
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy)]
 pub enum SoundChipType {
     YM2151,
     YM2203,
@@ -51,6 +51,7 @@ pub trait SoundChip {
 
 struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
+    sound_chip_use: bool,
     sound_stream: SoundStream,
 }
 
@@ -71,33 +72,33 @@ impl SoundSlot {
         }
     }
 
-    pub fn add_device(&mut self, sound_device_name: SoundChipType, clock: u32) -> usize {
-        let mut sound_chip: Box<dyn SoundChip> = match sound_device_name {
-            SoundChipType::YM2151 => Box::new(YmFm::new(SoundChipType::YM2151)),
-            SoundChipType::YM2203 => Box::new(YmFm::new(SoundChipType::YM2203)),
-            SoundChipType::YM2149 => Box::new(YmFm::new(SoundChipType::YM2149)),
-            SoundChipType::YM2612 => Box::new(YmFm::new(SoundChipType::YM2612)),
-            SoundChipType::YM2413 => Box::new(YmFm::new(SoundChipType::YM2413)),
-            SoundChipType::YM2602 => todo!(),
-            SoundChipType::SEGAPSG => Box::new(SN76489::new(SoundChipType::SEGAPSG)),
-            SoundChipType::PWM => Box::new(PWM::new(SoundChipType::PWM)),
-            SoundChipType::SEGAPCM => {
-                let mut segapcm = Box::new(SEGAPCM::new(SoundChipType::SEGAPCM));
-                let segapcm_romset = Rc::new(RefCell::new(RomSet::new()));
-                RomDevice::set_rom(&mut *segapcm, Some(segapcm_romset.clone()));
-                self.sound_romset.insert(0x80, segapcm_romset); // 0x80 segapcm
-                segapcm
-            },
-        };
-        // TODO: change to chip native sampling rate
-        let device_sampling_rate = sound_chip.init(clock);
-        // TODO: slot index 0
-        self.sound_device.insert(sound_device_name, vec![SoundDevice {
-            sound_chip,
-            sound_stream: SoundStream::new(device_sampling_rate, self.internal_sampling_rate),
-        }]);
-        // TODO: return index no
-        0
+    pub fn add_device(&mut self, sound_device_name: SoundChipType, number_of: usize, clock: u32) {
+        for _n in 0..number_of {
+            let mut sound_chip: Box<dyn SoundChip> = match sound_device_name {
+                SoundChipType::YM2151 => Box::new(YmFm::new(SoundChipType::YM2151)),
+                SoundChipType::YM2203 => Box::new(YmFm::new(SoundChipType::YM2203)),
+                SoundChipType::YM2149 => Box::new(YmFm::new(SoundChipType::YM2149)),
+                SoundChipType::YM2612 => Box::new(YmFm::new(SoundChipType::YM2612)),
+                SoundChipType::YM2413 => Box::new(YmFm::new(SoundChipType::YM2413)),
+                SoundChipType::YM2602 => todo!(),
+                SoundChipType::SEGAPSG => Box::new(SN76489::new(SoundChipType::SEGAPSG)),
+                SoundChipType::PWM => Box::new(PWM::new(SoundChipType::PWM)),
+                SoundChipType::SEGAPCM => {
+                    let mut segapcm = Box::new(SEGAPCM::new(SoundChipType::SEGAPCM));
+                    let segapcm_romset = Rc::new(RefCell::new(RomSet::new()));
+                    RomDevice::set_rom(&mut *segapcm, Some(segapcm_romset.clone()));
+                    self.sound_romset.insert(0x80, segapcm_romset); // 0x80 segapcm
+                    segapcm
+                },
+            };
+            // TODO: change to chip native sampling rate
+            let device_sampling_rate = sound_chip.init(clock);
+            self.sound_device.entry(sound_device_name).or_insert_with(Vec::new).push(SoundDevice {
+                sound_chip,
+                sound_chip_use: false,
+                sound_stream: SoundStream::new(device_sampling_rate, self.internal_sampling_rate),
+            });
+        }
     }
 
     pub fn add_rom(&self, index: usize, memory: &[u8], start_address: usize, end_address: usize) {
@@ -111,11 +112,11 @@ impl SoundSlot {
     }
 
     #[inline]
-    pub fn find(&mut self, sound_device_name: SoundChipType, no: usize) -> Option<&mut dyn SoundChip> {
+    pub fn find(&mut self, sound_device_name: SoundChipType, index: usize) -> Option<&mut dyn SoundChip> {
         let sound_chip = match self.sound_device.get_mut(&sound_device_name) {
             None => None,
             Some(vec) => {
-                if vec.len() < no {
+                if vec.len() < index {
                     return None
                 }
                 Some(vec)
@@ -123,12 +124,12 @@ impl SoundSlot {
         };
         match sound_chip {
             None => None,
-            Some(sound_chip) => Some(&mut *sound_chip[no].sound_chip)
+            Some(sound_chip) => Some(&mut *sound_chip[index].sound_chip)
         }
     }
 
-    pub fn write(&mut self, sound_device_name: SoundChipType, no: usize, port: u32, data: u32) {
-        match self.find(sound_device_name, no) {
+    pub fn write(&mut self, sound_device_name: SoundChipType, index: usize, port: u32, data: u32) {
+        match self.find(sound_device_name, index) {
             None => { /* nothing to do */ },
             Some(sound_chip) => sound_chip.write(port, data)
         }
@@ -137,15 +138,29 @@ impl SoundSlot {
     pub fn update(
         &mut self,
         sound_device_name: SoundChipType,
-        no: usize,
+        index: usize,
         buffer_l: &mut [f32],
         buffer_r: &mut [f32],
         numsamples: usize,
         buffer_pos: usize,
     ) {
-        match self.find(sound_device_name, no) {
+        match self.find(sound_device_name, index) {
             None => { /* nothing to do */ },
             Some(sound_chip) => sound_chip.update(buffer_l, buffer_r, numsamples, buffer_pos)
+        }
+    }
+
+    pub fn update_all(
+        &mut self,
+        sound_device_name: SoundChipType,
+        buffer_l: &mut [f32],
+        buffer_r: &mut [f32],
+        numsamples: usize,
+        buffer_pos: usize,
+    ) {
+        let number_of = self.sound_device.entry(sound_device_name).or_default().len();
+        for index in 0..number_of {
+            self.update(sound_device_name, index, buffer_l, buffer_r, numsamples, buffer_pos);
         }
     }
 }
