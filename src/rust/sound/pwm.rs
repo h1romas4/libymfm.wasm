@@ -314,11 +314,11 @@ impl SoundChip for PWM {
         self.device_reset_pwm(0);
     }
 
-    fn write(&mut self, port: u32, data: u32) {
+    fn write(&mut self, _: usize, port: u32, data: u32) {
         self.pwm_chn_w(0, port as u8, data as u16);
     }
 
-    fn update(&mut self, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {
+    fn update(&mut self, _: usize, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {
         self.pwm_update_chip(0, buffer_l, buffer_r, numsamples, buffer_pos);
     }
 }

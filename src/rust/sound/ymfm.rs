@@ -8,8 +8,8 @@ use super::SoundChipType;
 #[link(name = "ymfm")]
 extern {
     fn ymfm_add_chip(chip_num: u16, clock: u32);
-    fn ymfm_write(chip_num: u16, reg: u32, data: u8);
-    fn ymfm_generate(chip_num: u16, output_start: i64, output_step: i64, buffer: *const i32);
+    fn ymfm_write(chip_num: u16, index: u16, reg: u32, data: u8);
+    fn ymfm_generate(chip_num: u16, index: u16, output_start: i64, output_step: i64, buffer: *const i32);
     fn ymfm_remove_chip(chip_num: u16);
 }
 
@@ -49,14 +49,14 @@ impl YmFm {
         self.output_step = 0x100000000 / i64::from(sampling_rate);
     }
 
-    fn write_chip(&self, offset: u32, data: u8) {
-        unsafe { ymfm_write(self.chip_type as u16, offset, data); }
+    fn write_chip(&self, index: usize, offset: u32, data: u8) {
+        unsafe { ymfm_write(self.chip_type as u16, index as u16, offset, data); }
     }
 
     #[allow(clippy::missing_safety_doc)]
-    fn generate(&mut self, buffer: &mut [i32; 2]) {
+    fn generate(&mut self, index: usize, buffer: &mut [i32; 2]) {
         let generate_buffer: [i32; 2] = [0, 0];
-        unsafe { ymfm_generate(self.chip_type as u16, self.output_pos, self.output_step, generate_buffer.as_ptr()); }
+        unsafe { ymfm_generate(self.chip_type as u16, index as u16, self.output_pos, self.output_step, generate_buffer.as_ptr()); }
         buffer[0] = generate_buffer[0];
         buffer[1] = generate_buffer[1];
 
@@ -106,12 +106,13 @@ impl SoundChip for YmFm {
     fn reset(&mut self) {
     }
 
-    fn write(&mut self, offset: u32, data: u32) {
-        self.write_chip(offset, data as u8);
+    fn write(&mut self, index: usize, offset: u32, data: u32) {
+        self.write_chip(index, offset, data as u8);
     }
 
     fn update(
         &mut self,
+        index: usize,
         buffer_l: &mut [f32],
         buffer_r: &mut [f32],
         numsamples: usize,
@@ -119,7 +120,7 @@ impl SoundChip for YmFm {
     ) {
         let mut buffer: [i32; 2] = [0, 0];
         for i in 0..numsamples {
-            self.generate(&mut buffer);
+            self.generate(index, &mut buffer);
             buffer_l[buffer_pos + i] += convert_sample_i2f(buffer[0]);
             buffer_r[buffer_pos + i] += convert_sample_i2f(buffer[1]);
         }

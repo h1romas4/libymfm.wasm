@@ -373,11 +373,11 @@ impl SoundChip for SN76489 {
         self.reset();
     }
 
-    fn write(&mut self, _: u32, data: u32) {
+    fn write(&mut self, _: usize, _: u32, data: u32) {
         self.write(data as u8);
     }
 
-    fn update(&mut self, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {
+    fn update(&mut self, _: usize, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {
         self.update(buffer_l, buffer_r, numsamples, buffer_pos);
     }
 }

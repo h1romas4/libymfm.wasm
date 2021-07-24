@@ -39,9 +39,10 @@ pub trait SoundChip {
     fn new(sound_device_name: SoundChipType) -> Self where Self: Sized;
     fn init(&mut self, clock: u32) -> u32;
     fn reset(&mut self);
-    fn write(&mut self, port: u32, data: u32);
+    fn write(&mut self, index: usize, port: u32, data: u32);
     fn update(
         &mut self,
+        index: usize,
         buffer_l: &mut [f32],
         buffer_r: &mut [f32],
         numsamples: usize,
@@ -135,7 +136,7 @@ impl SoundSlot {
     pub fn write(&mut self, sound_device_name: SoundChipType, index: usize, port: u32, data: u32) {
         match self.find(sound_device_name, index) {
             None => { /* nothing to do */ },
-            Some(sound_chip) => sound_chip.write(port, data)
+            Some(sound_chip) => sound_chip.write(index, port, data)
         }
     }
 
@@ -150,7 +151,7 @@ impl SoundSlot {
     ) {
         match self.find(sound_device_name, index) {
             None => { /* nothing to do */ },
-            Some(sound_chip) => sound_chip.update(buffer_l, buffer_r, numsamples, buffer_pos)
+            Some(sound_chip) => sound_chip.update(index, buffer_l, buffer_r, numsamples, buffer_pos)
         }
     }
 

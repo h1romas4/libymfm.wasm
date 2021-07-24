@@ -1904,11 +1904,11 @@ impl SoundChip for YM3438 {
         self.reset(self.clock, self.sample_rate);
     }
 
-    fn write(&mut self, port: u32, data: u32) {
+    fn write(&mut self, _: usize, port: u32, data: u32) {
         self.opn2_write_bufferd(port, data as u8);
     }
 
-    fn update(&mut self, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {
+    fn update(&mut self, _: usize, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {
         self.opn2_generate_stream(buffer_l, buffer_r, numsamples, buffer_pos);
     }
 }

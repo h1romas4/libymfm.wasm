@@ -226,6 +226,7 @@ void add_chips(uint32_t clock, chip_type type, char const *chipname)
 {
     uint32_t clockval = clock & 0x3fffffff;
     int numchips = (clock & 0x40000000) ? 2 : 1;
+    // TODO: WASI binding
     // printf("Adding %s%s @ %dHz\n", (numchips == 2) ? "2 x " : "", chipname, clockval);
     for (int index = 0; index < numchips; index++)
     {
@@ -234,6 +235,7 @@ void add_chips(uint32_t clock, chip_type type, char const *chipname)
         active_chips.push_back(new vgm_chip<ChipType>(clockval, type, chipname));
     }
 
+    // TODO: WASI binding
     // if (type == CHIP_YM2608)
     // {
     //     FILE *rom = fopen("ym2608_adpcm_rom.bin", "rb");
@@ -267,7 +269,6 @@ void remove_chip(chip_type type, uint8_t index)
     vgm_chip_base *chip = find_chip(type, index);
     if(chip != nullptr)
     {
-        // printf("remove chip\n");
         active_chips.remove(chip);
         delete chip;
     }
@@ -321,21 +322,21 @@ extern "C"
         }
     }
 
-    void ymfm_write(uint16_t chip_num, uint32_t reg, uint8_t data)
+    void ymfm_write(uint16_t chip_num, uint16_t index, uint32_t reg, uint8_t data)
     {
-        vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), 0); // TODO: 0
+        vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), index);
         chip->write(reg, data);
     }
 
-    void ymfm_generate(uint16_t chip_num, int64_t output_start, int64_t output_step, int32_t *buffer)
+    void ymfm_generate(uint16_t chip_num, uint16_t index, int64_t output_start, int64_t output_step, int32_t *buffer)
     {
-        vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), 0); // TODO: 0
+        vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), index);
         chip->generate(output_start, output_step, buffer);
     }
 
     void ymfm_remove_chip(uint16_t chip_num)
     {
-        // printf("ymfmffi: ymfm_remove_chip!\n");
-        remove_chip(static_cast<chip_type>(chip_num), 0); // TODO: 0
+        // pop chip
+        remove_chip(static_cast<chip_type>(chip_num), 0);
     }
 }
