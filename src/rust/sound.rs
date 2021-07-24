@@ -51,7 +51,6 @@ pub trait SoundChip {
 
 struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
-    sound_chip_use: bool,
     sound_stream: SoundStream,
 }
 
@@ -95,7 +94,6 @@ impl SoundSlot {
             let device_sampling_rate = sound_chip.init(clock);
             self.sound_device.entry(sound_device_name).or_insert_with(Vec::new).push(SoundDevice {
                 sound_chip,
-                sound_chip_use: false,
                 sound_stream: SoundStream::new(device_sampling_rate, self.internal_sampling_rate),
             });
         }
