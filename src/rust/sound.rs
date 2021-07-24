@@ -58,6 +58,7 @@ pub struct SoundSlot {
     internal_sampling_rate: u32,
     max_output_sample_size: usize,
     sound_device: HashMap<SoundChipType, Vec<SoundDevice>>,
+    sound_romset: HashMap<usize, Rc<RefCell<RomSet>>>,
 }
 
 impl SoundSlot {
@@ -66,10 +67,11 @@ impl SoundSlot {
             internal_sampling_rate: 96000,
             max_output_sample_size,
             sound_device: HashMap::new(),
+            sound_romset: HashMap::new(),
         }
     }
 
-    pub fn add(&mut self, sound_device_name: SoundChipType, clock: u32) -> usize {
+    pub fn add_device(&mut self, sound_device_name: SoundChipType, clock: u32) -> usize {
         let mut sound_chip: Box<dyn SoundChip> = match sound_device_name {
             SoundChipType::YM2151 => Box::new(YmFm::new(SoundChipType::YM2151)),
             SoundChipType::YM2203 => Box::new(YmFm::new(SoundChipType::YM2203)),
@@ -79,7 +81,13 @@ impl SoundSlot {
             SoundChipType::YM2602 => todo!(),
             SoundChipType::SEGAPSG => Box::new(SN76489::new(SoundChipType::SEGAPSG)),
             SoundChipType::PWM => Box::new(PWM::new(SoundChipType::PWM)),
-            SoundChipType::SEGAPCM => Box::new(SEGAPCM::new(SoundChipType::SEGAPCM)),
+            SoundChipType::SEGAPCM => {
+                let mut segapcm = Box::new(SEGAPCM::new(SoundChipType::SEGAPCM));
+                let segapcm_romset = Rc::new(RefCell::new(RomSet::new()));
+                RomDevice::set_rom(&mut *segapcm, Some(segapcm_romset.clone()));
+                self.sound_romset.insert(0x80, segapcm_romset); // 0x80 segapcm
+                segapcm
+            },
         };
         // TODO: change to chip native sampling rate
         let device_sampling_rate = sound_chip.init(clock);
@@ -90,6 +98,16 @@ impl SoundSlot {
         }]);
         // TODO: return index no
         0
+    }
+
+    pub fn add_rom(&self, index: usize, memory: &[u8], start_address: usize, end_address: usize) {
+        if self.sound_romset.contains_key(&index) {
+            self.sound_romset.get(&index).unwrap().borrow_mut().add_rom(
+                memory,
+                start_address,
+                end_address,
+            );
+        }
     }
 
     #[inline]
@@ -130,13 +148,8 @@ impl SoundSlot {
             Some(sound_chip) => sound_chip.update(buffer_l, buffer_r, numsamples, buffer_pos)
         }
     }
-
-    // pub fn set_rom(&mut self, sound_device_name: SoundChipType, no: usize, rombank: RomBank) {
-    //     if sound_device_name == SoundChipType::SEGAPCM {
-    //         RomDevice::set_rom(self.find(&sound_device_name, no), rombank);
-    //     }
-    // }
 }
+
 struct SoundStream {
     device_sampling_rate: u32,
     output_sampling_rate: u32,

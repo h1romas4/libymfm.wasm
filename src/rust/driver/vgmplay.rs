@@ -16,7 +16,6 @@ use crate::sound::{RomSet, SoundSlot};
 
 pub struct VgmPlay {
     sound_slot: SoundSlot,
-    sound_romset: HashMap<usize, Rc<RefCell<RomSet>>>,
     sample_rate: u32,
     vgm_pos: usize,
     data_pos: usize,
@@ -50,7 +49,6 @@ impl VgmPlay {
     pub fn new(sample_rate: u32, max_sample_size: usize, vgm_file_size: usize) -> Self {
         VgmPlay {
             sound_slot: SoundSlot::new(max_sample_size),
-            sound_romset: HashMap::new(),
             sample_rate,
             vgm_pos: 0,
             data_pos: 0,
@@ -140,35 +138,31 @@ impl VgmPlay {
 
         if self.vgm_header.clock_sn76489 != 0 {
             self.sound_slot
-                .add(SoundChipType::SEGAPSG, self.vgm_header.clock_sn76489);
+                .add_device(SoundChipType::SEGAPSG, self.vgm_header.clock_sn76489);
         }
         if self.vgm_header.clock_ym2612 != 0 {
             self.sound_slot
-                .add(SoundChipType::YM2612, self.vgm_header.clock_ym2612);
+                .add_device(SoundChipType::YM2612, self.vgm_header.clock_ym2612);
         }
         if self.vgm_header.clock_pwm != 0 {
             self.sound_slot
-                .add(SoundChipType::PWM, self.vgm_header.clock_pwm);
+                .add_device(SoundChipType::PWM, self.vgm_header.clock_pwm);
         }
         if self.vgm_header.sega_pcm_clock != 0 {
             self.sound_slot
-                .add(SoundChipType::SEGAPCM, self.vgm_header.sega_pcm_clock);
-            // TODO:
-            // let romset = Rc::new(RefCell::new(RomSet::new()));
-            // RomDevice::set_rom(&mut self.sound_device_segapcm, Some(romset.clone()));
-            // self.sound_romset.insert(0x80, romset); // 0x80 segapcm
+                .add_device(SoundChipType::SEGAPCM, self.vgm_header.sega_pcm_clock);
         }
         if self.vgm_header.clock_ym2151 != 0 {
             self.sound_slot
-                .add(SoundChipType::YM2151, self.vgm_header.clock_ym2151);
+                .add_device(SoundChipType::YM2151, self.vgm_header.clock_ym2151);
         }
         if self.vgm_header.clock_ym2203 != 0 {
             self.sound_slot
-                .add(SoundChipType::YM2203, self.vgm_header.clock_ym2203);
+                .add_device(SoundChipType::YM2203, self.vgm_header.clock_ym2203);
         }
         if self.vgm_header.clock_ym2413 != 0 {
             self.sound_slot
-                .add(SoundChipType::YM2413, self.vgm_header.clock_ym2413);
+                .add_device(SoundChipType::YM2413, self.vgm_header.clock_ym2413);
         }
         if self.vgm_header.clock_ay8910 != 0 {
             // TODO: YM2149 - AY8910 clock hack (* 4 ?)
@@ -182,7 +176,7 @@ impl VgmPlay {
             } else {
                 clock_ay8910 = self.vgm_header.clock_ay8910 * 8;
             }
-            self.sound_slot.add(SoundChipType::YM2149, clock_ay8910);
+            self.sound_slot.add_device(SoundChipType::YM2149, clock_ay8910);
         }
 
         Ok(())
@@ -499,7 +493,7 @@ impl VgmPlay {
                         data_size = u32::min(size - 8, rom_size - start_address) as usize;
                     }
                     let start_address = start_address as usize;
-                    self.add_rom(
+                    self.sound_slot.add_rom(
                         data_type as usize,
                         &self.vgm_data[(data_pos + 8)..(data_pos + 8) + data_size],
                         start_address,
@@ -653,16 +647,6 @@ impl VgmPlay {
             }
         }
         wait
-    }
-
-    fn add_rom(&self, index: usize, memory: &[u8], start_address: usize, end_address: usize) {
-        if self.sound_romset.contains_key(&index) {
-            self.sound_romset.get(&index).unwrap().borrow_mut().add_rom(
-                memory,
-                start_address,
-                end_address,
-            );
-        }
     }
 }
 
