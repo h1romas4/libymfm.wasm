@@ -16,7 +16,7 @@ pub use crate::sound::ymfm::YmFm;
 pub use crate::sound::ymfm::ChipType;
 
 ///
-/// Device Name
+/// Sound chip type
 ///
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq, Hash, Clone, Copy)]
@@ -33,7 +33,7 @@ pub enum SoundChipType {
 }
 
 ///
-/// Device common interface
+/// Sound chip common interface
 ///
 pub trait SoundChip {
     fn new(sound_device_name: SoundChipType) -> Self where Self: Sized;
@@ -49,11 +49,17 @@ pub trait SoundChip {
     );
 }
 
+///
+/// Sound Device
+///
 struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
     sound_stream: SoundStream,
 }
 
+///
+/// Sound slot
+///
 pub struct SoundSlot {
     internal_sampling_rate: u32,
     max_output_sample_size: usize,
@@ -163,6 +169,9 @@ impl SoundSlot {
     }
 }
 
+///
+/// Sound stream
+///
 struct SoundStream {
     device_sampling_rate: u32,
     output_sampling_rate: u32,
@@ -220,6 +229,9 @@ fn convert_sample_i2f(i32_sample: i32) -> f32 {
 
 pub type RomBank = Option<Rc<RefCell<RomSet>>>;
 
+///
+/// Rom device interface
+///
 pub trait RomDevice {
     fn set_rom(&mut self, rombank: RomBank);
 
@@ -229,7 +241,7 @@ pub trait RomDevice {
 }
 
 ///
-/// Sound rom
+/// Rom
 ///
 pub struct Rom {
     start_address: usize,
@@ -238,7 +250,7 @@ pub struct Rom {
 }
 
 ///
-/// Sound rom sets
+/// Rom sets
 ///
 #[derive(Default)]
 pub struct RomSet {
