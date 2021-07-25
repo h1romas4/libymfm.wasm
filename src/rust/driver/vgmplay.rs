@@ -136,28 +136,28 @@ impl VgmPlay {
             self.sound_slot.add_device(
                 SoundChipType::YM2612,
                 self.number_of_chip(self.vgm_header.clock_ym2612),
-                self.vgm_header.clock_ym2612,
+                self.vgm_header.clock_ym2612 & 0x3fffffff,
             );
         }
         if self.vgm_header.clock_ym2151 != 0 {
             self.sound_slot.add_device(
                 SoundChipType::YM2151,
                 self.number_of_chip(self.vgm_header.clock_ym2151),
-                self.vgm_header.clock_ym2151,
+                self.vgm_header.clock_ym2151 & 0x3fffffff,
             );
         }
         if self.vgm_header.clock_ym2203 != 0 {
             self.sound_slot.add_device(
                 SoundChipType::YM2203,
                 self.number_of_chip(self.vgm_header.clock_ym2203),
-                self.vgm_header.clock_ym2203,
+                self.vgm_header.clock_ym2203 & 0x3fffffff,
             );
         }
         if self.vgm_header.clock_ym2413 != 0 {
             self.sound_slot.add_device(
                 SoundChipType::YM2413,
                 self.number_of_chip(self.vgm_header.clock_ym2413),
-                self.vgm_header.clock_ym2413,
+                self.vgm_header.clock_ym2413 & 0x3fffffff,
             );
         }
         if self.vgm_header.clock_ay8910 != 0 {
@@ -175,7 +175,7 @@ impl VgmPlay {
             self.sound_slot.add_device(
                 SoundChipType::YM2149,
                 self.number_of_chip(self.vgm_header.clock_ay8910),
-                clock_ay8910,
+                clock_ay8910 & 0x3fffffff,
             );
         }
         if self.vgm_header.clock_sn76489 != 0 {
@@ -223,7 +223,6 @@ impl VgmPlay {
             if self.pcm_stream_pos_init == self.pcm_stream_pos && self.pcm_stream_length > 0 {
                 self.pcm_stream_sampling_pos = 0;
             }
-            let base_buffer_pos = buffer_pos;
             for _ in 0..update_frame_size {
                 // YM2612 straming pcm update
                 if self.vgm_header.clock_ym2612 != 0 {
@@ -253,13 +252,6 @@ impl VgmPlay {
                         buffer_pos,
                     );
                 }
-                if self.remain_frame_size > 0 {
-                    self.remain_frame_size -= 1;
-                }
-                buffer_pos += 1;
-                self.pcm_stream_sampling_pos += 1;
-            }
-            if update_frame_size != 0 {
                 if self.number_of_chip(self.vgm_header.clock_ym2612) == 2 {
                     self.sound_slot.update(
                         SoundChipType::YM2612,
@@ -275,8 +267,8 @@ impl VgmPlay {
                         SoundChipType::YM2151,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                        1,
+                        buffer_pos,
                     );
                 }
                 if self.vgm_header.clock_ym2203 != 0 {
@@ -284,8 +276,8 @@ impl VgmPlay {
                         SoundChipType::YM2203,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                        1,
+                        buffer_pos,
                     );
                 }
                 if self.vgm_header.clock_ay8910 != 0 {
@@ -293,8 +285,8 @@ impl VgmPlay {
                         SoundChipType::YM2149,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                        1,
+                        buffer_pos,
                     );
                 }
                 if self.vgm_header.clock_ym2413 != 0 {
@@ -302,8 +294,8 @@ impl VgmPlay {
                         SoundChipType::YM2413,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                        1,
+                        buffer_pos,
                     );
                 }
                 if self.vgm_header.clock_sn76489 != 0 {
@@ -311,8 +303,8 @@ impl VgmPlay {
                         SoundChipType::SEGAPSG,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                        1,
+                        buffer_pos,
                     );
                 }
                 if self.vgm_header.clock_pwm != 0 {
@@ -320,8 +312,8 @@ impl VgmPlay {
                         SoundChipType::PWM,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                        1,
+                        buffer_pos,
                     );
                 }
                 if self.vgm_header.sega_pcm_clock != 0 {
@@ -329,10 +321,15 @@ impl VgmPlay {
                         SoundChipType::SEGAPCM,
                         &mut self.sampling_l,
                         &mut self.sampling_r,
-                        update_frame_size,
-                        base_buffer_pos,
+                        1,
+                        buffer_pos,
                     );
                 }
+                if self.remain_frame_size > 0 {
+                    self.remain_frame_size -= 1;
+                }
+                buffer_pos += 1;
+                self.pcm_stream_sampling_pos += 1;
             }
             buffer_pos < self.max_sample_size && !self.vgm_end
         } {}
