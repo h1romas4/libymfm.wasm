@@ -7,7 +7,7 @@ use super::SoundChipType;
 ///
 #[link(name = "ymfm")]
 extern {
-    fn ymfm_add_chip(chip_num: u16, clock: u32);
+    fn ymfm_add_chip(chip_num: u16, clock: u32) -> u32;
     fn ymfm_write(chip_num: u16, index: u16, reg: u32, data: u8);
     fn ymfm_generate(chip_num: u16, index: u16, output_start: i64, output_step: i64, buffer: *const i32);
     fn ymfm_remove_chip(chip_num: u16);
@@ -43,7 +43,7 @@ pub struct YmFm {
 
 impl YmFm {
     fn init(&mut self, sampling_rate: u32, clock: u32) {
-        unsafe { ymfm_add_chip(self.chip_type as u16, clock) }
+        unsafe { let _ = ymfm_add_chip(self.chip_type as u16, clock); }
         self.sampling_rate = sampling_rate;
         self.clock = clock;
         self.output_step = 0x100000000 / i64::from(sampling_rate);
