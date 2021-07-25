@@ -10,6 +10,8 @@ use crate::driver::metadata::VgmHeader;
 
 use crate::sound::{SoundChipType, SoundSlot};
 
+const VGM_UPDATE_RATE: u32 = 44100;
+
 pub struct VgmPlay {
     sound_slot: SoundSlot,
     sample_rate: u32,
@@ -44,7 +46,7 @@ impl VgmPlay {
     ///
     pub fn new(sample_rate: u32, max_sample_size: usize, vgm_file_size: usize) -> Self {
         VgmPlay {
-            sound_slot: SoundSlot::new(max_sample_size),
+            sound_slot: SoundSlot::new(VGM_UPDATE_RATE),
             sample_rate,
             vgm_pos: 0,
             data_pos: 0,

@@ -57,7 +57,7 @@
 
 use crate::sound::{SoundChip, convert_sample_i2f};
 
-use super::SoundChipType;
+use super::{SoundChipType, SoundStream};
 
 const CHIP_SAMPLING_MODE: u8 = 0x00;
 const CHIP_SAMPLE_RATE: i32 = 44100;
@@ -321,4 +321,6 @@ impl SoundChip for PWM {
     fn update(&mut self, _: usize, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {
         self.pwm_update_chip(0, buffer_l, buffer_r, numsamples, buffer_pos);
     }
+
+    fn tick(&mut self, index: usize, sound_stream: &mut SoundStream) {}
 }

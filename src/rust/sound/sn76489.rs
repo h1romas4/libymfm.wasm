@@ -36,6 +36,7 @@ use std::i32;
 use crate::sound::{SoundChip, convert_sample_i2f};
 
 use super::SoundChipType;
+use super::SoundStream;
 
 // More testing is needed to find and confirm feedback patterns for
 // SN76489 variants and compatible chips.
@@ -380,4 +381,6 @@ impl SoundChip for SN76489 {
     fn update(&mut self, _: usize, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {
         self.update(buffer_l, buffer_r, numsamples, buffer_pos);
     }
+
+    fn tick(&mut self, index: usize, sound_stream: &mut SoundStream) {}
 }

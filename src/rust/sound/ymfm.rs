@@ -1,6 +1,6 @@
 use crate::sound::{SoundChip, convert_sample_i2f};
 
-use super::SoundChipType;
+use super::{SoundChipType, SoundStream};
 
 ///
 /// FFI interface
@@ -42,11 +42,12 @@ pub struct YmFm {
 }
 
 impl YmFm {
-    fn init(&mut self, sampling_rate: u32, clock: u32) {
-        unsafe { let _ = ymfm_add_chip(self.chip_type as u16, clock); }
-        self.sampling_rate = sampling_rate;
+    fn init(&mut self, clock: u32) -> u32 {
+        unsafe { self.sampling_rate = ymfm_add_chip(self.chip_type as u16, clock); }
         self.clock = clock;
-        self.output_step = 0x100000000 / i64::from(sampling_rate);
+        // TODO: 44100 yet
+        self.output_step = 0x100000000 / i64::from(44100);
+        self.sampling_rate
     }
 
     fn write_chip(&self, index: usize, offset: u32, data: u8) {
@@ -97,10 +98,7 @@ impl SoundChip for YmFm {
     }
 
     fn init(&mut self, clock: u32) -> u32 {
-        // TODO:
-        self.init(44100, clock);
-        // TODO:
-        44100
+        self.init(clock)
     }
 
     fn reset(&mut self) {
@@ -125,4 +123,6 @@ impl SoundChip for YmFm {
             buffer_r[buffer_pos + i] += convert_sample_i2f(buffer[1]);
         }
     }
+
+    fn tick(&mut self, index: usize, sound_stream: &mut SoundStream) {}
 }
