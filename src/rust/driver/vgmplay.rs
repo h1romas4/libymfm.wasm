@@ -1,8 +1,6 @@
 use flate2::read::GzDecoder;
-use std::cell::RefCell;
 use std::convert::TryInto;
 use std::io::prelude::*;
-use std::rc::Rc;
 
 use crate::console_log;
 use crate::driver::metadata::parse_vgm_meta;
@@ -11,8 +9,6 @@ use crate::driver::metadata::Jsonlize;
 use crate::driver::metadata::VgmHeader;
 
 use crate::sound::{SoundChipType, SoundSlot};
-
-pub const VGM_UPDATE_RATE: u32 = 44100;
 
 pub struct VgmPlay {
     sound_slot: SoundSlot,
