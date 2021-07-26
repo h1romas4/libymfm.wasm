@@ -1,6 +1,8 @@
 use flate2::read::GzDecoder;
+use std::cell::RefCell;
 use std::convert::TryInto;
 use std::io::prelude::*;
+use std::rc::Rc;
 
 use crate::console_log;
 use crate::driver::metadata::parse_vgm_meta;
@@ -10,7 +12,7 @@ use crate::driver::metadata::VgmHeader;
 
 use crate::sound::{SoundChipType, SoundSlot};
 
-const VGM_UPDATE_RATE: u32 = 44100;
+pub const VGM_UPDATE_RATE: u32 = 44100;
 
 pub struct VgmPlay {
     sound_slot: SoundSlot,
@@ -32,7 +34,7 @@ pub struct VgmPlay {
     vgm_end: bool,
     vgm_file: Vec<u8>,
     vgm_data: Vec<u8>,
-    max_sample_size: usize,
+    output_sample_chunk_size: usize,
     sampling_l: Vec<f32>,
     sampling_r: Vec<f32>,
     vgm_header: VgmHeader,
@@ -44,9 +46,11 @@ impl VgmPlay {
     ///
     /// Create sound driver.
     ///
-    pub fn new(sample_rate: u32, max_sample_size: usize, vgm_file_size: usize) -> Self {
+    pub fn new(sound_slot: SoundSlot, vgm_file_size: usize) -> Self {
+        let sample_rate = sound_slot.get_output_sampling_rate();
+        let output_sample_chunk_size = sound_slot.get_output_sample_chunk_size();
         VgmPlay {
-            sound_slot: SoundSlot::new(VGM_UPDATE_RATE),
+            sound_slot,
             sample_rate,
             vgm_pos: 0,
             data_pos: 0,
@@ -65,9 +69,10 @@ impl VgmPlay {
             vgm_end: false,
             vgm_file: vec![0; vgm_file_size],
             vgm_data: Vec::new(),
-            max_sample_size,
-            sampling_l: vec![0_f32; max_sample_size],
-            sampling_r: vec![0_f32; max_sample_size],
+            output_sample_chunk_size,
+            // TODO: move to sound slot
+            sampling_l: vec![0_f32; output_sample_chunk_size],
+            sampling_r: vec![0_f32; output_sample_chunk_size],
             vgm_header: VgmHeader::default(),
             vgm_gd3: Gd3::default(),
         }
@@ -205,7 +210,7 @@ impl VgmPlay {
         let mut buffer_pos: usize;
 
         // clear buffer
-        for i in 0..self.max_sample_size {
+        for i in 0..self.output_sample_chunk_size {
             self.sampling_l[i] = 0_f32;
             self.sampling_r[i] = 0_f32;
         }
@@ -217,10 +222,10 @@ impl VgmPlay {
             } else {
                 frame_size = self.parse_vgm(repeat) as usize;
             }
-            if buffer_pos + frame_size < self.max_sample_size {
+            if buffer_pos + frame_size < self.output_sample_chunk_size {
                 update_frame_size = frame_size;
             } else {
-                update_frame_size = self.max_sample_size - buffer_pos;
+                update_frame_size = self.output_sample_chunk_size - buffer_pos;
             }
             if self.pcm_stream_pos_init == self.pcm_stream_pos && self.pcm_stream_length > 0 {
                 self.pcm_stream_sampling_pos = 0;
@@ -333,7 +338,7 @@ impl VgmPlay {
                 buffer_pos += 1;
                 self.pcm_stream_sampling_pos += 1;
             }
-            buffer_pos < self.max_sample_size && !self.vgm_end
+            buffer_pos < self.output_sample_chunk_size && !self.vgm_end
         } {}
         self.remain_frame_size = frame_size - update_frame_size;
 
@@ -694,6 +699,8 @@ impl VgmPlay {
 ///
 #[cfg(test)]
 mod tests {
+    use crate::sound::SoundSlot;
+
     use super::VgmPlay;
     use std::fs::File;
     use std::io::{Read, Write};
@@ -734,8 +741,7 @@ mod tests {
         let _ = file.read_to_end(&mut buffer).unwrap();
 
         let mut vgmplay = VgmPlay::new(
-            44100,
-            MAX_SAMPLE_SIZE,
+            SoundSlot::new(44100, 44100, MAX_SAMPLE_SIZE),
             file.metadata().unwrap().len() as usize,
         );
         // set vgmdata (Wasm simulation)

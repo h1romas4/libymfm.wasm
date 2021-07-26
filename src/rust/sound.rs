@@ -66,6 +66,8 @@ pub trait RomDevice {
 ///
 pub struct SoundSlot {
     external_tick_rate: u32,
+    output_sampling_rate: u32,
+    output_sample_chunk_size: usize,
     internal_sampling_rate: u32,
     sound_device: HashMap<SoundChipType, Vec<SoundDevice>>,
     sound_romset: HashMap<usize, Rc<RefCell<RomSet>>>,
@@ -75,13 +77,27 @@ pub struct SoundSlot {
 const INTERNAL_SAMPLING_RATE: u32 = 44100;
 
 impl SoundSlot {
-    pub fn new(external_tick_rate: u32) -> Self {
+    pub fn new(external_tick_rate: u32, output_sampling_rate: u32, output_sample_chunk_size: usize) -> Self {
         SoundSlot {
             external_tick_rate,
+            output_sampling_rate,
+            output_sample_chunk_size,
             internal_sampling_rate: INTERNAL_SAMPLING_RATE,
             sound_device: HashMap::new(),
             sound_romset: HashMap::new(),
         }
+    }
+
+    pub fn get_output_sampling_rate(&self) -> u32 {
+        self.output_sampling_rate
+    }
+
+    pub fn get_external_tick_rate(&self) -> u32 {
+        self.external_tick_rate
+    }
+
+    pub fn get_output_sample_chunk_size(&self) -> usize {
+        self.output_sample_chunk_size
     }
 
     pub fn add_device(&mut self, sound_chip_type: SoundChipType, number_of: usize, clock: u32) {
