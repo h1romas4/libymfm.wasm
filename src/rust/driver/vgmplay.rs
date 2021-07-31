@@ -717,6 +717,33 @@ mod tests {
     }
 
     #[test]
+    fn ym2612_2() {
+        play("./docs/vgm/2612/20.vgz");
+        play("./docs/vgm/2612/21.vgz");
+        play("./docs/vgm/2612/22.vgz");
+        play("./docs/vgm/2612/23.vgz");
+        play("./docs/vgm/2612/24.vgz");
+        play("./docs/vgm/2612/25.vgz");
+        play("./docs/vgm/2612/26.vgz");
+        play("./docs/vgm/2612/27.vgz");
+        play("./docs/vgm/2612/28.vgz");
+        play("./docs/vgm/2612/29.vgz");
+        play("./docs/vgm/2612/30.vgz");
+        play("./docs/vgm/2612/31.vgz");
+        play("./docs/vgm/2612/32.vgz");
+        play("./docs/vgm/2612/33.vgz");
+        play("./docs/vgm/2612/34.vgz");
+        play("./docs/vgm/2612/35.vgz");
+        play("./docs/vgm/2612/36.vgz");
+        play("./docs/vgm/2612/37.vgz");
+        play("./docs/vgm/2612/38.vgz");
+        play("./docs/vgm/2612/39.vgz");
+        play("./docs/vgm/2612/40.vgz");
+        play("./docs/vgm/2612/41.vgz");
+        play("./docs/vgm/2612/42.vgz");
+    }
+
+    #[test]
     fn ym2151_1() {
         println!("1st vgm instance");
         play("./docs/vgm/ym2151.vgm");
@@ -730,7 +757,7 @@ mod tests {
     }
 
     fn play(filepath: &str) {
-        println!("Play start!");
+        println!("Play start! {}", filepath);
         // load sn76489 vgm file
         let mut file = File::open(filepath).unwrap();
         let mut buffer = Vec::new();
@@ -767,6 +794,6 @@ mod tests {
                 }
             }
         }
-        println!("Play end! (vgm instance drop)");
+        println!("Play end! {} (vgm instance drop)", filepath);
     }
 }

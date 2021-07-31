@@ -9,8 +9,8 @@
                 "${workspaceFolder}/src/**",
                 "${workspaceFolder}/components/ymfm/**"
             ],
-            "defines": [
-            ]
+            "defines": [],
+            "configurationProvider": "ms-vscode.cmake-tools"
         }
     ],
     "version": 4
