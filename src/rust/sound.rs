@@ -76,6 +76,9 @@ pub struct SoundSlot {
 // TODO: 44100 -> 96000
 const INTERNAL_SAMPLING_RATE: u32 = 44100;
 
+///
+/// SoundSlot
+///
 impl SoundSlot {
     pub fn new(external_tick_rate: u32, output_sampling_rate: u32, output_sample_chunk_size: usize) -> Self {
         SoundSlot {
@@ -163,6 +166,10 @@ impl SoundSlot {
         }
     }
 
+    ///
+    /// update
+    /// TODO: remove arg sound_chip_type & index
+    ///
     pub fn update(
         &mut self,
         sound_chip_type: SoundChipType,
