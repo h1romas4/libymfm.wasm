@@ -1,0 +1,36 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Clean CMake directory",
+            "type": "shell",
+            "linux": {
+                "command": "rm -Rf ${workspaceFolder}/build && mkdir ${workspaceFolder}/build"
+            }
+        },
+        {
+            "label": "Clean Build (Nanja)",
+            "type": "shell",
+            "linux": {
+                "command": "(cd ${workspaceFolder}/build && ninja clean)"
+            }
+        },
+        {
+            "label": "Run CMake (Ninja)",
+            "type": "shell",
+            "dependsOn": "Clean CMake directory",
+            "linux": {
+                "command": "(cd ${workspaceFolder}/build && cmake -GNinja ..)"
+            }
+        },
+        {
+            "label": "Run Build (Ninja)",
+            "type": "shell",
+            "linux": {
+                "command": "(cd ${workspaceFolder}/build && ninja)"
+            }
+        }
+    ]
+}
