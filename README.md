@@ -67,7 +67,7 @@ cmake / make
 git clone --recursive https://github.com/h1romas4/libymfm.wasm
 cd libymfm.wasm
 mkdir build && cd build
-cmake ..
+cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake  ..
 make -j4
 ```
 

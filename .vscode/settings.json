@@ -6,10 +6,8 @@
         "*.tcc": "cpp"
     },
     "git.ignoreLimitWarning": true,
-    "cmake.configureEnvironment": {
-        "G": "Ninja",
-        "CMAKE_C_COMPILER": "${env:WASI_SDK_PATH}/bin/clang",
-        "CMAKE_CXX_COMPILER": "${env:WASI_SDK_PATH}/bin/clang",
-        "CMAKE_SYSROOT": "${env:WASI_SDK_PATH}/share/wasi-sysroot/"
+    "cmake.generator": "Ninja",
+    "cmake.configureSettings": {
+        "CMAKE_TOOLCHAIN_FILE" : "${workspaceFolder}/cmake/wasi.cmake"
     }
 }

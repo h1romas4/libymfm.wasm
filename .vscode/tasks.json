@@ -18,11 +18,19 @@
             }
         },
         {
-            "label": "Run CMake (Ninja)",
+            "label": "Run CMake WASI (Ninja)",
             "type": "shell",
             "dependsOn": "Clean CMake directory",
             "linux": {
-                "command": "(cd ${workspaceFolder}/build && cmake -GNinja ..)"
+                "command": "(cd ${workspaceFolder}/build && cmake -DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/cmake/wasi.cmake -GNinja ..)"
+            }
+        },
+        {
+            "label": "Run CMake x86_64 (Ninja)",
+            "type": "shell",
+            "dependsOn": "Clean CMake directory",
+            "linux": {
+                "command": "(cd ${workspaceFolder}/build && cmake -DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/cmake/x86-64.cmake -GNinja ..)"
             }
         },
         {
