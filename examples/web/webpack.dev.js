@@ -6,11 +6,9 @@ module.exports = merge(common, {
   mode: "development",
   devtool: 'source-map',
   devServer: {
-    inline: true,
-    contentBase: [
-      path.join(__dirname, '../../docs/'), // eslint-disable-line
-    ],
-    watchContentBase: false,
+    static: {
+      directory: path.join(__dirname, '../../docs/'), // eslint-disable-line
+    },
     port: 9000,
     open: true,
     // host: '0.0.0.0',
