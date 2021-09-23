@@ -73,7 +73,13 @@ make -j4
 
 ## WebAssembly VGM Player (`examples/web`)
 
-fix linker path
+Install wasm-bindgen
+
+```
+cargo install wasm-bindgen-cli
+```
+
+Fix linker path
 
 ```
 $ cat .cargo/config # fix linker path
