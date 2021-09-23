@@ -1,24 +1,34 @@
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-use crate::driver::VgmPlay;
+use crate::{driver::VgmPlay, sound::SoundSlot};
 
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 pub struct WgmPlay {
-    vgmplay: VgmPlay
+    vgmplay: VgmPlay,
 }
 
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 impl WgmPlay {
     ///
     /// constructor
     ///
     #[wasm_bindgen(constructor)]
-    pub fn from(sample_rate: u32, max_sampling_size: usize, data_length: usize) -> Self {
+    pub fn from(
+        output_sampling_rate: u32,
+        output_sample_chunk_size: usize,
+        data_length: usize,
+    ) -> Self {
         #[cfg(feature = "console_error_panic_hook")]
         console_error_panic_hook::set_once();
 
         WgmPlay {
-            vgmplay: VgmPlay::new(sample_rate, max_sampling_size, data_length)
+            vgmplay: VgmPlay::new(
+                SoundSlot::new(44100, output_sampling_rate, output_sample_chunk_size),
+                data_length,
+            ),
         }
     }
 

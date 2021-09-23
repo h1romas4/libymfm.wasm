@@ -6,4 +6,8 @@
         "*.tcc": "cpp"
     },
     "git.ignoreLimitWarning": true,
+    "cmake.generator": "Ninja",
+    "cmake.configureSettings": {
+        "CMAKE_TOOLCHAIN_FILE" : "${workspaceFolder}/cmake/wasi.cmake"
+    }
 }

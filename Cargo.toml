@@ -13,7 +13,7 @@ crate-type = ["cdylib", "rlib"]
 path = "src/rust/lib.rs"
 
 [features]
-default = ["console_error_panic_hook", "wee_alloc"]
+default = ["console_error_panic_hook"]
 
 [dependencies]
 flate2 = "1.0"
@@ -22,9 +22,10 @@ serde = "1"
 serde_json = "1"
 serde_derive = "1"
 array-macro = "1.0"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"
 console_error_panic_hook = { version = "0.1", optional = true }
-wee_alloc = { version = "0.4", optional = true }
 
 [profile.release]
 opt-level = "s"

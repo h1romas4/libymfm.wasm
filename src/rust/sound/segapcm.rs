@@ -13,6 +13,8 @@ use crate::sound::{convert_sample_i2f, RomDevice, RomSet, RomBank, SoundChip, So
  */
 use std::{cell::RefCell, rc::Rc};
 
+use super::SoundStream;
+
 #[allow(clippy::upper_case_acronyms)]
 pub struct SEGAPCM {
     clock: u32,
@@ -35,8 +37,10 @@ impl SEGAPCM {
         }
     }
 
-    fn init(&mut self, clock: u32) {
+    fn init(&mut self, clock: u32) -> u32 {
         self.clock = clock;
+        // chip native samplig rate
+        self.clock / 128
     }
 
     fn reset(&mut self) {
@@ -122,8 +126,7 @@ impl SoundChip for SEGAPCM {
     }
 
     fn init(&mut self, clock: u32) -> u32 {
-        self.init(clock);
-        self.clock / 128
+        self.init(clock)
     }
 
     fn reset(&mut self) {
@@ -143,6 +146,13 @@ impl SoundChip for SEGAPCM {
         buffer_pos: usize,
     ) {
         self.update(buffer_l, buffer_r, numsamples, buffer_pos);
+    }
+
+    fn tick(&mut self, _: usize, sound_stream: &mut SoundStream) {
+        let mut l: [f32; 1] = [0_f32];
+        let mut r: [f32; 1] = [0_f32];
+        self.update(&mut l, &mut r, 1, 0);
+        sound_stream.push(l[0], r[0]);
     }
 }
 

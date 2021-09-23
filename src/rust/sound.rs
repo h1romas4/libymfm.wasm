@@ -19,7 +19,7 @@ pub use crate::sound::ymfm::ChipType;
 /// Sound chip type
 ///
 #[allow(non_camel_case_types)]
-#[derive(PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub enum SoundChipType {
     YM2151,
     YM2203,
@@ -33,7 +33,7 @@ pub enum SoundChipType {
 }
 
 ///
-/// Sound chip common interface
+/// Sound Chip Interface
 ///
 pub trait SoundChip {
     fn new(sound_device_name: SoundChipType) -> Self where Self: Sized;
@@ -48,39 +48,64 @@ pub trait SoundChip {
         numsamples: usize,
         buffer_pos: usize,
     );
+    fn tick(&mut self, index: usize, sound_stream: &mut SoundStream);
 }
 
 ///
-/// Sound Device
+/// Rom Device Interface
 ///
-struct SoundDevice {
-    sound_chip: Box<dyn SoundChip>,
-    sound_stream: SoundStream,
+pub trait RomDevice {
+    fn set_rom(&mut self, rombank: RomBank);
+    fn read_rom(rombank: &RomBank, address: usize) -> u8 {
+        rombank.as_ref().unwrap().borrow_mut().read(address)
+    }
 }
 
 ///
-/// Sound slot
+/// Sound Slot
 ///
 pub struct SoundSlot {
+    external_tick_rate: u32,
+    output_sampling_rate: u32,
+    output_sample_chunk_size: usize,
     internal_sampling_rate: u32,
-    max_output_sample_size: usize,
     sound_device: HashMap<SoundChipType, Vec<SoundDevice>>,
     sound_romset: HashMap<usize, Rc<RefCell<RomSet>>>,
 }
 
+// TODO: 44100 -> 96000
+const INTERNAL_SAMPLING_RATE: u32 = 44100;
+
+///
+/// SoundSlot
+///
 impl SoundSlot {
-    pub fn new(max_output_sample_size: usize) -> Self {
+    pub fn new(external_tick_rate: u32, output_sampling_rate: u32, output_sample_chunk_size: usize) -> Self {
         SoundSlot {
-            internal_sampling_rate: 96000,
-            max_output_sample_size,
+            external_tick_rate,
+            output_sampling_rate,
+            output_sample_chunk_size,
+            internal_sampling_rate: INTERNAL_SAMPLING_RATE,
             sound_device: HashMap::new(),
             sound_romset: HashMap::new(),
         }
     }
 
-    pub fn add_device(&mut self, sound_device_name: SoundChipType, number_of: usize, clock: u32) {
+    pub fn get_output_sampling_rate(&self) -> u32 {
+        self.output_sampling_rate
+    }
+
+    pub fn get_external_tick_rate(&self) -> u32 {
+        self.external_tick_rate
+    }
+
+    pub fn get_output_sample_chunk_size(&self) -> usize {
+        self.output_sample_chunk_size
+    }
+
+    pub fn add_device(&mut self, sound_chip_type: SoundChipType, number_of: usize, clock: u32) {
         for _n in 0..number_of {
-            let mut sound_chip: Box<dyn SoundChip> = match sound_device_name {
+            let mut sound_chip: Box<dyn SoundChip> = match sound_chip_type {
                 SoundChipType::YM2151 => Box::new(YmFm::new(SoundChipType::YM2151)),
                 SoundChipType::YM2203 => Box::new(YmFm::new(SoundChipType::YM2203)),
                 SoundChipType::YM2149 => Box::new(YmFm::new(SoundChipType::YM2149)),
@@ -97,11 +122,12 @@ impl SoundSlot {
                     segapcm
                 },
             };
-            // TODO: change to chip native sampling rate
-            let device_sampling_rate = sound_chip.init(clock);
-            self.sound_device.entry(sound_device_name).or_insert_with(Vec::new).push(SoundDevice {
+
+            let sound_chip_tick_rate = sound_chip.init(clock);
+            self.sound_device.entry(sound_chip_type).or_insert_with(Vec::new).push(SoundDevice {
                 sound_chip,
-                sound_stream: SoundStream::new(device_sampling_rate, self.internal_sampling_rate),
+                sound_chip_type,
+                sound_stream: SoundStream::new(sound_chip_tick_rate, self.internal_sampling_rate),
             });
         }
     }
@@ -117,7 +143,7 @@ impl SoundSlot {
     }
 
     #[inline]
-    pub fn find(&mut self, sound_device_name: SoundChipType, index: usize) -> Option<&mut dyn SoundChip> {
+    pub fn find(&mut self, sound_device_name: SoundChipType, index: usize) -> Option<&mut SoundDevice> {
         let sound_chip = match self.sound_device.get_mut(&sound_device_name) {
             None => None,
             Some(vec) => {
@@ -129,85 +155,123 @@ impl SoundSlot {
         };
         match sound_chip {
             None => None,
-            Some(sound_chip) => Some(&mut *sound_chip[index].sound_chip)
+            Some(sound_chip) => Some(&mut sound_chip[index])
         }
     }
 
     pub fn write(&mut self, sound_device_name: SoundChipType, index: usize, port: u32, data: u32) {
         match self.find(sound_device_name, index) {
             None => { /* nothing to do */ },
-            Some(sound_chip) => sound_chip.write(index, port, data)
+            Some(sound_device) => sound_device.sound_chip.write(index, port, data)
         }
     }
 
+    ///
+    /// update
+    /// TODO: remove arg sound_chip_type & index
+    ///
     pub fn update(
         &mut self,
-        sound_device_name: SoundChipType,
+        sound_chip_type: SoundChipType,
         index: usize,
         buffer_l: &mut [f32],
         buffer_r: &mut [f32],
         numsamples: usize,
         buffer_pos: usize,
     ) {
-        match self.find(sound_device_name, index) {
+        match self.find(sound_chip_type, index) {
             None => { /* nothing to do */ },
-            Some(sound_chip) => sound_chip.update(index, buffer_l, buffer_r, numsamples, buffer_pos)
+            Some(sound_device) => {
+                // TODO: for test
+                match &sound_chip_type {
+                    // TODO: for test
+                    SoundChipType::SEGAPCM => {
+                        for i in 0..numsamples {
+                            if sound_device.sound_stream.is_tick() {
+                                sound_device.sound_chip.tick(index, &mut sound_device.sound_stream);
+                            }
+                            let (l, r) = sound_device.sound_stream.pop();
+                            buffer_l[buffer_pos + i] += l;
+                            buffer_r[buffer_pos + i] += r;
+                        }
+                    },
+                    _ => {
+                        sound_device.sound_chip.update(index, buffer_l, buffer_r, numsamples, buffer_pos);
+                    }
+                }
+            }
         }
     }
 
     pub fn update_all(
         &mut self,
-        sound_device_name: SoundChipType,
+        sound_chip_type: SoundChipType,
         buffer_l: &mut [f32],
         buffer_r: &mut [f32],
         numsamples: usize,
         buffer_pos: usize,
     ) {
-        if self.sound_device.contains_key(&sound_device_name) {
-            for index in 0..self.sound_device.get(&sound_device_name).unwrap().len() {
-                self.update(sound_device_name, index, buffer_l, buffer_r, numsamples, buffer_pos);
+        if self.sound_device.contains_key(&sound_chip_type) {
+            for index in 0..self.sound_device.get(&sound_chip_type).unwrap().len() {
+                self.update(sound_chip_type, index, buffer_l, buffer_r, numsamples, buffer_pos);
             }
         }
     }
 }
 
 ///
-/// Sound stream
+/// Sound Device
 ///
-struct SoundStream {
-    device_sampling_rate: u32,
+pub struct SoundDevice {
+    sound_chip: Box<dyn SoundChip>,
+    sound_chip_type: SoundChipType,
+    sound_stream: SoundStream,
+}
+
+///
+/// Sound Stream
+///
+pub struct SoundStream {
+    sound_chip_tick_rate: u32,
+    sound_chip_tick_pos: u64,
+    sound_chip_tick_step: u64,
     output_sampling_rate: u32,
-    now_device_sampling_l: f32,
-    now_device_sampling_r: f32,
-    prv_device_sampling_l: f32,
-    prv_device_sampling_r: f32,
-    device_sampling_pos: usize,
-    output_sampling_pos: usize,
+    output_sampling_pos: u64,
+    output_sampling_step: u64,
+    now_chip_sampling_l: f32,
+    now_chip_sampling_r: f32,
 }
 
 impl SoundStream {
-    pub fn new(device_sampling_rate: u32, output_sampling_rate: u32) -> Self {
+    pub fn new(sound_chip_tick_rate: u32, output_sampling_rate: u32) -> Self {
         SoundStream {
-            device_sampling_rate,
+            sound_chip_tick_rate,
+            sound_chip_tick_pos: 0,
+            sound_chip_tick_step: 0x100000000_u64 / sound_chip_tick_rate as u64,
             output_sampling_rate,
-            now_device_sampling_l: 0_f32,
-            now_device_sampling_r: 0_f32,
-            prv_device_sampling_l: 0_f32,
-            prv_device_sampling_r: 0_f32,
-            device_sampling_pos: 0,
             output_sampling_pos: 0,
+            output_sampling_step: 0x100000000_u64 / output_sampling_rate as u64,
+            now_chip_sampling_l: 0_f32,
+            now_chip_sampling_r: 0_f32,
         }
     }
 
-    // pub fn push(&mut self, sampling_l: f32, sampling_r: f32) {
-    //     // self.output_sampling_l[self.output_sampling_pos] = sampling_l;
-    //     // self.output_sampling_r[self.output_sampling_pos] = sampling_r;
+    pub fn is_tick(&self) -> bool {
+        // TODO:
+        true
+    }
 
-    //     // self.output_sampling_pos += 1;
-    //     // if self.output_sampling_pos >= N {
-    //     //     self.output_sampling_pos = 0;
-    //     // }
-    // }
+    pub fn push(&mut self, sampling_l: f32, sampling_r: f32) {
+        // self.sound_chip_tick_pos += self.sound_chip_tick_step;
+        self.now_chip_sampling_l = sampling_l;
+        self.now_chip_sampling_r = sampling_r;
+    }
+
+    pub fn pop(&mut self) -> (f32, f32) {
+        // TODO: upsampling
+        // self.output_sampling_pos += self.output_sampling_step;
+        (self.now_chip_sampling_l, self.now_chip_sampling_r)
+    }
 }
 
 ///
@@ -230,17 +294,6 @@ fn convert_sample_i2f(i32_sample: i32) -> f32 {
 }
 
 pub type RomBank = Option<Rc<RefCell<RomSet>>>;
-
-///
-/// Rom device interface
-///
-pub trait RomDevice {
-    fn set_rom(&mut self, rombank: RomBank);
-
-    fn read_rom(rombank: &RomBank, address: usize) -> u8 {
-        rombank.as_ref().unwrap().borrow_mut().read(address)
-    }
-}
 
 ///
 /// Rom

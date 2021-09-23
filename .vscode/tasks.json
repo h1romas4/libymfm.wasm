@@ -1,0 +1,65 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Clean CMake directory",
+            "type": "shell",
+            "linux": {
+                "command": "rm -Rf ${workspaceFolder}/build && mkdir ${workspaceFolder}/build"
+            }
+        },
+        {
+            "label": "Clean Build (C++ Nanja)",
+            "type": "shell",
+            "linux": {
+                "command": "(cd ${workspaceFolder}/build && ninja clean)"
+            }
+        },
+        {
+            "label": "Run CMake WASI (C++ Ninja)",
+            "type": "shell",
+            "dependsOn": "Clean CMake directory",
+            "linux": {
+                "command": "(cd ${workspaceFolder}/build && cmake -DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/cmake/wasi.cmake -GNinja ..)"
+            }
+        },
+        {
+            "label": "Run CMake x86_64 (C++ Ninja)",
+            "type": "shell",
+            "dependsOn": "Clean CMake directory",
+            "linux": {
+                "command": "(cd ${workspaceFolder}/build && cmake -DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/cmake/x86-64.cmake -GNinja ..)"
+            }
+        },
+        {
+            "label": "Run Build (C++ Ninja)",
+            "type": "shell",
+            "linux": {
+                "command": "(cd ${workspaceFolder}/build && ninja)"
+            }
+        },
+        {
+            "label": "Run Build (Rust and wasm-bindgen)",
+            "type": "shell",
+            "linux": {
+                "command": "cargo build --release --target wasm32-wasi && wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/"
+            }
+        },
+        {
+            "label": "Run Build (JavaScript)",
+            "type": "shell",
+            "linux": {
+                "command": "(cd ${workspaceFolder}/examples/web && npm run build)"
+            }
+        },
+        {
+            "label": "Start Example Web",
+            "type": "shell",
+            "linux": {
+                "command": "(cd ${workspaceFolder}/examples/web && npm run start)"
+            }
+        }
+    ]
+}
