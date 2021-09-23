@@ -87,7 +87,7 @@ Rust build and wasm-bindgen
 
 ```
 cargo build --release --target wasm32-wasi
-wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./pkg/ --target web
+wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
 ```
 
 npm

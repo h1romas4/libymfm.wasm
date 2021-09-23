@@ -90,3 +90,43 @@ export const fd_fdstat_set_flags = function(dirfd, dirflags, pathPtr, pathLen, o
 export const fd_read = function(fd, iovs, iovsLen, nread) { // eslint-disable-line
     console.log(`fd_fdstat_get: ${fd}, ${iovs}, ${iovsLen}, ${nread}`);
 }
+
+/**
+ * environ_sizes_get
+ *
+ * @param {*} environcOffset
+ * @param {*} environBufferSizeOffset
+ */
+export const environ_sizes_get = function(environcOffset, environBufferSizeOffset) {
+    console.log(`environ_sizes_get: ${environcOffset}, ${environBufferSizeOffset}`);
+}
+
+/**
+ * proc_exit
+ *
+ * @param {*} rval
+ */
+export const proc_exit = function(rval) {
+    console.log(`proc_exit: ${rval}`);
+}
+
+/**
+ * environ_get
+ *
+ * @param {*} environOffset
+ * @param {*} environBufferOffset
+ */
+export const environ_get = function(environOffset, environBufferOffset) {
+    console.log(`environ_get: ${environOffset}, ${environBufferOffset}`);
+}
+
+/**
+ * random_get
+ *
+ * @param {*} bufferOffset
+ * @param {*} bufferLength
+ */
+export const random_get = function(bufferOffset, bufferLength) {
+    console.log(`random_get: ${bufferOffset}, ${bufferLength}`);
+    return 0;
+}
