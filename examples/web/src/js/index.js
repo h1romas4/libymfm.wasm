@@ -1,5 +1,5 @@
-import { WgmPlay } from "libymfm";
-import { memory } from "libymfm/libymfm_bg.wasm";
+import { WgmPlay } from "../wasm/libymfm";
+import { memory } from "../wasm/libymfm_bg.wasm";
 
 /**
  * vgm setting

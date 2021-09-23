@@ -77,16 +77,17 @@ fix linker path
 
 ```
 $ cat .cargo/config # fix linker path
-[target.wasm32-unknown-unknown]
+[target.wasm32-wasi]
 linker = "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/bin/lld"
 rustflags = [
   "-L", "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/share/wasi-sysroot/lib/wasm32-wasi",
 ```
 
-wasm-pack
+Rust build and wasm-bindgen
 
 ```
-wasm-pack build
+cargo build --release --target wasm32-wasi
+wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
 ```
 
 npm

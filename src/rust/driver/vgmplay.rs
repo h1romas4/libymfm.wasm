@@ -2,6 +2,7 @@ use flate2::read::GzDecoder;
 use std::convert::TryInto;
 use std::io::prelude::*;
 
+#[cfg(target_arch = "wasm32")]
 use crate::console_log;
 use crate::driver::metadata::parse_vgm_meta;
 use crate::driver::metadata::Gd3;
@@ -672,13 +673,13 @@ impl VgmPlay {
                 self.get_vgm_u8();
             }
             _ => {
-                #[cfg(feature = "console_error_panic_hook")]
+                #[cfg(target_arch = "wasm32")]
                 console_log!(
                     "unknown cmd at {:x}: {:x}",
                     self.vgm_pos - 1,
                     self.vgm_data[self.vgm_pos - 1]
                 );
-                #[cfg(not(feature = "console_error_panic_hook"))]
+                #[cfg(not(target_arch = "wasm32"))]
                 println!(
                     "unknown cmd at {:x}: {:x}",
                     self.vgm_pos - 1,

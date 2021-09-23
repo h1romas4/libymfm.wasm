@@ -11,14 +11,14 @@
             }
         },
         {
-            "label": "Clean Build (Nanja)",
+            "label": "Clean Build (C++ Nanja)",
             "type": "shell",
             "linux": {
                 "command": "(cd ${workspaceFolder}/build && ninja clean)"
             }
         },
         {
-            "label": "Run CMake WASI (Ninja)",
+            "label": "Run CMake WASI (C++ Ninja)",
             "type": "shell",
             "dependsOn": "Clean CMake directory",
             "linux": {
@@ -26,7 +26,7 @@
             }
         },
         {
-            "label": "Run CMake x86_64 (Ninja)",
+            "label": "Run CMake x86_64 (C++ Ninja)",
             "type": "shell",
             "dependsOn": "Clean CMake directory",
             "linux": {
@@ -34,10 +34,31 @@
             }
         },
         {
-            "label": "Run Build (Ninja)",
+            "label": "Run Build (C++ Ninja)",
             "type": "shell",
             "linux": {
                 "command": "(cd ${workspaceFolder}/build && ninja)"
+            }
+        },
+        {
+            "label": "Run Build (Rust and wasm-bindgen)",
+            "type": "shell",
+            "linux": {
+                "command": "cargo build --release --target wasm32-wasi && wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/"
+            }
+        },
+        {
+            "label": "Run Build (JavaScript)",
+            "type": "shell",
+            "linux": {
+                "command": "(cd ${workspaceFolder}/examples/web && npm run build)"
+            }
+        },
+        {
+            "label": "Start Example Web",
+            "type": "shell",
+            "linux": {
+                "command": "(cd ${workspaceFolder}/examples/web && npm run start)"
             }
         }
     ]
