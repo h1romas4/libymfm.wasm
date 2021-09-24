@@ -322,5 +322,5 @@ impl SoundChip for PWM {
         self.pwm_update_chip(0, buffer_l, buffer_r, numsamples, buffer_pos);
     }
 
-    fn tick(&mut self, index: usize, sound_stream: &mut SoundStream) {}
+    fn tick(&mut self, _index: usize, _sound_stream: &mut SoundStream) {}
 }

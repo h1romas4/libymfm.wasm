@@ -1,8 +1,6 @@
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
-use crate::{driver::VgmPlay, sound::SoundSlot};
-
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 pub struct WgmPlay {

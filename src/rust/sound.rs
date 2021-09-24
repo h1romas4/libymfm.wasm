@@ -137,7 +137,7 @@ impl SoundSlot {
                 .or_insert_with(Vec::new)
                 .push(SoundDevice {
                     sound_chip,
-                    sound_chip_type,
+                    _sound_chip_type: sound_chip_type,
                     sound_stream: SoundStream::new(
                         sound_chip_tick_rate,
                         self.internal_sampling_rate,
@@ -253,7 +253,7 @@ impl SoundSlot {
 ///
 pub struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
-    sound_chip_type: SoundChipType,
+    _sound_chip_type: SoundChipType,
     sound_stream: SoundStream,
 }
 
