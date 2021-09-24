@@ -56,10 +56,12 @@ pub trait SoundChip {
 ///
 /// Rom Device Interface
 ///
+pub type RomBank = Option<Rc<RefCell<RomSet>>>;
+
 pub trait RomDevice {
     fn set_rom(&mut self, rombank: RomBank);
     fn read_rom(rombank: &RomBank, address: usize) -> u8 {
-        rombank.as_ref().unwrap().borrow_mut().read(address)
+        rombank.as_ref().unwrap().borrow().read(address)
     }
 }
 
@@ -333,8 +335,6 @@ fn convert_sample_i2f(i32_sample: i32) -> f32 {
     }
     f32_sample
 }
-
-pub type RomBank = Option<Rc<RefCell<RomSet>>>;
 
 ///
 /// Rom

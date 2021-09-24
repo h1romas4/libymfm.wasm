@@ -1,5 +1,4 @@
 // license:BSD-3-Clause
-use crate::sound::{convert_sample_i2f, RomDevice, RomSet, RomBank, SoundChip, SoundChipType};
 /**
  * Rust SEGAPCM emulation
  *  Hiromasa Tanaka <h1romas4@gmail.com>
@@ -11,15 +10,15 @@ use crate::sound::{convert_sample_i2f, RomDevice, RomSet, RomBank, SoundChip, So
  *  https://github.com/mamedev/mame/blob/master/src/devices/sound/segapcm.cpp
  *  rev. 70743c6fb2602a5c2666c679b618706eabfca2ad
  */
-use std::{cell::RefCell, rc::Rc};
 
+use crate::sound::{convert_sample_i2f, RomDevice, RomBank, SoundChip, SoundChipType};
 use super::SoundStream;
 
 #[allow(clippy::upper_case_acronyms)]
 pub struct SEGAPCM {
     clock: u32,
     ram: [u8; 0x800],
-    romset: RomBank,
+    rombank: RomBank,
     bankshift: u8,
     bankmask: u8,
     low: [u8; 16],
@@ -32,7 +31,7 @@ impl SEGAPCM {
             bankshift: 12,
             bankmask: 0x70,
             ram: [0xff; 0x800],
-            romset: None,
+            rombank: None,
             low: [0; 16],
         }
     }
@@ -98,7 +97,7 @@ impl SEGAPCM {
                         }
                     }
                     /* fetch the sample */
-                    let v = SEGAPCM::read_rom(&self.romset, offset as usize + (addr >> 8) as usize);
+                    let v = Self::read_rom(&self.rombank, offset as usize + (addr >> 8) as usize);
                     let v: i32 = i32::from(v) - 0x80;
                     /* apply panning and advance */
                     buffer_l[buffer_pos + i] +=
@@ -157,7 +156,7 @@ impl SoundChip for SEGAPCM {
 }
 
 impl RomDevice for SEGAPCM {
-    fn set_rom(&mut self, romset: Option<Rc<RefCell<RomSet>>>) {
-        self.romset = romset;
+    fn set_rom(&mut self, rombank: RomBank) {
+        self.rombank = rombank;
     }
 }
