@@ -21,7 +21,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |YM2413|ymfm||
 |PWM|vgmplay|for demo|
 |SN76489|vgmplay|for demo|
-|segapcm|mame|for demo (wrong sound. need upsampling 31250 to 44100)|
+|segapcm|mame|for demo|
 
 example source code:
 
