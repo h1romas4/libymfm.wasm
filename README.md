@@ -123,9 +123,10 @@ npm run start
 
 ## TODO / known issues
 
+- [ ] Better upsampling.
 - [ ] Add direct ymfm intarfece.
 - [ ] Use yfmf's YM2612 chip and other.
 - [ ] It is not a BSD license.
 - [x] YM2141 clock worng?
-- [ ] Fix segapcm.
+- [x] Fix segapcm.
 - [ ] Refactoring.
