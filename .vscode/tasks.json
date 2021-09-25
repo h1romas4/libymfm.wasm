@@ -18,7 +18,7 @@
             }
         },
         {
-            "label": "Run CMake WASI (C++ Ninja)",
+            "label": "Run CMake (C++ WASI Ninja)",
             "type": "shell",
             "dependsOn": "Clean CMake directory",
             "linux": {
@@ -26,7 +26,7 @@
             }
         },
         {
-            "label": "Run CMake x86_64 (C++ Ninja)",
+            "label": "Run CMake (C++ x86_64 Ninja)",
             "type": "shell",
             "dependsOn": "Clean CMake directory",
             "linux": {

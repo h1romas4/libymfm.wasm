@@ -654,7 +654,6 @@ impl VgmPlay {
                 self.get_vgm_u8();
             }
             0xc9..=0xcf | 0xd7..=0xdf | 0xc1..=0xc8 | 0xd1..=0xd6 => {
-                // 0xc0: bbaa dd: Sega PCM, write value dd to memory offset aabb
                 // 0xc1: bbaa dd: RF5C68, write value dd to memory offset aabb
                 // 0xc2: bbaa dd: RF5C164, write value dd to memory offset aabb
                 // 0xc3: cc bbaa: MultiPCM, write set bank offset aabb to channel cc

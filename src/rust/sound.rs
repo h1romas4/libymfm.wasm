@@ -123,6 +123,7 @@ impl SoundSlot {
                 SoundChipType::SEGAPSG => Box::new(SN76489::new(SoundChipType::SEGAPSG)),
                 SoundChipType::PWM => Box::new(PWM::new(SoundChipType::PWM)),
                 SoundChipType::SEGAPCM => {
+                    // connect PCM ROM
                     let mut segapcm = Box::new(SEGAPCM::new(SoundChipType::SEGAPCM));
                     let segapcm_romset = Rc::new(RefCell::new(RomSet::new()));
                     RomDevice::set_rom(&mut *segapcm, Some(segapcm_romset.clone()));
@@ -200,26 +201,15 @@ impl SoundSlot {
         match self.find(sound_chip_type, index) {
             None => { /* nothing to do */ }
             Some(sound_device) => {
-                // TODO: for test
-                match &sound_chip_type {
-                    // TODO: for test
-                    SoundChipType::SEGAPCM => {
-                        for i in 0..numsamples {
-                            if sound_device.sound_stream.is_tick() {
-                                sound_device
-                                    .sound_chip
-                                    .tick(index, &mut sound_device.sound_stream);
-                            }
-                            let (l, r) = sound_device.sound_stream.pop();
-                            buffer_l[buffer_pos + i] += l;
-                            buffer_r[buffer_pos + i] += r;
-                        }
-                    }
-                    _ => {
+                for i in 0..numsamples {
+                    if sound_device.sound_stream.is_tick() {
                         sound_device
                             .sound_chip
-                            .update(index, buffer_l, buffer_r, numsamples, buffer_pos);
+                            .tick(index, &mut sound_device.sound_stream);
                     }
+                    let (l, r) = sound_device.sound_stream.pop();
+                    buffer_l[buffer_pos + i] += l;
+                    buffer_r[buffer_pos + i] += r;
                 }
             }
         }
@@ -286,11 +276,14 @@ impl SoundStream {
     }
 
     pub fn is_tick(&self) -> bool {
-        if self.sound_chip_tick_rate != self.output_sampling_rate
-            && self.sound_chip_tick_pos > self.output_sampling_pos
-        {
+        if self.sound_chip_tick_rate == self.output_sampling_rate {
+            return true;
+        }
+        // TODO: better upsampling
+        if self.sound_chip_tick_pos > self.output_sampling_pos {
             return false;
         }
+        // TODO: down sampling
         true
     }
 
@@ -302,9 +295,9 @@ impl SoundStream {
     }
 
     pub fn pop(&mut self) -> (f32, f32) {
-        // TODO: upsampling
         self.output_sampling_pos =
             Self::next_pos(self.output_sampling_pos, self.output_sampling_step);
+        // TODO: better upsampling
         (self.now_chip_sampling_l, self.now_chip_sampling_r)
     }
 

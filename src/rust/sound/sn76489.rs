@@ -382,5 +382,10 @@ impl SoundChip for SN76489 {
         self.update(buffer_l, buffer_r, numsamples, buffer_pos);
     }
 
-    fn tick(&mut self, _index: usize, _sound_stream: &mut SoundStream) {}
+    fn tick(&mut self, _: usize, sound_stream: &mut SoundStream) {
+        let mut l: [f32; 1] = [0_f32];
+        let mut r: [f32; 1] = [0_f32];
+        self.update(&mut l, &mut r, 1, 0);
+        sound_stream.push(l[0], r[0]);
+    }
 }
