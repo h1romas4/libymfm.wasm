@@ -1,6 +1,7 @@
 build/
 target/
 pkg/
+examples/web/src/wasm/
 examples/web/dist/
 examples/web/node_modules/
 *.vgm
