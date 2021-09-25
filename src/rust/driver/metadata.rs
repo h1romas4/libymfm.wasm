@@ -1,5 +1,6 @@
-use nom::number::complete::{le_u8, le_u16, le_u32};
+// license:BSD-3-Clause
 use nom::bytes::complete::{tag, take};
+use nom::number::complete::{le_u16, le_u32, le_u8};
 use nom::IResult;
 
 ///
@@ -51,7 +52,7 @@ pub struct VgmHeader {
     pub clock_okim6258: u32,
     pub okmi6258_flag: u8,
     pub k054539_flag: u8,
-    pub c140_chip_type : u8,
+    pub c140_chip_type: u8,
     pub reserved02: u8,
     pub clock_okim6295: u32,
     pub clock_k051649: u32,
@@ -81,7 +82,7 @@ pub struct VgmHeader {
     pub reserved07: u32,
     pub reserved08: u32,
     pub reserved09: u32,
-    pub reserved10: u32
+    pub reserved10: u32,
 }
 
 ///
@@ -98,7 +99,7 @@ pub struct Gd3 {
     pub track_author: String,
     pub track_author_j: String,
     pub date: String,
-    pub converted: String
+    pub converted: String,
 }
 
 ///
@@ -108,7 +109,11 @@ fn parse_vgm_header(i: &[u8]) -> IResult<&[u8], VgmHeader> {
     let (i, _) = tag("Vgm ")(i)?;
     let (i, eof) = le_u32(i)?;
     let (i, version) = take(4usize)(i)?;
-    let version = version.iter().rev().map(|n| format!("{:02X}", n)).collect::<String>();
+    let version = version
+        .iter()
+        .rev()
+        .map(|n| format!("{:02X}", n))
+        .collect::<String>();
     let version = version.parse().unwrap_or(0);
     let (i, clock_sn76489) = le_u32(i)?;
     let (i, clock_ym2413) = le_u32(i)?;
@@ -200,10 +205,7 @@ fn parse_vgm_header(i: &[u8]) -> IResult<&[u8], VgmHeader> {
         };
     }
     if version >= 101 {
-        header = VgmHeader {
-            rate,
-            ..header
-        };
+        header = VgmHeader { rate, ..header };
     }
     if version >= 110 {
         header = VgmHeader {
@@ -324,7 +326,7 @@ fn parse_utf16_until_null(i: &[u8]) -> IResult<&[u8], String> {
     }
     let string = match String::from_utf16(&string) {
         Ok(string) => string,
-        Err(_) => String::from("")
+        Err(_) => String::from(""),
     };
 
     Ok((i, string))
@@ -349,18 +351,21 @@ fn parse_vgm_gd3(i: &[u8]) -> IResult<&[u8], Gd3> {
     let (i, date) = parse_utf16_until_null(i)?;
     let (i, converted) = parse_utf16_until_null(i)?;
 
-    Ok((i, Gd3 {
-        track_name,
-        track_name_j,
-        game_name,
-        game_name_j,
-        system_name,
-        system_name_j,
-        track_author,
-        track_author_j,
-        date,
-        converted,
-    }))
+    Ok((
+        i,
+        Gd3 {
+            track_name,
+            track_name_j,
+            game_name,
+            game_name_j,
+            system_name,
+            system_name_j,
+            track_author,
+            track_author_j,
+            date,
+            converted,
+        },
+    ))
 }
 
 ///
@@ -369,13 +374,11 @@ fn parse_vgm_gd3(i: &[u8]) -> IResult<&[u8], Gd3> {
 pub(crate) fn parse_vgm_meta(vgmdata: &[u8]) -> Result<(VgmHeader, Gd3), &'static str> {
     let header = match parse_vgm_header(&vgmdata[..255]) {
         Ok((_, header)) => header,
-        Err(_) => {
-            return Err("vgm header parse error.")
-        }
+        Err(_) => return Err("vgm header parse error."),
     };
     let gd3 = match parse_vgm_gd3(&vgmdata[(0x14 + header.offset_gd3 as usize)..]) {
         Ok((_, gd3)) => gd3,
-        Err(_) => Gd3::default() // blank values
+        Err(_) => Gd3::default(), // blank values
     };
 
     Ok((header, gd3))
@@ -384,17 +387,17 @@ pub(crate) fn parse_vgm_meta(vgmdata: &[u8]) -> Result<(VgmHeader, Gd3), &'stati
 ///
 /// Jsonlize
 ///
-pub(crate) trait Jsonlize : serde::Serialize {
+pub(crate) trait Jsonlize: serde::Serialize {
     fn get_json(&self) -> String {
         match serde_json::to_string(&self) {
             Ok(json) => json,
-            Err(_) => String::from("")
+            Err(_) => String::from(""),
         }
     }
 }
 
-impl Jsonlize for VgmHeader { }
-impl Jsonlize for Gd3 { }
+impl Jsonlize for VgmHeader {}
+impl Jsonlize for Gd3 {}
 
 #[cfg(test)]
 mod tests {

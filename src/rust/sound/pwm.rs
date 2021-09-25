@@ -1,3 +1,4 @@
+// license:GPL-2
 /**
  * Rust PWM emulation
  *  Hiromasa Tanaka <h1romas4@gmail.com>
@@ -33,7 +34,6 @@
  * with this program; if not, write to the Free Software Foundation, Inc., *
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.           *
  ***************************************************************************/
-
 // const CHILLY_WILLY_SCALE: u8 = 1;
 // const PWM_BUF_SIZE: usize = 4;
 
@@ -54,9 +54,7 @@
 // 	0x00, 0x80, 0x40, 0x00,
 // 	0x00, 0x00, 0x80, 0x40
 // ];
-
-use crate::sound::{SoundChip, convert_sample_i2f};
-
+use crate::sound::{convert_sample_i2f, SoundChip};
 use super::{SoundChipType, SoundStream};
 
 const CHIP_SAMPLING_MODE: u8 = 0x00;
@@ -65,7 +63,7 @@ const MAX_CHIPS: usize = 0x02;
 const PWM_LOUDNESS: u8 = 0;
 
 pub struct PWM {
-    pwm_chip: [PWMChip; MAX_CHIPS]
+    pwm_chip: [PWMChip; MAX_CHIPS],
 }
 
 #[derive(Default)]
@@ -122,7 +120,7 @@ struct PWMChip {
     // #endif
 
     // 	int clock;
-    clock: i32
+    clock: i32,
 }
 
 #[allow(dead_code)]
@@ -188,7 +186,13 @@ impl PWM {
         ((pwm_in - chip.pwm_offset) * chip.pwm_scale) >> (8 - PWM_LOUDNESS)
     }
 
-    fn pwm_update(&self, chip: &PWMChip, buffer_l: &mut [f32], buffer_r: &mut [f32], length: usize) {
+    fn pwm_update(
+        &self,
+        chip: &PWMChip,
+        buffer_l: &mut [f32],
+        buffer_r: &mut [f32],
+        length: usize,
+    ) {
         let tmp_out_l: i32;
         let tmp_out_r: i32;
 
@@ -208,8 +212,20 @@ impl PWM {
         }
     }
 
-    pub fn pwm_update_chip(&self, chipid: usize, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {
-        self.pwm_update(&self.pwm_chip[chipid], &mut buffer_l[buffer_pos..], &mut buffer_r[buffer_pos..], numsamples);
+    pub fn pwm_update_chip(
+        &self,
+        chipid: usize,
+        buffer_l: &mut [f32],
+        buffer_r: &mut [f32],
+        numsamples: usize,
+        buffer_pos: usize,
+    ) {
+        self.pwm_update(
+            &self.pwm_chip[chipid],
+            &mut buffer_l[buffer_pos..],
+            &mut buffer_r[buffer_pos..],
+            numsamples,
+        );
     }
 
     pub fn device_start_pwm(&mut self, chipid: usize, clock: i32) -> i32 {
@@ -219,7 +235,8 @@ impl PWM {
 
         let mut chip = &mut self.pwm_chip[chipid];
         let mut rate: i32 = 22020;
-        if (CHIP_SAMPLING_MODE & 0x01 != 0 && rate < CHIP_SAMPLE_RATE) || CHIP_SAMPLING_MODE == 0x20 {
+        if (CHIP_SAMPLING_MODE & 0x01 != 0 && rate < CHIP_SAMPLE_RATE) || CHIP_SAMPLING_MODE == 0x20
+        {
             rate = CHIP_SAMPLE_RATE;
         }
         chip.clock = clock;
@@ -229,8 +246,7 @@ impl PWM {
         rate
     }
 
-    pub fn device_stop_pwm(&self, _chipid: usize) {
-    }
+    pub fn device_stop_pwm(&self, _chipid: usize) {}
 
     pub fn device_reset_pwm(&mut self, chipid: usize) {
         let mut chip = &mut self.pwm_chip[chipid];
@@ -300,11 +316,11 @@ impl PWM {
 impl SoundChip for PWM {
     fn new(_sound_device_name: SoundChipType) -> Self {
         PWM {
-            pwm_chip: [PWMChip::default(), PWMChip::default()]
+            pwm_chip: [PWMChip::default(), PWMChip::default()],
         }
     }
 
-    fn init(&mut self,clock: u32) -> u32 {
+    fn init(&mut self, clock: u32) -> u32 {
         self.device_start_pwm(0, clock as i32);
         // TODO: stream device upsampling
         CHIP_SAMPLE_RATE as u32
@@ -318,7 +334,14 @@ impl SoundChip for PWM {
         self.pwm_chn_w(0, port as u8, data as u16);
     }
 
-    fn update(&mut self, _: usize, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {
+    fn update(
+        &mut self,
+        _: usize,
+        buffer_l: &mut [f32],
+        buffer_r: &mut [f32],
+        numsamples: usize,
+        buffer_pos: usize,
+    ) {
         self.pwm_update_chip(0, buffer_l, buffer_r, numsamples, buffer_pos);
     }
 

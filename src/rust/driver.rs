@@ -1,3 +1,4 @@
+// license:BSD-3-Clause
 mod vgmplay;
 mod wgmplay;
 mod metadata;

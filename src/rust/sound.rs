@@ -1,3 +1,4 @@
+// license:BSD-3-Clause
 mod pwm;
 mod segapcm;
 mod sn76489;

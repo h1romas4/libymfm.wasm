@@ -10,8 +10,7 @@
  *  https://github.com/mamedev/mame/blob/master/src/devices/sound/segapcm.cpp
  *  rev. 70743c6fb2602a5c2666c679b618706eabfca2ad
  */
-
-use crate::sound::{convert_sample_i2f, RomDevice, RomBank, SoundChip, SoundChipType};
+use crate::sound::{convert_sample_i2f, RomBank, RomDevice, SoundChip, SoundChipType};
 use super::SoundStream;
 
 #[allow(clippy::upper_case_acronyms)]
@@ -100,10 +99,8 @@ impl SEGAPCM {
                     let v = Self::read_rom(&self.rombank, offset as usize + (addr >> 8) as usize);
                     let v: i32 = i32::from(v) - 0x80;
                     /* apply panning and advance */
-                    buffer_l[buffer_pos + i] +=
-                        convert_sample_i2f(v * (regs[2] & 0x7f) as i32);
-                    buffer_r[buffer_pos + i] +=
-                        convert_sample_i2f(v * (regs[3] & 0x7f) as i32);
+                    buffer_l[buffer_pos + i] += convert_sample_i2f(v * (regs[2] & 0x7f) as i32);
+                    buffer_r[buffer_pos + i] += convert_sample_i2f(v * (regs[3] & 0x7f) as i32);
                     addr = (addr + regs[7] as u32) & 0xffffff;
                 }
                 /* store back the updated address */

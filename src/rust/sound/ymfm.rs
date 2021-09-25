@@ -1,23 +1,28 @@
-use crate::sound::{SoundChip, convert_sample_i2f};
-
+// license:BSD-3-Clause
+use crate::sound::{convert_sample_i2f, SoundChip};
 use super::{SoundChipType, SoundStream};
 
 ///
 /// FFI interface
 ///
 #[link(name = "ymfm")]
-extern {
+extern "C" {
     fn ymfm_add_chip(chip_num: u16, clock: u32) -> u32;
     fn ymfm_write(chip_num: u16, index: u16, reg: u32, data: u8);
-    fn ymfm_generate(chip_num: u16, index: u16, output_start: i64, output_step: i64, buffer: *const i32);
+    fn ymfm_generate(
+        chip_num: u16,
+        index: u16,
+        output_start: i64,
+        output_step: i64,
+        buffer: *const i32,
+    );
     fn ymfm_remove_chip(chip_num: u16);
 }
 
 type EmulatedTime = i64;
 
 #[allow(non_camel_case_types)]
-#[derive(Clone)]
-#[derive(Copy)]
+#[derive(Clone, Copy)]
 pub enum ChipType {
     CHIP_YM2149 = 0,
     CHIP_YM2151 = 1,
@@ -43,7 +48,9 @@ pub struct YmFm {
 
 impl YmFm {
     fn init(&mut self, clock: u32) -> u32 {
-        unsafe { self.sampling_rate = ymfm_add_chip(self.chip_type as u16, clock); }
+        unsafe {
+            self.sampling_rate = ymfm_add_chip(self.chip_type as u16, clock);
+        }
         self.clock = clock;
         // TODO: 44100 yet
         self.output_step = 0x100000000 / i64::from(44100);
@@ -51,21 +58,32 @@ impl YmFm {
     }
 
     fn write_chip(&self, index: usize, offset: u32, data: u8) {
-        unsafe { ymfm_write(self.chip_type as u16, index as u16, offset, data); }
+        unsafe {
+            ymfm_write(self.chip_type as u16, index as u16, offset, data);
+        }
     }
 
     #[allow(clippy::missing_safety_doc)]
     fn generate(&mut self, index: usize, buffer: &mut [i32; 2]) {
         let generate_buffer: [i32; 2] = [0, 0];
-        unsafe { ymfm_generate(self.chip_type as u16, index as u16, self.output_pos, self.output_step, generate_buffer.as_ptr()); }
+        unsafe {
+            ymfm_generate(
+                self.chip_type as u16,
+                index as u16,
+                self.output_pos,
+                self.output_step,
+                generate_buffer.as_ptr(),
+            );
+        }
         buffer[0] = generate_buffer[0];
         buffer[1] = generate_buffer[1];
 
         // vgm == sampling_rate == 44100Hz
         if self.output_pos as u64 + self.output_step as u64 > i64::MAX as u64 {
-           self.output_pos = ((self.output_pos as u64 + self.output_step as u64) - i64::MAX as u64) as i64;
+            self.output_pos =
+                ((self.output_pos as u64 + self.output_step as u64) - i64::MAX as u64) as i64;
         } else {
-           self.output_pos += self.output_step;
+            self.output_pos += self.output_step;
         }
     }
 }
@@ -93,7 +111,7 @@ impl SoundChip for YmFm {
             clock: 0,
             sampling_rate: 0,
             output_pos: 0,
-            output_step: 0
+            output_step: 0,
         }
     }
 
@@ -101,8 +119,7 @@ impl SoundChip for YmFm {
         self.init(clock)
     }
 
-    fn reset(&mut self) {
-    }
+    fn reset(&mut self) {}
 
     fn write(&mut self, index: usize, offset: u32, data: u32) {
         self.write_chip(index, offset, data as u8);

@@ -1,3 +1,4 @@
+// license:BSD-3-Clause
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 

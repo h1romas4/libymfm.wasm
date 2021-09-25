@@ -1,3 +1,4 @@
+// license:GPL-2
 /**
  * Rust SN76489 emulation
  *  Hiromasa Tanaka <h1romas4@gmail.com>
@@ -12,31 +13,28 @@
  * Original SN76489 emulation Copyright
  */
 /*
-	SN76489 emulation
-	by Maxim in 2001 and 2002
-	converted from my original Delphi implementation
-	I'm a C newbie so I'm sure there are loads of stupid things
-	in here which I'll come back to some day and redo
-	Includes:
-	- Super-high quality tone channel "oversampling" by calculating fractional positions on transitions
-	- Noise output pattern reverse engineered from actual SMS output
-	- Volume levels taken from actual SMS output
-	07/08/04  Charles MacDonald
-	Modified for use with SMS Plus:
-	- Added support for multiple PSG chips.
-	- Added reset/config/update routines.
-	- Added context management routines.
-	- Removed SN76489_GetValues().
-	- Removed some unused variables.
+    SN76489 emulation
+    by Maxim in 2001 and 2002
+    converted from my original Delphi implementation
+    I'm a C newbie so I'm sure there are loads of stupid things
+    in here which I'll come back to some day and redo
+    Includes:
+    - Super-high quality tone channel "oversampling" by calculating fractional positions on transitions
+    - Noise output pattern reverse engineered from actual SMS output
+    - Volume levels taken from actual SMS output
+    07/08/04  Charles MacDonald
+    Modified for use with SMS Plus:
+    - Added support for multiple PSG chips.
+    - Added reset/config/update routines.
+    - Added context management routines.
+    - Removed SN76489_GetValues().
+    - Removed some unused variables.
 */
-
 use std::f32;
 use std::i32;
 
-use crate::sound::{SoundChip, convert_sample_i2f};
-
-use super::SoundChipType;
-use super::SoundStream;
+use crate::sound::{convert_sample_i2f, SoundChip};
+use super::{SoundChipType, SoundStream};
 
 // More testing is needed to find and confirm feedback patterns for
 // SN76489 variants and compatible chips.
@@ -44,41 +42,41 @@ use super::SoundStream;
 #[allow(clippy::enum_variant_names)]
 enum FeedbackPatterns {
     // Texas Instruments TMS SN76489N (original) from BBC Micro computer
-    FbBbcmicro =   0x8005,
+    FbBbcmicro = 0x8005,
     // Texas Instruments TMS SN76489AN (rev. A) from SC-3000H computer
-    FbSc3000   =   0x0006,
+    FbSc3000 = 0x0006,
     // SN76489 clone in Sega's VDP chips (315-5124, 315-5246, 315-5313, Game Gear)
-    FbSegavdp  =   0x0009
+    FbSegavdp = 0x0009,
 }
 
 #[allow(dead_code)]
 enum SrWidths {
     SrwSc3000bbcmicro = 15,
-    SrwSegavdp = 16
+    SrwSegavdp = 16,
 }
 
 #[allow(dead_code)]
 enum VolumeModes {
     // Volume levels 13-15 are identical
-    VolTrunc   =   0,
+    VolTrunc = 0,
     // Volume levels 13-15 are unique
-    VolFull    =   1
+    VolFull = 1,
 }
 
 #[allow(dead_code)]
 enum MuteValues {
     // All channels muted
-    AllOff   =   0,
+    AllOff = 0,
     // Tone 1 mute control
-    Tone1On  =   1,
+    Tone1On = 1,
     // Tone 2 mute control
-    Tone2On  =   2,
+    Tone2On = 2,
     // Tone 3 mute control
-    Tone3On  =   4,
+    Tone3On = 4,
     // Noise mute control
-    NoiseOn  =   8,
+    NoiseOn = 8,
     // All channels enabled
-    AllOn    =   15
+    AllOn = 15,
 }
 
 // Initial state of shift register
@@ -91,7 +89,7 @@ const PSG_VOLUME_VALUES: [i32; 16] = [
     // these values are true volumes for 2dB drops at each step (multiply previous by 10^-0.1)
     //	1516,1205,957,760,603,479,381,303,240,191,152,120,96,76,60,0
     // The MAME core uses 0x2000 as maximum volume (0x1000 for bipolar output)
-    4096, 3254, 2584, 2053, 1631, 1295, 1029, 817, 649, 516, 410, 325, 258, 205, 163, 0
+    4096, 3254, 2584, 2053, 1631, 1295, 1029, 817, 649, 516, 410, 325, 258, 205, 163, 0,
 ];
 
 #[derive(Default)]
@@ -163,7 +161,7 @@ impl SN76489 {
     }
 
     pub fn write(&mut self, data: u8) {
-        let data : u16 = u16::from(data);
+        let data: u16 = u16::from(data);
         if data & 0x80 != 0 {
             self.latched_register = i32::from(data >> 4) & 0x07;
             self.registers[self.latched_register as usize] =
@@ -208,7 +206,13 @@ impl SN76489 {
         }
     }
 
-    pub fn update(&mut self, buffer_l: &mut [f32], buffer_r: &mut [f32], length: usize, buffer_pos: usize) {
+    pub fn update(
+        &mut self,
+        buffer_l: &mut [f32],
+        buffer_r: &mut [f32],
+        length: usize,
+        buffer_pos: usize,
+    ) {
         for j in 0..length {
             // Tone channels
             for i in 0..3 {
@@ -220,9 +224,9 @@ impl SN76489 {
                                 * self.intermediate_pos[i]) as i32;
                     } else {
                         // Flat (no antialiasing needed)
-                        self.channels[i] =
-                            (PSG_VOLUME_VALUES[self.registers[2 * i + 1] as usize]
-                                * self.tone_freq_pos[i]) as i32;
+                        self.channels[i] = (PSG_VOLUME_VALUES[self.registers[2 * i + 1] as usize]
+                            * self.tone_freq_pos[i])
+                            as i32;
                     }
                 } else {
                     // Muted channel
@@ -244,11 +248,11 @@ impl SN76489 {
             }
 
             // Build stereo result into buffer (clear buffer)
-            let mut buffer_li: i32  = 0;
-            let mut buffer_ri: i32  = 0;
+            let mut buffer_li: i32 = 0;
+            let mut buffer_ri: i32 = 0;
             for i in 0..4 {
-                buffer_li +=  self.channels[i];
-                buffer_ri +=  self.channels[i];
+                buffer_li += self.channels[i];
+                buffer_ri += self.channels[i];
             }
             buffer_l[j + buffer_pos] += convert_sample_i2f(buffer_li / 2);
             buffer_r[j + buffer_pos] += convert_sample_i2f(buffer_ri / 2);
@@ -277,10 +281,10 @@ impl SN76489 {
                     if self.registers[i * 2] >= PSG_CUTOFF {
                         // For tone-generating values, calculate how much of the sample is + and how much is -
                         // This is optimised into an even more confusing state than it was in the first place...
-                        self.intermediate_pos[i] =
-                            (self.num_clocks_for_sample as f32 - self.clock + 2_f32 * self.tone_freq_vals[i] as f32)
-                                * self.tone_freq_pos[i] as f32
-                                / (self.num_clocks_for_sample as f32 + self.clock);
+                        self.intermediate_pos[i] = (self.num_clocks_for_sample as f32 - self.clock
+                            + 2_f32 * self.tone_freq_vals[i] as f32)
+                            * self.tone_freq_pos[i] as f32
+                            / (self.num_clocks_for_sample as f32 + self.clock);
                         // Flip the flip-flop
                         self.tone_freq_pos[i] = -self.tone_freq_pos[i];
                     } else {
@@ -288,8 +292,8 @@ impl SN76489 {
                         self.tone_freq_pos[i] = 1;
                         self.intermediate_pos[i] = f32::MIN;
                     }
-                    self.tone_freq_vals[i] += self.registers[i * 2] *
-                        (self.num_clocks_for_sample / self.registers[i * 2] + 1);
+                    self.tone_freq_vals[i] += self.registers[i * 2]
+                        * (self.num_clocks_for_sample / self.registers[i * 2] + 1);
                 } else {
                     // signal no antialiasing needed
                     self.intermediate_pos[i] = f32::MIN;
@@ -303,7 +307,8 @@ impl SN76489 {
                 self.tone_freq_pos[3] = -self.tone_freq_pos[3];
                 if self.noise_freq != 0x80 {
                     // If not matching tone2, decrement counter
-                    self.tone_freq_vals[3] += self.noise_freq * (self.num_clocks_for_sample / self.noise_freq + 1);
+                    self.tone_freq_vals[3] +=
+                        self.noise_freq * (self.num_clocks_for_sample / self.noise_freq + 1);
                 }
                 if self.tone_freq_pos[3] == 1 {
                     // On the positive edge of the square wave (only once per cycle)
@@ -319,7 +324,8 @@ impl SN76489 {
                                 // If two bits fed back, I can do Feedback=(nsr & fb) && (nsr & fb ^ fb)
                                 // since that's (one or more bits set) && (not all bits set)
                                 let f1 = self.noise_shift_register & self.white_noise_feedback;
-                                let f2 = (self.noise_shift_register & self.white_noise_feedback) ^ self.white_noise_feedback;
+                                let f2 = (self.noise_shift_register & self.white_noise_feedback)
+                                    ^ self.white_noise_feedback;
                                 if f1 != 0 && f2 != 0 {
                                     feedback = 1;
                                 } else {
@@ -340,8 +346,8 @@ impl SN76489 {
                     } else {
                         feedback = self.noise_shift_register & 1;
                     }
-                    self.noise_shift_register = (self.noise_shift_register >> 1)
-                        | (feedback << (self.sr_width - 1));
+                    self.noise_shift_register =
+                        (self.noise_shift_register >> 1) | (feedback << (self.sr_width - 1));
                 }
             }
         }
@@ -378,7 +384,14 @@ impl SoundChip for SN76489 {
         self.write(data as u8);
     }
 
-    fn update(&mut self, _: usize, buffer_l: &mut [f32], buffer_r: &mut [f32], numsamples: usize, buffer_pos: usize) {
+    fn update(
+        &mut self,
+        _: usize,
+        buffer_l: &mut [f32],
+        buffer_r: &mut [f32],
+        numsamples: usize,
+        buffer_pos: usize,
+    ) {
         self.update(buffer_l, buffer_r, numsamples, buffer_pos);
     }
 
