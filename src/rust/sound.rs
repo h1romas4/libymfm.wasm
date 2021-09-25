@@ -375,6 +375,6 @@ mod tests {
 
     #[test]
     fn make_stream_1() {
-        let stream = SoundStream::new(44100, 44100);
+        let _stream = SoundStream::new(44100, 44100);
     }
 }

@@ -199,8 +199,8 @@ impl PWM {
         let pwm_out_l = chip.pwm_out_l as i32;
         let pwm_out_r = chip.pwm_out_r as i32;
 
-        tmp_out_l = self.pwm_update_scale(&chip, pwm_out_l);
-        tmp_out_r = self.pwm_update_scale(&chip, pwm_out_r);
+        tmp_out_l = self.pwm_update_scale(chip, pwm_out_l);
+        tmp_out_r = self.pwm_update_scale(chip, pwm_out_r);
 
         for i in 0..length {
             buffer_l[i] += convert_sample_i2f(tmp_out_l);
