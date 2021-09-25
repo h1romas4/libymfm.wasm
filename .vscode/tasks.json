@@ -51,7 +51,7 @@
             "label": "Run Build (JavaScript)",
             "type": "shell",
             "linux": {
-                "command": "(cd ${workspaceFolder}/examples/web && npm run build)"
+                "command": "(cd ${workspaceFolder}/examples/web && rm -f dist/* && npm run build)"
             }
         },
         {
