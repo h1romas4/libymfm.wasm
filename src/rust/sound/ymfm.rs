@@ -12,14 +12,10 @@ extern "C" {
     fn ymfm_generate(
         chip_num: u16,
         index: u16,
-        output_start: i64,
-        output_step: i64,
         buffer: *const i32,
     );
     fn ymfm_remove_chip(chip_num: u16);
 }
-
-type EmulatedTime = i64;
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy)]
@@ -42,8 +38,6 @@ pub struct YmFm {
     chip_type: ChipType,
     clock: u32,
     sampling_rate: u32,
-    output_pos: EmulatedTime,
-    output_step: EmulatedTime,
 }
 
 impl YmFm {
@@ -52,8 +46,6 @@ impl YmFm {
             self.sampling_rate = ymfm_add_chip(self.chip_type as u16, clock);
         }
         self.clock = clock;
-        // TODO: 44100 yet
-        self.output_step = 0x100000000 / i64::from(44100);
         self.sampling_rate
     }
 
@@ -70,21 +62,11 @@ impl YmFm {
             ymfm_generate(
                 self.chip_type as u16,
                 index as u16,
-                self.output_pos,
-                self.output_step,
                 generate_buffer.as_ptr(),
             );
         }
         buffer[0] = generate_buffer[0];
         buffer[1] = generate_buffer[1];
-
-        // vgm == sampling_rate == 44100Hz
-        if self.output_pos as u64 + self.output_step as u64 > i64::MAX as u64 {
-            self.output_pos =
-                ((self.output_pos as u64 + self.output_step as u64) - i64::MAX as u64) as i64;
-        } else {
-            self.output_pos += self.output_step;
-        }
     }
 }
 
@@ -110,8 +92,6 @@ impl SoundChip for YmFm {
             chip_type,
             clock: 0,
             sampling_rate: 0,
-            output_pos: 0,
-            output_step: 0,
         }
     }
 

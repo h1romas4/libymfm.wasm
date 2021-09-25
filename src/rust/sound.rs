@@ -201,10 +201,18 @@ impl SoundSlot {
             None => { /* nothing to do */ }
             Some(sound_device) => {
                 for i in 0..numsamples {
-                    if sound_device.sound_stream.is_tick() {
+                    let mut is_tick;
+                    while {
+                        is_tick = sound_device.sound_stream.is_tick();
+                        is_tick != Tick::NO
+                    }
+                    {
                         sound_device
                             .sound_chip
                             .tick(index, &mut sound_device.sound_stream);
+                        if is_tick == Tick::ONE {
+                            break;
+                        }
                     }
                     let (l, r) = sound_device.sound_stream.pop();
                     buffer_l[buffer_pos + i] += l;
@@ -274,16 +282,22 @@ impl SoundStream {
         }
     }
 
-    pub fn is_tick(&self) -> bool {
-        if self.sound_chip_tick_rate == self.output_sampling_rate {
-            return true;
+    pub fn is_tick(&self) -> Tick {
+        // TODO: better up-sampling
+        if self.sound_chip_tick_rate < self.output_sampling_rate
+            && self.sound_chip_tick_pos > self.output_sampling_pos
+        {
+            return Tick::NO;
         }
-        // TODO: better upsampling
-        if self.sound_chip_tick_pos > self.output_sampling_pos {
-            return false;
+        // down-sampling
+        if self.sound_chip_tick_rate > self.output_sampling_rate {
+            if self.sound_chip_tick_pos < self.output_sampling_pos {
+                return Tick::MORE;
+            } else {
+                return Tick::NO;
+            }
         }
-        // TODO: down sampling
-        true
+        Tick::ONE
     }
 
     pub fn push(&mut self, sampling_l: f32, sampling_r: f32) {
@@ -307,6 +321,13 @@ impl SoundStream {
         }
         next as u64
     }
+}
+
+#[derive(PartialEq)]
+pub enum Tick {
+    ONE,
+    MORE,
+    NO,
 }
 
 ///
