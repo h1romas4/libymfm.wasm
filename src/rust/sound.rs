@@ -1,7 +1,6 @@
 mod pwm;
 mod segapcm;
 mod sn76489;
-mod ym3438;
 mod ymfm;
 
 use std::cell::RefCell;
@@ -11,7 +10,6 @@ use std::rc::Rc;
 pub use crate::sound::pwm::PWM;
 pub use crate::sound::segapcm::SEGAPCM;
 pub use crate::sound::sn76489::SN76489;
-pub use crate::sound::ym3438::YM3438;
 pub use crate::sound::ymfm::ChipType;
 pub use crate::sound::ymfm::YmFm;
 
