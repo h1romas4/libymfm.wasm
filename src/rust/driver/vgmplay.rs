@@ -2,14 +2,14 @@ use flate2::read::GzDecoder;
 use std::convert::TryInto;
 use std::io::prelude::*;
 
-#[cfg(target_arch = "wasm32")]
-use crate::console_log;
+use crate::sound::{SoundChipType, SoundSlot};
 use crate::driver::metadata::parse_vgm_meta;
 use crate::driver::metadata::Gd3;
 use crate::driver::metadata::Jsonlize;
 use crate::driver::metadata::VgmHeader;
 
-use crate::sound::{SoundChipType, SoundSlot};
+#[cfg(target_arch = "wasm32")]
+use crate::console_log;
 
 pub struct VgmPlay {
     sound_slot: SoundSlot,

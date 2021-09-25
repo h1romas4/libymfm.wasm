@@ -377,3 +377,13 @@ impl RomSet {
         0
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::sound::SoundStream;
+
+    #[test]
+    fn make_stream_1() {
+        let stream = SoundStream::new(44100, 44100);
+    }
+}
