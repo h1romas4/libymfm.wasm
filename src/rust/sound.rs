@@ -291,10 +291,13 @@ impl SoundStream {
         }
         // down-sampling
         if self.sound_chip_tick_rate > self.output_sampling_rate {
-            if self.sound_chip_tick_pos < self.output_sampling_pos {
-                return Tick::MORE;
+            #[allow(clippy::comparison_chain)]
+            return if self.sound_chip_tick_pos < self.output_sampling_pos {
+                Tick::MORE
+            } else if self.sound_chip_tick_pos == self.output_sampling_pos {
+                Tick::ONE
             } else {
-                return Tick::NO;
+                Tick::NO
             }
         }
         Tick::ONE
