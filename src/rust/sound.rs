@@ -60,9 +60,13 @@ pub trait RomDevice {
 /// Sound Slot
 ///
 pub struct SoundSlot {
-    external_tick_rate: u32,
-    output_sampling_rate: u32,
+    _external_tick_rate: u32,
+    _output_sampling_rate: u32,
     output_sample_chunk_size: usize,
+    output_sampling_l: Vec<f32>,
+    output_sampling_r: Vec<f32>,
+    output_sampling_buffer_l: Vec<f32>,
+    output_sampling_buffer_r: Vec<f32>,
     internal_sampling_rate: u32,
     sound_device: HashMap<SoundChipType, Vec<SoundDevice>>,
     sound_romset: HashMap<usize, Rc<RefCell<RomSet>>>,
@@ -70,6 +74,7 @@ pub struct SoundSlot {
 
 // TODO: 44100 -> 96000
 const INTERNAL_SAMPLING_RATE: u32 = 44100;
+const BUFFERING_SCALE: usize = 4;
 
 ///
 /// SoundSlot
@@ -81,25 +86,17 @@ impl SoundSlot {
         output_sample_chunk_size: usize,
     ) -> Self {
         SoundSlot {
-            external_tick_rate,
-            output_sampling_rate,
+            _external_tick_rate: external_tick_rate,
+            _output_sampling_rate: output_sampling_rate,
             output_sample_chunk_size,
+            output_sampling_l: vec![0_f32; output_sample_chunk_size],
+            output_sampling_r: vec![0_f32; output_sample_chunk_size],
+            output_sampling_buffer_l: vec![0_f32; output_sample_chunk_size * BUFFERING_SCALE],
+            output_sampling_buffer_r: vec![0_f32; output_sample_chunk_size * BUFFERING_SCALE],
             internal_sampling_rate: INTERNAL_SAMPLING_RATE,
             sound_device: HashMap::new(),
             sound_romset: HashMap::new(),
         }
-    }
-
-    pub fn get_output_sampling_rate(&self) -> u32 {
-        self.output_sampling_rate
-    }
-
-    pub fn get_external_tick_rate(&self) -> u32 {
-        self.external_tick_rate
-    }
-
-    pub fn get_output_sample_chunk_size(&self) -> usize {
-        self.output_sample_chunk_size
     }
 
     pub fn add_device(&mut self, sound_chip_type: SoundChipType, number_of: usize, clock: u32) {
@@ -148,27 +145,6 @@ impl SoundSlot {
         }
     }
 
-    #[inline]
-    pub fn find(
-        &mut self,
-        sound_device_name: SoundChipType,
-        index: usize,
-    ) -> Option<&mut SoundDevice> {
-        let sound_chip = match self.sound_device.get_mut(&sound_device_name) {
-            None => None,
-            Some(vec) => {
-                if vec.len() < index {
-                    return None;
-                }
-                Some(vec)
-            }
-        };
-        match sound_chip {
-            None => None,
-            Some(sound_chip) => Some(&mut sound_chip[index]),
-        }
-    }
-
     pub fn write(&mut self, sound_device_name: SoundChipType, index: usize, port: u32, data: u32) {
         match self.find(sound_device_name, index) {
             None => { /* nothing to do */ }
@@ -176,23 +152,13 @@ impl SoundSlot {
         }
     }
 
-    ///
-    /// update
-    /// TODO: remove arg sound_chip_type & index
-    ///
-    pub fn update(
-        &mut self,
-        sound_chip_type: SoundChipType,
-        index: usize,
-        buffer_l: &mut [f32],
-        buffer_r: &mut [f32],
-        numsamples: usize,
-        buffer_pos: usize,
-    ) {
-        match self.find(sound_chip_type, index) {
-            None => { /* nothing to do */ }
-            Some(sound_device) => {
-                for i in 0..numsamples {
+    pub fn update(&mut self, tick_count: usize) {
+        for _ in 0..tick_count {
+            self.output_sampling_buffer_l.push(0_f32);
+            self.output_sampling_buffer_r.push(0_f32);
+            let buffer_pos = self.output_sampling_buffer_l.len() - 1;
+            for (_, sound_devices) in self.sound_device.iter_mut() {
+                for (index, sound_device) in sound_devices.iter_mut().enumerate() {
                     let mut is_tick;
                     while {
                         is_tick = sound_device.sound_stream.is_tick();
@@ -206,32 +172,76 @@ impl SoundSlot {
                         }
                     }
                     let (l, r) = sound_device.sound_stream.pop();
-                    buffer_l[buffer_pos + i] += l;
-                    buffer_r[buffer_pos + i] += r;
+                    self.output_sampling_buffer_l[buffer_pos] += l;
+                    self.output_sampling_buffer_r[buffer_pos] += r;
                 }
             }
         }
     }
 
-    pub fn update_all(
-        &mut self,
-        sound_chip_type: SoundChipType,
-        buffer_l: &mut [f32],
-        buffer_r: &mut [f32],
-        numsamples: usize,
-        buffer_pos: usize,
-    ) {
-        if self.sound_device.contains_key(&sound_chip_type) {
-            for index in 0..self.sound_device.get(&sound_chip_type).unwrap().len() {
-                self.update(
-                    sound_chip_type,
-                    index,
-                    buffer_l,
-                    buffer_r,
-                    numsamples,
-                    buffer_pos,
-                );
+    ///
+    /// Whether the output buffer is filled or not.
+    ///
+    pub fn ready(&self) -> bool {
+        if self.output_sampling_buffer_l.len() > self.output_sample_chunk_size * BUFFERING_SCALE {
+            return false;
+        }
+        true
+    }
+
+    ///
+    /// Stream sampling chank
+    ///
+    pub fn stream_sampling_chank(&mut self) {
+        let mut chunk_size = self.output_sample_chunk_size;
+        if self.output_sample_chunk_size > self.output_sampling_buffer_l.len() {
+            chunk_size = self.output_sampling_buffer_l.len();
+        }
+
+        for (i, val) in self
+            .output_sampling_buffer_l
+            .drain(0..chunk_size)
+            .enumerate()
+        {
+            self.output_sampling_l[i] = val;
+        }
+        for (i, val) in self
+            .output_sampling_buffer_r
+            .drain(0..chunk_size)
+            .enumerate()
+        {
+            self.output_sampling_r[i] = val;
+        }
+    }
+
+    ///
+    /// Return sampling_l buffer referance.
+    ///
+    pub fn get_output_sampling_l_ref(&self) -> *const f32 {
+        self.output_sampling_l.as_ptr()
+    }
+
+    ///
+    /// Return sampling buffer referance.
+    ///
+    pub fn get_output_sampling_r_ref(&self) -> *const f32 {
+        self.output_sampling_l.as_ptr()
+    }
+
+    #[inline]
+    fn find(&mut self, sound_device_name: SoundChipType, index: usize) -> Option<&mut SoundDevice> {
+        let sound_chip = match self.sound_device.get_mut(&sound_device_name) {
+            None => None,
+            Some(vec) => {
+                if vec.len() < index {
+                    return None;
+                }
+                Some(vec)
             }
+        };
+        match sound_chip {
+            None => None,
+            Some(sound_chip) => Some(&mut sound_chip[index]),
         }
     }
 }

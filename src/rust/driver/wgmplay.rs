@@ -3,6 +3,8 @@
 use crate::{driver::VgmPlay, sound::SoundSlot};
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
+#[cfg(target_arch = "wasm32")]
+use crate::driver::vgmplay::VGM_TICK_RATE;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
@@ -31,7 +33,7 @@ impl WgmPlay {
         WgmPlay {
             vgmplay: VgmPlay::new(
                 SoundSlot::new(
-                    44100, /* VGM format tick rate */
+                    VGM_TICK_RATE,
                     output_sampling_rate,
                     output_sample_chunk_size,
                 ),
