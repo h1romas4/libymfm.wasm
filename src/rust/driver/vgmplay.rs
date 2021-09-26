@@ -194,20 +194,7 @@ impl VgmPlay {
     pub fn play(&mut self, repeat: bool) -> usize {
         while self.sound_slot.ready() && !self.vgm_end {
             for _ in 0..self.parse_vgm(repeat) {
-                // YM2612 straming pcm update
-                if self.pcm_stream_length > 0
-                    && (self.pcm_stream_sampling_pos % self.pcm_stream_sample_count) as usize == 0
-                {
-                    self.sound_slot.write(
-                        SoundChipType::YM2612,
-                        0,
-                        0x2a,
-                        self.vgm_data[self.data_pos + self.pcm_stream_pos + self.pcm_stream_offset]
-                            .into(),
-                    );
-                    self.pcm_stream_length -= 1;
-                    self.pcm_stream_pos += 1;
-                }
+                self.update_pcm_stream();
                 self.sound_slot.update(1);
             }
         }
@@ -221,6 +208,27 @@ impl VgmPlay {
         } else {
             self.vgm_loop_count
         }
+    }
+
+    fn update_pcm_stream(&mut self) {
+        // YM2612 straming pcm update
+        if self.pcm_stream_pos_init == self.pcm_stream_pos && self.pcm_stream_length > 0 {
+            self.pcm_stream_sampling_pos = 0;
+        }
+        if self.pcm_stream_length > 0
+            && (self.pcm_stream_sampling_pos % self.pcm_stream_sample_count) as usize == 0
+        {
+            self.sound_slot.write(
+                SoundChipType::YM2612,
+                0,
+                0x2a,
+                self.vgm_data[self.data_pos + self.pcm_stream_pos + self.pcm_stream_offset]
+                    .into(),
+            );
+            self.pcm_stream_length -= 1;
+            self.pcm_stream_pos += 1;
+        }
+        self.pcm_stream_sampling_pos += 1;
     }
 
     fn extract(&mut self) {
