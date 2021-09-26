@@ -105,11 +105,11 @@ impl SoundSlot {
     pub fn add_device(&mut self, sound_chip_type: SoundChipType, number_of: usize, clock: u32) {
         for _n in 0..number_of {
             let mut sound_chip: Box<dyn SoundChip> = match sound_chip_type {
-                SoundChipType::YM2151 => Box::new(YmFm::new(SoundChipType::YM2151)),
-                SoundChipType::YM2203 => Box::new(YmFm::new(SoundChipType::YM2203)),
-                SoundChipType::YM2149 => Box::new(YmFm::new(SoundChipType::YM2149)),
-                SoundChipType::YM2612 => Box::new(YmFm::new(SoundChipType::YM2612)),
-                SoundChipType::YM2413 => Box::new(YmFm::new(SoundChipType::YM2413)),
+                SoundChipType::YM2151
+                | SoundChipType::YM2203
+                | SoundChipType::YM2149
+                | SoundChipType::YM2612
+                | SoundChipType::YM2413 => Box::new(YmFm::new(sound_chip_type)),
                 SoundChipType::YM2602 => todo!(),
                 SoundChipType::SEGAPSG => Box::new(SN76489::new(SoundChipType::SEGAPSG)),
                 SoundChipType::PWM => Box::new(PWM::new(SoundChipType::PWM)),
@@ -197,8 +197,7 @@ impl SoundSlot {
                     while {
                         is_tick = sound_device.sound_stream.is_tick();
                         is_tick != Tick::NO
-                    }
-                    {
+                    } {
                         sound_device
                             .sound_chip
                             .tick(index, &mut sound_device.sound_stream);
@@ -290,7 +289,7 @@ impl SoundStream {
                 Tick::ONE
             } else {
                 Tick::NO
-            }
+            };
         }
         Tick::ONE
     }
