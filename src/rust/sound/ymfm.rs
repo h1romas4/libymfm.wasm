@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
-use crate::sound::{convert_sample_i2f, SoundChip};
 use super::{SoundChipType, SoundStream};
+use crate::sound::{convert_sample_i2f, SoundChip};
 
 ///
 /// FFI interface
@@ -9,11 +9,7 @@ use super::{SoundChipType, SoundStream};
 extern "C" {
     fn ymfm_add_chip(chip_num: u16, clock: u32) -> u32;
     fn ymfm_write(chip_num: u16, index: u16, reg: u32, data: u8);
-    fn ymfm_generate(
-        chip_num: u16,
-        index: u16,
-        buffer: *const i32,
-    );
+    fn ymfm_generate(chip_num: u16, index: u16, buffer: *const i32);
     fn ymfm_remove_chip(chip_num: u16);
 }
 
@@ -105,26 +101,9 @@ impl SoundChip for YmFm {
         self.write_chip(index, offset, data as u8);
     }
 
-    fn update(
-        &mut self,
-        index: usize,
-        buffer_l: &mut [f32],
-        buffer_r: &mut [f32],
-        numsamples: usize,
-        buffer_pos: usize,
-    ) {
-        let mut buffer: [i32; 2] = [0, 0];
-        for i in 0..numsamples {
-            self.generate(index, &mut buffer);
-            buffer_l[buffer_pos + i] += convert_sample_i2f(buffer[0]);
-            buffer_r[buffer_pos + i] += convert_sample_i2f(buffer[1]);
-        }
-    }
-
     fn tick(&mut self, index: usize, sound_stream: &mut SoundStream) {
-        let mut l: [f32; 1] = [0_f32];
-        let mut r: [f32; 1] = [0_f32];
-        self.update(index, &mut l, &mut r, 1, 0);
-        sound_stream.push(l[0], r[0]);
+        let mut buffer: [i32; 2] = [0, 0];
+        self.generate(index, &mut buffer);
+        sound_stream.push(convert_sample_i2f(buffer[0]), convert_sample_i2f(buffer[1]));
     }
 }

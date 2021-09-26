@@ -334,21 +334,10 @@ impl SoundChip for PWM {
         self.pwm_chn_w(0, port as u8, data as u16);
     }
 
-    fn update(
-        &mut self,
-        _: usize,
-        buffer_l: &mut [f32],
-        buffer_r: &mut [f32],
-        numsamples: usize,
-        buffer_pos: usize,
-    ) {
-        self.pwm_update_chip(0, buffer_l, buffer_r, numsamples, buffer_pos);
-    }
-
     fn tick(&mut self, _: usize, sound_stream: &mut SoundStream) {
         let mut l: [f32; 1] = [0_f32];
         let mut r: [f32; 1] = [0_f32];
-        self.update(0, &mut l, &mut r, 1, 0);
+        self.pwm_update_chip(0, &mut l,&mut r, 1, 0);
         sound_stream.push(l[0], r[0]);
     }
 }

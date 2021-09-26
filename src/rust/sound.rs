@@ -41,14 +41,6 @@ pub trait SoundChip {
     fn init(&mut self, clock: u32) -> u32;
     fn reset(&mut self);
     fn write(&mut self, index: usize, port: u32, data: u32);
-    fn update(
-        &mut self,
-        index: usize,
-        buffer_l: &mut [f32],
-        buffer_r: &mut [f32],
-        numsamples: usize,
-        buffer_pos: usize,
-    );
     fn tick(&mut self, index: usize, sound_stream: &mut SoundStream);
 }
 
