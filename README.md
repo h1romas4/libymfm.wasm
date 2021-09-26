@@ -27,22 +27,6 @@ example source code:
 
 > [https://github.com/h1romas4/libymfm.wasm/tree/wasm](https://github.com/h1romas4/libymfm.wasm/tree/wasm)
 
-## WASI vgm2wav render
-
-Install [Wasmer](https://wasmer.io/) runtime
-
-```
-$ wasmer -v
-wasmer 2.0.0
-```
-
-Play vgm file (This repository includes pre-build `dist/vgmrender.wasi` and sample vgm file)
-
-```
-wasmer run ./dist/vgmrender.wasi --mapdir /:./docs/vgm/ -- /ym2612.vgm -o ym2612.wav
-ffplay ./docs/vgm/ym2612.wav
-```
-
 ## Build `vgmrender.wasi`
 
 Setup [wasi-sdk-12](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-12)
@@ -69,6 +53,22 @@ cd libymfm.wasm
 mkdir build && cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake  ..
 make -j4
+```
+
+## WASI vgm2wav render
+
+Install [Wasmer](https://wasmer.io/) runtime
+
+```
+$ wasmer -v
+wasmer 2.0.0
+```
+
+Play vgm file
+
+```
+wasmer run ./dist/vgmrender.wasi --mapdir /:./docs/vgm/ -- /ym2612.vgm -o ym2612.wav
+ffplay ./docs/vgm/ym2612.wav
 ```
 
 ## WebAssembly VGM Player (`examples/web`)
