@@ -10,6 +10,9 @@ pub struct WgmPlay {
     vgmplay: VgmPlay,
 }
 
+///
+/// VgmPlay WebAssembly Interface
+///
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 impl WgmPlay {
@@ -27,7 +30,11 @@ impl WgmPlay {
 
         WgmPlay {
             vgmplay: VgmPlay::new(
-                SoundSlot::new(44100, output_sampling_rate, output_sample_chunk_size),
+                SoundSlot::new(
+                    44100, /* VGM format tick rate */
+                    output_sampling_rate,
+                    output_sample_chunk_size,
+                ),
                 data_length,
             ),
         }
@@ -55,14 +62,14 @@ impl WgmPlay {
     }
 
     ///
-    /// get_header
+    /// Get the JSON parsed from the header of the VGM file.
     ///
     pub fn get_seq_header(&self) -> String {
         self.vgmplay.get_vgm_header_json()
     }
 
     ///
-    /// get_gd3
+    /// Get the JSON parsed GD3 of the VGM file.
     ///
     pub fn get_seq_gd3(&self) -> String {
         self.vgmplay.get_vgm_gd3_json()
@@ -71,15 +78,15 @@ impl WgmPlay {
     ///
     /// Initialize sound driver.
     ///
-    /// # Arguments
-    /// sample_rate - WebAudio sampling rate
-    ///
     pub fn init(&mut self) -> bool {
         self.vgmplay.init().is_ok()
     }
 
     ///
-    /// play
+    /// Continue playing until output_sample_chunk_size is satisfied.
+    ///
+    /// The number of times the song has been looped will be returned.
+    /// In the case of an infinite loop, the std::usize::MAX value is always returned.
     ///
     pub fn play(&mut self) -> usize {
         self.vgmplay.play(true)
