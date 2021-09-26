@@ -230,7 +230,7 @@ impl SoundSlot {
     /// Return sampling buffer referance.
     ///
     pub fn get_output_sampling_r_ref(&self) -> *const f32 {
-        self.output_sampling_l.as_ptr()
+        self.output_sampling_r.as_ptr()
     }
 
     #[inline]
