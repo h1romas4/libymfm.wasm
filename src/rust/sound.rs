@@ -74,7 +74,6 @@ pub struct SoundSlot {
 
 // TODO: 44100 -> 96000
 const INTERNAL_SAMPLING_RATE: u32 = 44100;
-const BUFFERING_SCALE: usize = 4;
 
 impl SoundSlot {
     pub fn new(
@@ -88,8 +87,8 @@ impl SoundSlot {
             output_sample_chunk_size,
             output_sampling_l: vec![0_f32; output_sample_chunk_size],
             output_sampling_r: vec![0_f32; output_sample_chunk_size],
-            output_sampling_buffer_l: vec![0_f32; output_sample_chunk_size * BUFFERING_SCALE],
-            output_sampling_buffer_r: vec![0_f32; output_sample_chunk_size * BUFFERING_SCALE],
+            output_sampling_buffer_l: vec![0_f32; output_sample_chunk_size * 2],
+            output_sampling_buffer_r: vec![0_f32; output_sample_chunk_size * 2],
             internal_sampling_rate: INTERNAL_SAMPLING_RATE,
             sound_device: HashMap::new(),
             sound_romset: HashMap::new(),
@@ -192,7 +191,7 @@ impl SoundSlot {
     /// Whether the output buffer is filled or not.
     ///
     pub fn ready(&self) -> bool {
-        if self.output_sampling_buffer_l.len() > self.output_sample_chunk_size * BUFFERING_SCALE {
+        if self.output_sampling_buffer_l.len() > self.output_sample_chunk_size {
             return false;
         }
         true
