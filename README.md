@@ -21,7 +21,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |YM2413|ymfm||
 |PWM|vgmplay|for demo|
 |SN76489|vgmplay|for demo|
-|segapcm|mame|for demo|
+|SEGAPCM|mame|for demo|
 
 example source code:
 
@@ -36,14 +36,14 @@ $ wasmer -v
 wasmer 2.0.0
 ```
 
-Play vgm file (This repository includes pre-build `dist/libymfm.wasi` and sample vgm file)
+Play vgm file (This repository includes pre-build `dist/vgmrender.wasi` and sample vgm file)
 
 ```
-wasmer run ./dist/libymfm.wasi --mapdir /:./docs/vgm/ -- /ym2612.vgm -o ym2612.wav
+wasmer run ./dist/vgmrender.wasi --mapdir /:./docs/vgm/ -- /ym2612.vgm -o ym2612.wav
 ffplay ./docs/vgm/ym2612.wav
 ```
 
-## Build `libymfm.wasi`
+## Build `vgmrender.wasi`
 
 Setup [wasi-sdk-12](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-12)
 
@@ -67,6 +67,68 @@ cmake / make
 git clone --recursive https://github.com/h1romas4/libymfm.wasm
 cd libymfm.wasm
 mkdir build && cd build
-cmake ..
+cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake  ..
 make -j4
 ```
+
+## WebAssembly VGM Player (`examples/web`)
+
+Install wasm-bindgen
+
+```
+cargo install wasm-bindgen-cli
+```
+
+Fix linker path
+
+```
+$ cat .cargo/config # fix linker path
+[target.wasm32-wasi]
+linker = "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/bin/lld"
+rustflags = [
+  "-L", "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/share/wasi-sysroot/lib/wasm32-wasi",
+```
+
+Rust build and wasm-bindgen
+
+```
+cargo build --release --target wasm32-wasi
+wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
+```
+
+npm
+
+```
+cd examples/web
+npm install
+```
+
+workaround patch webpack/lib/wasm-sync/WebAssemblyParser.js
+
+```
+alias: {
+    // Import "fd_seek" from "wasi_snapshot_preview1" with Non-JS-compatible Func Signature (i64 as parameter)
+    //  can only be used for direct wasm to wasm dependencies
+    // webpack/lib/wasm-sync/WebAssemblyParser.js
+    //  const JS_COMPAT_TYPES = new Set(["i32", "f32", "f64"]);
+    // build for workaround patch examples/web/node_modules/webpack/lib/wasm-sync/WebAssemblyParser.js
+    //  const JS_COMPAT_TYPES = new Set(["i32", "i64", "f32", "f64"]);
+    "wasi_snapshot_preview1": path.resolve(__dirname, './src/js/wasi_snapshot_preview1.js'), // eslint-disable-line
+}
+```
+
+```
+npm run start
+```
+
+## TODO / known issues
+
+- [ ] Better upsampling.
+- [ ] To BSD license. (import SN76489/PWM from MAME)
+- [ ] Add buffering mode.
+- [ ] Add direct ymfm intarfece.
+- [ ] Support yfmf's all sound chips.
+- [x] YM2141 clock worng?
+- [x] Fix SEGAPCM.
+- [ ] Refactoring.
+    - [x] Separate the sound stream from the sound driver.

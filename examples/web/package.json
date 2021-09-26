@@ -1,0 +1,27 @@
+{
+    "name": "wasm-vgm-player",
+    "version": "0.1.0",
+    "description": "wasm-vgm-player",
+    "license": "GPL-2.0-or-later",
+    "dependencies": {
+        "@wasmer/wasi": "0.12.0"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.15.5",
+        "@babel/preset-env": "^7.15.6",
+        "babel-eslint": "^10.1.0",
+        "babel-loader": "^8.2.2",
+        "copy-webpack-plugin": "^9.0.1",
+        "eslint": "^7.32.0",
+        "htmlhint": "^0.15.2",
+        "webpack": "^5.53.0",
+        "webpack-cli": "^4.8.0",
+        "webpack-dev-server": "^4.2.1",
+        "webpack-merge": "^5.8.0",
+        "websocket-extensions": ">=0.1.4"
+    },
+    "scripts": {
+        "build": "webpack --config webpack.config.js",
+        "start": "webpack serve --config webpack.dev.js"
+    }
+}
