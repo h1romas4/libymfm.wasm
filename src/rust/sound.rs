@@ -47,14 +47,14 @@ pub trait SoundChip {
 ///
 /// Rom Device Interface
 ///
-pub type RomBank = Option<Rc<RefCell<RomSet>>>;
-
 pub trait RomDevice {
     fn set_rom(&mut self, rombank: RomBank);
     fn read_rom(rombank: &RomBank, address: usize) -> u8 {
         rombank.as_ref().unwrap().borrow().read(address)
     }
 }
+
+pub type RomBank = Option<Rc<RefCell<RomSet>>>;
 
 ///
 /// Sound Slot
@@ -76,9 +76,6 @@ pub struct SoundSlot {
 const INTERNAL_SAMPLING_RATE: u32 = 44100;
 const BUFFERING_SCALE: usize = 4;
 
-///
-/// SoundSlot
-///
 impl SoundSlot {
     pub fn new(
         external_tick_rate: u32,
@@ -99,7 +96,10 @@ impl SoundSlot {
         }
     }
 
-    pub fn add_device(&mut self, sound_chip_type: SoundChipType, number_of: usize, clock: u32) {
+    ///
+    /// Add sound device (sound chip and sound stream, Rom set)
+    ///
+    pub fn add_sound_device(&mut self, sound_chip_type: SoundChipType, number_of: usize, clock: u32) {
         for _n in 0..number_of {
             let mut sound_chip: Box<dyn SoundChip> = match sound_chip_type {
                 SoundChipType::YM2151
@@ -135,6 +135,9 @@ impl SoundSlot {
         }
     }
 
+    ///
+    /// Add ROM for sound chip.
+    ///
     pub fn add_rom(&self, index: usize, memory: &[u8], start_address: usize, end_address: usize) {
         if self.sound_romset.contains_key(&index) {
             self.sound_romset.get(&index).unwrap().borrow_mut().add_rom(
@@ -145,6 +148,9 @@ impl SoundSlot {
         }
     }
 
+    ///
+    /// Write command to sound chip.
+    ///
     pub fn write(&mut self, sound_device_name: SoundChipType, index: usize, port: u32, data: u32) {
         match self.find(sound_device_name, index) {
             None => { /* nothing to do */ }
@@ -152,6 +158,9 @@ impl SoundSlot {
         }
     }
 
+    ///
+    /// Update sound chip.
+    ///
     pub fn update(&mut self, tick_count: usize) {
         for _ in 0..tick_count {
             self.output_sampling_buffer_l.push(0_f32);
@@ -233,6 +242,9 @@ impl SoundSlot {
         self.output_sampling_r.as_ptr()
     }
 
+    ///
+    /// Get the sound chip from the sound slot.
+    ///
     #[inline]
     fn find(&mut self, sound_device_name: SoundChipType, index: usize) -> Option<&mut SoundDevice> {
         let sound_chip = match self.sound_device.get_mut(&sound_device_name) {
@@ -261,7 +273,7 @@ pub struct SoundDevice {
 }
 
 ///
-/// Sound Stream
+/// Sound stream for sound chip
 ///
 pub struct SoundStream {
     sound_chip_tick_rate: u32,
@@ -288,6 +300,10 @@ impl SoundStream {
         }
     }
 
+    ///
+    /// Compare the native tick rate of the sound chip to the output sampling rate
+    /// to determine if it needs to be ticked.
+    ///
     pub fn is_tick(&self) -> Tick {
         // TODO: better up-sampling
         if self.sound_chip_tick_rate < self.output_sampling_rate
@@ -309,6 +325,9 @@ impl SoundStream {
         Tick::ONE
     }
 
+    ///
+    /// The interface through which the sound chip pushes the stream.
+    ///
     pub fn push(&mut self, sampling_l: f32, sampling_r: f32) {
         self.sound_chip_tick_pos =
             Self::next_pos(self.sound_chip_tick_pos, self.sound_chip_tick_step);
@@ -316,6 +335,9 @@ impl SoundStream {
         self.now_chip_sampling_r = sampling_r;
     }
 
+    ///
+    /// Get the stream of the sound chip.
+    ///
     pub fn pop(&mut self) -> (f32, f32) {
         self.output_sampling_pos =
             Self::next_pos(self.output_sampling_pos, self.output_sampling_step);
@@ -323,6 +345,9 @@ impl SoundStream {
         (self.now_chip_sampling_l, self.now_chip_sampling_r)
     }
 
+    ///
+    /// Calculate the position of the stream.
+    ///
     fn next_pos(now: u64, step: u64) -> u64 {
         let next: u128 = (now + step).into();
         if next > u64::MAX.into() {
@@ -368,7 +393,7 @@ pub struct Rom {
 }
 
 ///
-/// Rom sets
+/// Rom set
 ///
 #[derive(Default)]
 pub struct RomSet {
@@ -380,6 +405,9 @@ impl RomSet {
         RomSet { rom: Vec::new() }
     }
 
+    ///
+    /// Add a ROM to the rom set.
+    ///
     pub fn add_rom(&mut self, memory: &[u8], start_address: usize, end_address: usize) {
         // println!("rom: {:<08x} - {:<08x}, {:<08x}, {:<02x}", start_address, end_address, memory.len(), memory[0]);
         // to_vec(clone) is external SPI memory simulation.
@@ -390,6 +418,9 @@ impl RomSet {
         });
     }
 
+    ///
+    /// Read the data from the ROM address.
+    ///
     pub fn read(&self, address: usize) -> u8 {
         for r in self.rom.iter() {
             if r.start_address <= address && r.end_address >= address {

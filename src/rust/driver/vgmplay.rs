@@ -127,28 +127,28 @@ impl VgmPlay {
         self.vgm_pos = (0x34 + self.vgm_header.vgm_data_offset) as usize;
 
         if self.vgm_header.clock_ym2612 != 0 {
-            self.sound_slot.add_device(
+            self.sound_slot.add_sound_device(
                 SoundChipType::YM2612,
                 self.number_of_chip(self.vgm_header.clock_ym2612),
                 self.vgm_header.clock_ym2612 & 0x3fffffff,
             );
         }
         if self.vgm_header.clock_ym2151 != 0 {
-            self.sound_slot.add_device(
+            self.sound_slot.add_sound_device(
                 SoundChipType::YM2151,
                 self.number_of_chip(self.vgm_header.clock_ym2151),
                 self.vgm_header.clock_ym2151 & 0x3fffffff,
             );
         }
         if self.vgm_header.clock_ym2203 != 0 {
-            self.sound_slot.add_device(
+            self.sound_slot.add_sound_device(
                 SoundChipType::YM2203,
                 self.number_of_chip(self.vgm_header.clock_ym2203),
                 self.vgm_header.clock_ym2203 & 0x3fffffff,
             );
         }
         if self.vgm_header.clock_ym2413 != 0 {
-            self.sound_slot.add_device(
+            self.sound_slot.add_sound_device(
                 SoundChipType::YM2413,
                 self.number_of_chip(self.vgm_header.clock_ym2413),
                 self.vgm_header.clock_ym2413 & 0x3fffffff,
@@ -166,7 +166,7 @@ impl VgmPlay {
             } else {
                 clock_ay8910 = self.vgm_header.clock_ay8910 * 8;
             }
-            self.sound_slot.add_device(
+            self.sound_slot.add_sound_device(
                 SoundChipType::YM2149,
                 self.number_of_chip(self.vgm_header.clock_ay8910),
                 clock_ay8910 & 0x3fffffff,
@@ -174,15 +174,15 @@ impl VgmPlay {
         }
         if self.vgm_header.clock_sn76489 != 0 {
             self.sound_slot
-                .add_device(SoundChipType::SEGAPSG, 1, self.vgm_header.clock_sn76489);
+                .add_sound_device(SoundChipType::SEGAPSG, 1, self.vgm_header.clock_sn76489);
         }
         if self.vgm_header.clock_pwm != 0 {
             self.sound_slot
-                .add_device(SoundChipType::PWM, 1, self.vgm_header.clock_pwm);
+                .add_sound_device(SoundChipType::PWM, 1, self.vgm_header.clock_pwm);
         }
         if self.vgm_header.sega_pcm_clock != 0 {
             self.sound_slot
-                .add_device(SoundChipType::SEGAPCM, 1, self.vgm_header.sega_pcm_clock);
+                .add_sound_device(SoundChipType::SEGAPCM, 1, self.vgm_header.sega_pcm_clock);
         }
 
         Ok(())
