@@ -194,8 +194,13 @@ impl SoundSlot {
     ///
     pub fn stream_sampling_chank(&mut self) {
         let mut chunk_size = self.output_sample_chunk_size;
+        // Last chunk
         if self.output_sample_chunk_size > self.output_sampling_buffer_l.len() {
             chunk_size = self.output_sampling_buffer_l.len();
+            for i in 0..self.output_sample_chunk_size {
+                self.output_sampling_l[i] = 0_f32;
+                self.output_sampling_r[i] = 0_f32;
+            }
         }
 
         for (i, val) in self

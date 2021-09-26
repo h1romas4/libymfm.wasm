@@ -192,7 +192,7 @@ impl VgmPlay {
     /// play
     ///
     pub fn play(&mut self, repeat: bool) -> usize {
-        while self.sound_slot.ready() {
+        while self.sound_slot.ready() && !self.vgm_end {
             for _ in 0..self.parse_vgm(repeat) {
                 // YM2612 straming pcm update
                 if self.pcm_stream_length > 0
