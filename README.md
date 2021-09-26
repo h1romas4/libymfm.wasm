@@ -21,7 +21,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |YM2413|ymfm||
 |PWM|vgmplay|for demo|
 |SN76489|vgmplay|for demo|
-|segapcm|mame|for demo|
+|SEGAPCM|mame|for demo|
 
 example source code:
 
@@ -124,9 +124,11 @@ npm run start
 ## TODO / known issues
 
 - [ ] Better upsampling.
+- [ ] To BSD license. (import SN76489/PWM from MAME)
+- [ ] Add buffering mode.
 - [ ] Add direct ymfm intarfece.
-- [ ] Use yfmf's YM2612 chip and other.
-- [ ] It is not a BSD license.
+- [ ] Support yfmf's all sound chips.
 - [x] YM2141 clock worng?
-- [x] Fix segapcm.
+- [x] Fix SEGAPCM.
 - [ ] Refactoring.
+    - [x] Separate the sound stream from the sound driver.
