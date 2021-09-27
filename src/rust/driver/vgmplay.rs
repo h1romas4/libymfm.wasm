@@ -198,7 +198,7 @@ impl VgmPlay {
                 self.sound_slot.update(1);
             }
         }
-        self.sound_slot.stream_sampling_chank();
+        self.sound_slot.stream_sampling_chunk();
 
         if self.vgm_loop_count == std::usize::MAX {
             self.vgm_loop_count = 0;
