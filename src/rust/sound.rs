@@ -199,7 +199,7 @@ impl SoundSlot {
     }
 
     ///
-    /// Stream sampling chank
+    /// Stream sampling chunk
     ///
     pub fn stream_sampling_chunk(&mut self) {
         let mut chunk_size = self.output_sample_chunk_size;
