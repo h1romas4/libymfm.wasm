@@ -14,6 +14,7 @@ extern "C" {
 }
 
 #[allow(non_camel_case_types)]
+#[allow(dead_code)]
 #[derive(Clone, Copy)]
 pub enum ChipType {
     CHIP_YM2149 = 0,

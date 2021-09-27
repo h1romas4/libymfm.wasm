@@ -9,11 +9,10 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-pub use crate::sound::pwm::PWM;
-pub use crate::sound::segapcm::SEGAPCM;
-pub use crate::sound::sn76489::SN76489;
-pub use crate::sound::ymfm::ChipType;
-pub use crate::sound::ymfm::YmFm;
+use crate::sound::pwm::PWM;
+use crate::sound::segapcm::SEGAPCM;
+use crate::sound::sn76489::SN76489;
+use crate::sound::ymfm::YmFm;
 
 ///
 /// Sound chip type
@@ -62,19 +61,15 @@ pub type RomBank = Option<Rc<RefCell<RomSet>>>;
 ///
 pub struct SoundSlot {
     _external_tick_rate: u32,
-    _output_sampling_rate: u32,
+    output_sampling_rate: u32,
     output_sample_chunk_size: usize,
     output_sampling_l: Vec<f32>,
     output_sampling_r: Vec<f32>,
     output_sampling_buffer_l: VecDeque<f32>,
     output_sampling_buffer_r: VecDeque<f32>,
-    internal_sampling_rate: u32,
     sound_device: HashMap<SoundChipType, Vec<SoundDevice>>,
     sound_romset: HashMap<usize, Rc<RefCell<RomSet>>>,
 }
-
-// TODO: 44100 -> 96000
-const INTERNAL_SAMPLING_RATE: u32 = 44100;
 
 impl SoundSlot {
     pub fn new(
@@ -83,14 +78,14 @@ impl SoundSlot {
         output_sample_chunk_size: usize,
     ) -> Self {
         SoundSlot {
+            // TODO: At present external_tick_rate == output_sampling_rate
             _external_tick_rate: external_tick_rate,
-            _output_sampling_rate: output_sampling_rate,
+            output_sampling_rate,
             output_sample_chunk_size,
             output_sampling_l: vec![0_f32; output_sample_chunk_size],
             output_sampling_r: vec![0_f32; output_sample_chunk_size],
             output_sampling_buffer_l: VecDeque::with_capacity(output_sample_chunk_size * 2),
             output_sampling_buffer_r: VecDeque::with_capacity(output_sample_chunk_size * 2),
-            internal_sampling_rate: INTERNAL_SAMPLING_RATE,
             sound_device: HashMap::new(),
             sound_romset: HashMap::new(),
         }
@@ -126,10 +121,9 @@ impl SoundSlot {
                 .or_insert_with(Vec::new)
                 .push(SoundDevice {
                     sound_chip,
-                    _sound_chip_type: sound_chip_type,
                     sound_stream: SoundStream::new(
                         sound_chip_tick_rate,
-                        self.internal_sampling_rate,
+                        self.output_sampling_rate,
                     ),
                 });
         }
@@ -198,7 +192,7 @@ impl SoundSlot {
     ///
     /// Stream sampling chunk
     ///
-    pub fn stream_sampling_chunk(&mut self) {
+    pub fn stream(&mut self) {
         let mut chunk_size = self.output_sample_chunk_size;
         // Last chunk
         if self.output_sample_chunk_size > self.output_sampling_buffer_l.len() {
@@ -265,7 +259,6 @@ impl SoundSlot {
 ///
 pub struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
-    _sound_chip_type: SoundChipType,
     sound_stream: SoundStream,
 }
 

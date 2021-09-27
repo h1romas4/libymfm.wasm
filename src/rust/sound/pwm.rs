@@ -62,6 +62,7 @@ const CHIP_SAMPLE_RATE: i32 = 44100;
 const MAX_CHIPS: usize = 0x02;
 const PWM_LOUDNESS: u8 = 0;
 
+#[allow(clippy::upper_case_acronyms)]
 pub struct PWM {
     pwm_chip: [PWMChip; MAX_CHIPS],
 }
