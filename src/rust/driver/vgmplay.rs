@@ -242,7 +242,7 @@ impl VgmPlay {
             self.pcm_stream_length -= 1;
             self.pcm_stream_pos += 1;
         }
-        if self.pcm_stream_pos_init != 0 {
+        if self.pcm_stream_length > 0 {
             self.pcm_stream_sampling_pos += 1;
         }
     }
