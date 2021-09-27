@@ -46,7 +46,6 @@ impl VgmPlay {
         VgmPlay {
             sound_slot,
             vgm_pos: 0,
-            pcm_origin_pos: 0,
             vgm_loop: 0,
             vgm_loop_offset: 0,
             vgm_loop_count: 0,
@@ -55,6 +54,7 @@ impl VgmPlay {
             vgm_data: Vec::new(),
             vgm_header: VgmHeader::default(),
             vgm_gd3: Gd3::default(),
+            pcm_origin_pos: 0,
             pcm_pos: 0,
             pcm_offset: 0,
             pcm_stream_sample_count: 0,
