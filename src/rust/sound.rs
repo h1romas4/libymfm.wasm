@@ -9,11 +9,10 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-pub use crate::sound::pwm::PWM;
-pub use crate::sound::segapcm::SEGAPCM;
-pub use crate::sound::sn76489::SN76489;
-pub use crate::sound::ymfm::ChipType;
-pub use crate::sound::ymfm::YmFm;
+use crate::sound::pwm::PWM;
+use crate::sound::segapcm::SEGAPCM;
+use crate::sound::sn76489::SN76489;
+use crate::sound::ymfm::YmFm;
 
 ///
 /// Sound chip type
