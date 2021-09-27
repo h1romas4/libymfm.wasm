@@ -6,6 +6,7 @@ mod ymfm;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::rc::Rc;
 
 pub use crate::sound::pwm::PWM;
@@ -65,8 +66,8 @@ pub struct SoundSlot {
     output_sample_chunk_size: usize,
     output_sampling_l: Vec<f32>,
     output_sampling_r: Vec<f32>,
-    output_sampling_buffer_l: Vec<f32>,
-    output_sampling_buffer_r: Vec<f32>,
+    output_sampling_buffer_l: VecDeque<f32>,
+    output_sampling_buffer_r: VecDeque<f32>,
     internal_sampling_rate: u32,
     sound_device: HashMap<SoundChipType, Vec<SoundDevice>>,
     sound_romset: HashMap<usize, Rc<RefCell<RomSet>>>,
@@ -87,8 +88,8 @@ impl SoundSlot {
             output_sample_chunk_size,
             output_sampling_l: vec![0_f32; output_sample_chunk_size],
             output_sampling_r: vec![0_f32; output_sample_chunk_size],
-            output_sampling_buffer_l: vec![0_f32; output_sample_chunk_size * 2],
-            output_sampling_buffer_r: vec![0_f32; output_sample_chunk_size * 2],
+            output_sampling_buffer_l: VecDeque::with_capacity(output_sample_chunk_size * 2),
+            output_sampling_buffer_r: VecDeque::with_capacity(output_sample_chunk_size * 2),
             internal_sampling_rate: INTERNAL_SAMPLING_RATE,
             sound_device: HashMap::new(),
             sound_romset: HashMap::new(),
@@ -162,8 +163,8 @@ impl SoundSlot {
     ///
     pub fn update(&mut self, tick_count: usize) {
         for _ in 0..tick_count {
-            self.output_sampling_buffer_l.push(0_f32);
-            self.output_sampling_buffer_r.push(0_f32);
+            self.output_sampling_buffer_l.push_back(0_f32);
+            self.output_sampling_buffer_r.push_back(0_f32);
             let buffer_pos = self.output_sampling_buffer_l.len() - 1;
             for (_, sound_devices) in self.sound_device.iter_mut() {
                 for (index, sound_device) in sound_devices.iter_mut().enumerate() {
@@ -188,19 +189,16 @@ impl SoundSlot {
     }
 
     ///
-    /// Whether the output buffer is filled or not.
+    /// Remaining sampling buffers.
     ///
-    pub fn ready(&self) -> bool {
-        if self.output_sampling_buffer_l.len() > self.output_sample_chunk_size {
-            return false;
-        }
-        true
+    pub fn ready(&self) -> usize {
+        self.output_sample_chunk_size - self.output_sampling_buffer_l.len()
     }
 
     ///
-    /// Stream sampling chank
+    /// Stream sampling chunk
     ///
-    pub fn stream_sampling_chank(&mut self) {
+    pub fn stream_sampling_chunk(&mut self) {
         let mut chunk_size = self.output_sample_chunk_size;
         // Last chunk
         if self.output_sample_chunk_size > self.output_sampling_buffer_l.len() {
