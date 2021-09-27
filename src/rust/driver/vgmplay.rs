@@ -213,7 +213,7 @@ impl VgmPlay {
                 self.remain_tick_count = self.parse_vgm(repeat) as usize;
             };
         }
-        self.sound_slot.stream_sampling_chunk();
+        self.sound_slot.stream();
 
         if self.vgm_loop_count == std::usize::MAX {
             self.vgm_loop_count = 0;
