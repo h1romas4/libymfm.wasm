@@ -17,7 +17,6 @@ pub const VGM_TICK_RATE: u32 = 44100;
 pub struct VgmPlay {
     sound_slot: SoundSlot,
     vgm_pos: usize,
-    data_pos: usize,
     vgm_loop: usize,
     vgm_loop_offset: usize,
     vgm_loop_count: usize,
@@ -26,6 +25,7 @@ pub struct VgmPlay {
     vgm_data: Vec<u8>,
     vgm_header: VgmHeader,
     vgm_gd3: Gd3,
+    pcm_origin_pos: usize,
     pcm_pos: usize,
     pcm_offset: usize,
     pcm_stream_sample_count: u32,
@@ -46,7 +46,7 @@ impl VgmPlay {
         VgmPlay {
             sound_slot,
             vgm_pos: 0,
-            data_pos: 0,
+            pcm_origin_pos: 0,
             vgm_loop: 0,
             vgm_loop_offset: 0,
             vgm_loop_count: 0,
@@ -237,7 +237,7 @@ impl VgmPlay {
                 SoundChipType::YM2612,
                 0,
                 0x2a,
-                self.vgm_data[self.data_pos + self.pcm_stream_pos + self.pcm_stream_offset].into(),
+                self.vgm_data[self.pcm_origin_pos + self.pcm_stream_pos + self.pcm_stream_offset].into(),
             );
             self.pcm_stream_length -= 1;
             self.pcm_stream_pos += 1;
@@ -416,7 +416,7 @@ impl VgmPlay {
                 // handle data block
                 if (0x00..=0x3f).contains(&data_type) {
                     // data of recorded streams (uncompressed) (for ym2612)
-                    self.data_pos = data_pos;
+                    self.pcm_origin_pos = data_pos;
                 } else if (0x80..=0xbf).contains(&data_type) {
                     // ROM/RAM Image dumps (0x80 segapcm)
                     let rom_size = u32::from_le_bytes(
@@ -450,7 +450,7 @@ impl VgmPlay {
                     SoundChipType::YM2612,
                     0,
                     0x2a,
-                    self.vgm_data[self.data_pos + self.pcm_pos + self.pcm_offset].into(),
+                    self.vgm_data[self.pcm_origin_pos + self.pcm_pos + self.pcm_offset].into(),
                 );
                 self.pcm_offset += 1;
             }
