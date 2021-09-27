@@ -4,7 +4,7 @@ import { memory } from "../wasm/libymfm_bg.wasm";
 /**
  * vgm setting
  */
-const MAX_SAMPLING_BUFFER = 4096;
+const MAX_SAMPLING_BUFFER = 2048;
 const SAMPLING_RATE = 44100;
 const LOOP_MAX_COUNT = 2;
 const FEED_OUT_SECOND = 2;

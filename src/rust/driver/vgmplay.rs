@@ -585,7 +585,7 @@ mod tests {
     use std::fs::File;
     use std::io::{Read, Write};
 
-    const MAX_SAMPLE_SIZE: usize = 4096;
+    const MAX_SAMPLE_SIZE: usize = 2048;
 
     #[test]
     fn sn76489_1() {
@@ -637,7 +637,7 @@ mod tests {
 
     #[test]
     fn segapcm_1() {
-        play("./docs/vgm/segapcm.vgm")
+        play("./docs/vgm/segapcm-2.vgz")
     }
 
     fn play(filepath: &str) {
