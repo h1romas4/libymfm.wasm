@@ -82,6 +82,7 @@ impl SoundSlot {
         output_sample_chunk_size: usize,
     ) -> Self {
         SoundSlot {
+            // TODO: At present external_tick_rate == output_sampling_rate == internal_sampling_rate
             _external_tick_rate: external_tick_rate,
             _output_sampling_rate: output_sampling_rate,
             output_sample_chunk_size,
@@ -125,7 +126,6 @@ impl SoundSlot {
                 .or_insert_with(Vec::new)
                 .push(SoundDevice {
                     sound_chip,
-                    _sound_chip_type: sound_chip_type,
                     sound_stream: SoundStream::new(
                         sound_chip_tick_rate,
                         self.internal_sampling_rate,
@@ -264,7 +264,6 @@ impl SoundSlot {
 ///
 pub struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
-    _sound_chip_type: SoundChipType,
     sound_stream: SoundStream,
 }
 
