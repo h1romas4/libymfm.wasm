@@ -189,13 +189,10 @@ impl SoundSlot {
     }
 
     ///
-    /// Whether the output buffer is filled or not.
+    /// Remaining sampling buffers.
     ///
-    pub fn ready(&self) -> bool {
-        if self.output_sampling_buffer_l.len() > self.output_sample_chunk_size {
-            return false;
-        }
-        true
+    pub fn ready(&self) -> usize {
+        self.output_sample_chunk_size - self.output_sampling_buffer_l.len()
     }
 
     ///

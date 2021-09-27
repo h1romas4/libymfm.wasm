@@ -18,14 +18,6 @@ pub struct VgmPlay {
     sound_slot: SoundSlot,
     vgm_pos: usize,
     data_pos: usize,
-    pcm_pos: usize,
-    pcm_offset: usize,
-    pcm_stream_sample_count: u32,
-    pcm_stream_sampling_pos: u32,
-    pcm_stream_length: usize,
-    pcm_stream_pos_init: usize,
-    pcm_stream_pos: usize,
-    pcm_stream_offset: usize,
     vgm_loop: usize,
     vgm_loop_offset: usize,
     vgm_loop_count: usize,
@@ -34,6 +26,15 @@ pub struct VgmPlay {
     vgm_data: Vec<u8>,
     vgm_header: VgmHeader,
     vgm_gd3: Gd3,
+    pcm_pos: usize,
+    pcm_offset: usize,
+    pcm_stream_sample_count: u32,
+    pcm_stream_sampling_pos: u32,
+    pcm_stream_length: usize,
+    pcm_stream_pos_init: usize,
+    pcm_stream_pos: usize,
+    pcm_stream_offset: usize,
+    remain_tick_count: usize,
 }
 
 #[allow(dead_code)]
@@ -46,14 +47,6 @@ impl VgmPlay {
             sound_slot,
             vgm_pos: 0,
             data_pos: 0,
-            pcm_pos: 0,
-            pcm_offset: 0,
-            pcm_stream_sample_count: 0,
-            pcm_stream_sampling_pos: 0,
-            pcm_stream_length: 0,
-            pcm_stream_pos_init: 0,
-            pcm_stream_pos: 0,
-            pcm_stream_offset: 0,
             vgm_loop: 0,
             vgm_loop_offset: 0,
             vgm_loop_count: 0,
@@ -62,6 +55,15 @@ impl VgmPlay {
             vgm_data: Vec::new(),
             vgm_header: VgmHeader::default(),
             vgm_gd3: Gd3::default(),
+            pcm_pos: 0,
+            pcm_offset: 0,
+            pcm_stream_sample_count: 0,
+            pcm_stream_sampling_pos: 0,
+            pcm_stream_length: 0,
+            pcm_stream_pos_init: 0,
+            pcm_stream_pos: 0,
+            pcm_stream_offset: 0,
+            remain_tick_count: 0,
         }
     }
 
@@ -173,30 +175,43 @@ impl VgmPlay {
             );
         }
         if self.vgm_header.clock_sn76489 != 0 {
-            self.sound_slot
-                .add_sound_device(SoundChipType::SEGAPSG, 1, self.vgm_header.clock_sn76489);
+            self.sound_slot.add_sound_device(
+                SoundChipType::SEGAPSG,
+                1,
+                self.vgm_header.clock_sn76489,
+            );
         }
         if self.vgm_header.clock_pwm != 0 {
             self.sound_slot
                 .add_sound_device(SoundChipType::PWM, 1, self.vgm_header.clock_pwm);
         }
         if self.vgm_header.sega_pcm_clock != 0 {
-            self.sound_slot
-                .add_sound_device(SoundChipType::SEGAPCM, 1, self.vgm_header.sega_pcm_clock);
+            self.sound_slot.add_sound_device(
+                SoundChipType::SEGAPCM,
+                1,
+                self.vgm_header.sega_pcm_clock,
+            );
         }
 
         Ok(())
     }
 
     ///
-    /// play
+    /// Play Sound.
     ///
     pub fn play(&mut self, repeat: bool) -> usize {
-        while self.sound_slot.ready() && !self.vgm_end {
-            for _ in 0..self.parse_vgm(repeat) {
+        while self.sound_slot.ready() > 0 {
+            for _ in 0..self.remain_tick_count {
                 self.update_pcm_stream();
                 self.sound_slot.update(1);
+                self.remain_tick_count -= 1;
+                if self.sound_slot.ready() == 0 {
+                    break;
+                }
             }
+            if self.remain_tick_count == 0 {
+                self.remain_tick_count = self.parse_vgm(repeat) as usize;
+            };
         }
         self.sound_slot.stream_sampling_chunk();
 
@@ -222,8 +237,7 @@ impl VgmPlay {
                 SoundChipType::YM2612,
                 0,
                 0x2a,
-                self.vgm_data[self.data_pos + self.pcm_stream_pos + self.pcm_stream_offset]
-                    .into(),
+                self.vgm_data[self.data_pos + self.pcm_stream_pos + self.pcm_stream_offset].into(),
             );
             self.pcm_stream_length -= 1;
             self.pcm_stream_pos += 1;
