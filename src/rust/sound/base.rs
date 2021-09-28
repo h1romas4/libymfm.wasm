@@ -160,12 +160,12 @@ impl SoundSlot {
                     let mut is_tick;
                     while {
                         is_tick = sound_device.sound_stream.is_tick();
-                        is_tick != Tick::NO
+                        is_tick != Tick::No
                     } {
                         sound_device
                             .sound_chip
                             .tick(index, &mut sound_device.sound_stream);
-                        if is_tick == Tick::ONE {
+                        if is_tick == Tick::One {
                             break;
                         }
                     }
@@ -294,20 +294,20 @@ impl SoundStream {
         if self.sound_chip_tick_rate < self.output_sampling_rate
             && self.sound_chip_tick_pos > self.output_sampling_pos
         {
-            return Tick::NO;
+            return Tick::No;
         }
         // down-sampling
         if self.sound_chip_tick_rate > self.output_sampling_rate {
             #[allow(clippy::comparison_chain)]
             return if self.sound_chip_tick_pos < self.output_sampling_pos {
-                Tick::MORE
+                Tick::More
             } else if self.sound_chip_tick_pos == self.output_sampling_pos {
-                Tick::ONE
+                Tick::One
             } else {
-                Tick::NO
+                Tick::No
             };
         }
-        Tick::ONE
+        Tick::One
     }
 
     ///
@@ -344,9 +344,9 @@ impl SoundStream {
 
 #[derive(PartialEq)]
 pub enum Tick {
-    ONE,
-    MORE,
-    NO,
+    One,
+    More,
+    No,
 }
 
 ///
