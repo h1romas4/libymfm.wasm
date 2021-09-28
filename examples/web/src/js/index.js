@@ -113,11 +113,12 @@ const fillTextCenterd = function(str, height) {
 const startScreen = function() {
     canvasContext.fillStyle = 'rgb(0, 0, 0)';
     canvasContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    canvasContext.font = '20px sans-serif';
+    canvasContext.font = 'bold 28px sans-serif';
+    canvasContext.fillStyle = COLOR_MD_RED;
+    fillTextCenterd("WebAssembly 🎮 VGM Player", CANVAS_HEIGHT / 2 - 32 * 4);
     canvasContext.fillStyle = COLOR_MD_GREEN;
-    fillTextCenterd("WebAssembly 👾 VGM Player", CANVAS_HEIGHT / 2 - 32 * 4);
-    canvasContext.font = '16px sans-serif';
-    fillTextCenterd("YM2151 | YM2203 | YM2149 | YM2413 | YM2612 | SN76489(MD) | PWM(32x)", CANVAS_HEIGHT / 2 - 32 * 2);
+    canvasContext.font = '15px sans-serif';
+    fillTextCenterd("YM2151 | YM2203 | YM2149 | YM2413 | YM2612 | SN76489(MD) | PWM(32x) | SEGAPCM", CANVAS_HEIGHT / 2 - 32 * 2);
     canvasContext.font = '20px sans-serif';
     fillTextCenterd("🎵 DRAG AND DROP VGM(vgm/vgz) HEAR", CANVAS_HEIGHT / 2 - 32 * 1);
     fillTextCenterd("OR CLICK(TAP) TO PLAY SAMPLE VGM", CANVAS_HEIGHT / 2 + 32 * 1);
