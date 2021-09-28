@@ -33,8 +33,7 @@
 use std::f32;
 use std::i32;
 
-use crate::sound::{convert_sample_i2f, SoundChip};
-use super::{SoundChipType, SoundStream};
+use crate::sound::base::*;
 
 // More testing is needed to find and confirm feedback patterns for
 // SN76489 variants and compatible chips.

@@ -3,14 +3,11 @@ use flate2::read::GzDecoder;
 use std::convert::TryInto;
 use std::io::prelude::*;
 
-use crate::driver::metadata::parse_vgm_meta;
-use crate::driver::metadata::Gd3;
-use crate::driver::metadata::Jsonlize;
-use crate::driver::metadata::VgmHeader;
+use crate::driver::vgmmeta::parse_vgm_meta;
+use crate::driver::vgmmeta::Gd3;
+use crate::driver::vgmmeta::Jsonlize;
+use crate::driver::vgmmeta::VgmHeader;
 use crate::sound::{SoundChipType, SoundSlot};
-
-#[cfg(target_arch = "wasm32")]
-use crate::console_log;
 
 pub const VGM_TICK_RATE: u32 = 44100;
 
@@ -570,12 +567,6 @@ impl VgmPlay {
                 self.get_vgm_u8();
             }
             _ => {
-                #[cfg(target_arch = "wasm32")]
-                console_log!(
-                    "unknown cmd at {:x}: {:x}",
-                    self.vgm_pos - 1,
-                    self.vgm_data[self.vgm_pos - 1]
-                );
                 #[cfg(not(target_arch = "wasm32"))]
                 println!(
                     "unknown cmd at {:x}: {:x}",

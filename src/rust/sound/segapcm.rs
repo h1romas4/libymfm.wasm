@@ -10,8 +10,7 @@
  *  https://github.com/mamedev/mame/blob/master/src/devices/sound/segapcm.cpp
  *  rev. 70743c6fb2602a5c2666c679b618706eabfca2ad
  */
-use crate::sound::{convert_sample_i2f, RomBank, RomDevice, SoundChip, SoundChipType};
-use super::SoundStream;
+use crate::sound::base::*;
 
 #[allow(clippy::upper_case_acronyms)]
 pub struct SEGAPCM {

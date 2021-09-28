@@ -34,6 +34,8 @@
  * with this program; if not, write to the Free Software Foundation, Inc., *
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.           *
  ***************************************************************************/
+use crate::sound::base::*;
+
 // const CHILLY_WILLY_SCALE: u8 = 1;
 // const PWM_BUF_SIZE: usize = 4;
 
@@ -54,8 +56,6 @@
 // 	0x00, 0x80, 0x40, 0x00,
 // 	0x00, 0x00, 0x80, 0x40
 // ];
-use crate::sound::{convert_sample_i2f, SoundChip};
-use super::{SoundChipType, SoundStream};
 
 const CHIP_SAMPLING_MODE: u8 = 0x00;
 const CHIP_SAMPLE_RATE: i32 = 44100;

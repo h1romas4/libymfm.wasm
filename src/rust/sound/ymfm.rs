@@ -1,6 +1,5 @@
 // license:BSD-3-Clause
-use super::{SoundChipType, SoundStream};
-use crate::sound::{convert_sample_i2f, SoundChip};
+use crate::sound::base::*;
 
 ///
 /// FFI interface
