@@ -183,6 +183,7 @@ impl SoundSlot {
     /// Remaining sampling buffers.
     ///
     pub fn ready(&self) -> usize {
+        // TODO: Consider sampling_tick_ratio.
         self.output_sample_chunk_size - self.output_sampling_buffer_l.len()
     }
 
