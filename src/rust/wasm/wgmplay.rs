@@ -1,12 +1,8 @@
 // license:BSD-3-Clause
-#[cfg(target_arch = "wasm32")]
-use crate::{driver::VgmPlay, sound::SoundSlot};
-#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
-#[cfg(target_arch = "wasm32")]
-use crate::driver::vgmplay::VGM_TICK_RATE;
 
-#[cfg(target_arch = "wasm32")]
+use crate::{driver::VgmPlay, driver::VGM_TICK_RATE, sound::SoundSlot};
+
 #[wasm_bindgen]
 pub struct WgmPlay {
     vgmplay: VgmPlay,
@@ -15,7 +11,6 @@ pub struct WgmPlay {
 ///
 /// VgmPlay WebAssembly Interface
 ///
-#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 impl WgmPlay {
     ///
