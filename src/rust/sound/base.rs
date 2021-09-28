@@ -55,7 +55,7 @@ pub type RomBank = Option<Rc<RefCell<RomSet>>>;
 /// Sound Slot
 ///
 pub struct SoundSlot {
-    _external_tick_rate: u32,
+    sampling_tick_ratio: f32,
     output_sampling_rate: u32,
     output_sample_chunk_size: usize,
     output_sampling_l: Vec<f32>,
@@ -72,9 +72,9 @@ impl SoundSlot {
         output_sampling_rate: u32,
         output_sample_chunk_size: usize,
     ) -> Self {
+        assert!(output_sampling_rate >= external_tick_rate); // TODO:
         SoundSlot {
-            // TODO: At present external_tick_rate == output_sampling_rate
-            _external_tick_rate: external_tick_rate,
+            sampling_tick_ratio: output_sampling_rate as f32 / external_tick_rate as f32,
             output_sampling_rate,
             output_sample_chunk_size,
             output_sampling_l: vec![0_f32; output_sample_chunk_size],
@@ -151,6 +151,8 @@ impl SoundSlot {
     /// Update sound chip.
     ///
     pub fn update(&mut self, tick_count: usize) {
+        // TODO: Invalid because of the need to absorb errors.
+        let _tick_count = f32::round(tick_count as f32 * self.sampling_tick_ratio) as usize;
         for _ in 0..tick_count {
             self.output_sampling_buffer_l.push_back(0_f32);
             self.output_sampling_buffer_r.push_back(0_f32);

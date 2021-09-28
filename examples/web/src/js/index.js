@@ -5,10 +5,10 @@ import { memory } from "../wasm/libymfm_bg.wasm";
  * vgm setting
  */
 const MAX_SAMPLING_BUFFER = 2048;
-const SAMPLING_RATE = 44100;
+const DEFAULT_SAMPLING_RATE = 44100;
 const LOOP_MAX_COUNT = 2;
 const FEED_OUT_SECOND = 2;
-const FEED_OUT_REMAIN = (SAMPLING_RATE * FEED_OUT_SECOND) / MAX_SAMPLING_BUFFER;
+const FEED_OUT_REMAIN = (DEFAULT_SAMPLING_RATE * FEED_OUT_SECOND) / MAX_SAMPLING_BUFFER;
 
 /**
  * canvas settings
@@ -27,7 +27,8 @@ let seqdata;
 let feedOutCount = 0;
 let playlist = [];
 let totalPlaylistCount;
-let music_meta;
+let musicMeta;
+let samplingRate = DEFAULT_SAMPLING_RATE;
 
 /**
  * audio contect
@@ -60,6 +61,28 @@ if(pixelRatio > 1 && window.screen.width < CANVAS_WIDTH) {
 canvasContext = canvas.getContext('2d');
 
 /**
+ * Switch sampling rate for test (ex. https://.../#s=48000)
+ *
+ *  let context = new AudioContext({ sampleRate: samplingRate })
+ *
+ * (2021/9)
+ * Support Firefox only. (I haven't confirmed anything other than Linux platform)
+ * In other browsers, the setting works, but the native connection to the audio interface drops to 44100Hz.
+ * There is probably some downsampling going on inside the browser.
+ * Also, the setting itself may be invalid in Safari.
+ */
+if(location.hash != "") {
+    const sample = location.hash.match(/^#s=(\d+)/);
+    if(sample != null) {
+        samplingRate = parseInt(sample[1]);
+        if(samplingRate != samplingRate /* isNan */
+            || !(samplingRate == 44100 || samplingRate == 48000 || samplingRate == 96000)) {
+            samplingRate = DEFAULT_SAMPLING_RATE;
+        }
+    }
+}
+
+/**
  * load sample vgm data
  */
 fetch('./vgm/ym2612.vgm')
@@ -81,7 +104,7 @@ fetch('./vgm/ym2612.vgm')
         canvas.addEventListener('drop', onDrop, false);
         // for sample vgm
         totalPlaylistCount = 1;
-        music_meta = createGd3meta({
+        musicMeta = createGd3meta({
             track_name: "WebAssembly 👾 VGM Player",
             track_name_j: "",
             game_name: "",
@@ -90,7 +113,7 @@ fetch('./vgm/ym2612.vgm')
             track_author_j: ""
         });
         // hack for AudioContext opening is delayed on Linux.
-        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLING_RATE });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
         audioContext = null;
         // ready to go
         startScreen();
@@ -122,6 +145,7 @@ const startScreen = function() {
     canvasContext.font = '20px sans-serif';
     fillTextCenterd("🎵 DRAG AND DROP VGM(vgm/vgz) HEAR", CANVAS_HEIGHT / 2 - 32 * 1);
     fillTextCenterd("OR CLICK(TAP) TO PLAY SAMPLE VGM", CANVAS_HEIGHT / 2 + 32 * 1);
+    printStatus();
 };
 
 /**
@@ -202,7 +226,7 @@ const createGd3meta = function(meta) {
 const init = function(vgmfile) {
     if(wgmplay != null) wgmplay.free();
     // create wasm instanse
-    wgmplay = new WgmPlay(SAMPLING_RATE, MAX_SAMPLING_BUFFER, vgmfile.byteLength);
+    wgmplay = new WgmPlay(samplingRate, MAX_SAMPLING_BUFFER, vgmfile.byteLength);
     // set vgmdata
     seqdata = new Uint8Array(memory.buffer, wgmplay.get_seq_data_ref(), vgmfile.byteLength);
     seqdata.set(new Uint8Array(vgmfile));
@@ -212,7 +236,7 @@ const init = function(vgmfile) {
         return false;
     }
 
-    music_meta = createGd3meta(JSON.parse(wgmplay.get_seq_gd3()));
+    musicMeta = createGd3meta(JSON.parse(wgmplay.get_seq_gd3()));
 
     return true;
 }
@@ -239,7 +263,7 @@ const play = function() {
     disconnect();
     // iOS only sounds AudioContext that created by the click event.
     if(audioContext == null) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SAMPLING_RATE });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
     }
     audioNode = audioContext.createScriptProcessor(MAX_SAMPLING_BUFFER, 2, 2);
     feedOutCount = 0;
@@ -329,7 +353,20 @@ const draw = function() {
         fillTextCenterd("Track " + (totalPlaylistCount - playlist.length) + " / " + totalPlaylistCount, CANVAS_HEIGHT / 2 - 96);
     }
     canvasContext.font = FONT_MAIN_STYLE;
-    canvasContext.fillText(music_meta.game_track_name, music_meta.game_track_name_left, CANVAS_HEIGHT / 2 - 64);
-    canvasContext.fillText(music_meta.game_track_name_j, music_meta.game_track_name_j_left, CANVAS_HEIGHT / 2 - 32);
-    canvasContext.fillText(music_meta.track_author_full, music_meta.track_author_full_left, CANVAS_HEIGHT / 2);
+    canvasContext.fillText(musicMeta.game_track_name, musicMeta.game_track_name_left, CANVAS_HEIGHT / 2 - 64);
+    canvasContext.fillText(musicMeta.game_track_name_j, musicMeta.game_track_name_j_left, CANVAS_HEIGHT / 2 - 32);
+    canvasContext.fillText(musicMeta.track_author_full, musicMeta.track_author_full_left, CANVAS_HEIGHT / 2);
+    printStatus();
+}
+
+const printStatus = function() {
+    if(samplingRate == 44100) return;
+
+    const status = " HD:" + samplingRate + " ";
+    canvasContext.font = '16px sans-serif';
+    const measure = canvasContext.measureText(status);
+    canvasContext.fillStyle = COLOR_MD_GREEN;
+    canvasContext.fillRect(CANVAS_WIDTH - measure.width, 0, CANVAS_WIDTH, 18);
+    canvasContext.fillStyle = 'rgb(0, 0, 0)';
+    canvasContext.fillText(status, CANVAS_WIDTH - measure.width, 16);
 }
