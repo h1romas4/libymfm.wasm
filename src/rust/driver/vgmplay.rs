@@ -7,7 +7,7 @@ use crate::driver::vgmmeta::parse_vgm_meta;
 use crate::driver::vgmmeta::Gd3;
 use crate::driver::vgmmeta::Jsonlize;
 use crate::driver::vgmmeta::VgmHeader;
-use crate::sound::base::{SoundChipType, SoundSlot};
+use crate::sound::{SoundChipType, SoundSlot};
 
 pub const VGM_TICK_RATE: u32 = 44100;
 
@@ -584,7 +584,7 @@ impl VgmPlay {
 ///
 #[cfg(test)]
 mod tests {
-    use crate::sound::base::SoundSlot;
+    use crate::sound::SoundSlot;
 
     use super::VgmPlay;
     use std::fs::File;
