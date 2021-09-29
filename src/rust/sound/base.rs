@@ -55,6 +55,7 @@ pub type RomBank = Option<Rc<RefCell<RomSet>>>;
 /// Sound Slot
 ///
 pub struct SoundSlot {
+    external_tick_rate: u32,
     sampling_tick_ratio: f32,
     output_sampling_rate: u32,
     output_sample_chunk_size: usize,
@@ -74,6 +75,7 @@ impl SoundSlot {
     ) -> Self {
         assert!(output_sampling_rate >= external_tick_rate); // TODO:
         SoundSlot {
+            external_tick_rate,
             sampling_tick_ratio: output_sampling_rate as f32 / external_tick_rate as f32,
             output_sampling_rate,
             output_sample_chunk_size,
@@ -153,8 +155,11 @@ impl SoundSlot {
     /// Update sound chip.
     ///
     pub fn update(&mut self, tick_count: usize) {
-        // TODO: Invalid because of the need to absorb errors.
-        let _tick_count = f32::round(tick_count as f32 * self.sampling_tick_ratio) as usize;
+        let mut tick_count = tick_count;
+        if self.external_tick_rate != self.output_sampling_rate {
+            // TODO: Invalid because of the need to absorb errors.
+            tick_count = f32::round(tick_count as f32 * self.sampling_tick_ratio) as usize;
+        }
         for _ in 0..tick_count {
             self.output_sampling_buffer_l.push_back(0_f32);
             self.output_sampling_buffer_r.push_back(0_f32);
@@ -170,11 +175,15 @@ impl SoundSlot {
     }
 
     ///
-    /// Remaining sampling buffers.
+    /// Remaining tickable in sampling buffers.
     ///
     pub fn ready(&self) -> usize {
-        // TODO: Consider sampling_tick_ratio.
-        self.output_sample_chunk_size - self.output_sampling_buffer_l.len()
+        let mut tickable = self.output_sample_chunk_size - self.output_sampling_buffer_l.len();
+        if self.external_tick_rate != self.output_sampling_rate {
+            // TODO: Invalid because of the need to absorb errors.
+            tickable = f32::round(tickable as f32 / self.sampling_tick_ratio) as usize;
+        }
+        tickable
     }
 
     ///
