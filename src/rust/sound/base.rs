@@ -89,7 +89,12 @@ impl SoundSlot {
     ///
     /// Add sound device (sound chip and sound stream, Rom set)
     ///
-    pub fn add_sound_device(&mut self, sound_chip_type: SoundChipType, number_of: usize, clock: u32) {
+    pub fn add_sound_device(
+        &mut self,
+        sound_chip_type: SoundChipType,
+        number_of: usize,
+        clock: u32,
+    ) {
         for _n in 0..number_of {
             let mut sound_chip: Box<dyn SoundChip> = match sound_chip_type {
                 SoundChipType::YM2151
@@ -116,10 +121,7 @@ impl SoundSlot {
                 .or_insert_with(Vec::new)
                 .push(SoundDevice {
                     sound_chip,
-                    sound_stream: SoundStream::new(
-                        sound_chip_tick_rate,
-                        self.output_sampling_rate,
-                    ),
+                    sound_stream: SoundStream::new(sound_chip_tick_rate, self.output_sampling_rate),
                 });
         }
     }
@@ -159,19 +161,7 @@ impl SoundSlot {
             let buffer_pos = self.output_sampling_buffer_l.len() - 1;
             for (_, sound_devices) in self.sound_device.iter_mut() {
                 for (index, sound_device) in sound_devices.iter_mut().enumerate() {
-                    let mut is_tick;
-                    while {
-                        is_tick = sound_device.sound_stream.is_tick();
-                        is_tick != Tick::No
-                    } {
-                        sound_device
-                            .sound_chip
-                            .tick(index, &mut sound_device.sound_stream);
-                        if is_tick == Tick::One {
-                            break;
-                        }
-                    }
-                    let (l, r) = sound_device.sound_stream.pop();
+                    let (l, r) = sound_device.generate(index);
                     self.output_sampling_buffer_l[buffer_pos] += l;
                     self.output_sampling_buffer_r[buffer_pos] += r;
                 }
@@ -258,6 +248,27 @@ impl SoundSlot {
 pub struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
     sound_stream: SoundStream,
+}
+
+impl SoundDevice {
+    ///
+    /// Generates a waveform for one sample according to
+    /// the output sampling rate of the sound stream.
+    ///
+    fn generate(&mut self, sound_chip_index: usize) -> (f32, f32) {
+        let mut is_tick;
+        while {
+            is_tick = self.sound_stream.is_tick();
+            is_tick != Tick::No
+        } {
+            self.sound_chip
+                .tick(sound_chip_index, &mut self.sound_stream);
+            if is_tick == Tick::One {
+                break;
+            }
+        }
+        self.sound_stream.pop()
+    }
 }
 
 ///
