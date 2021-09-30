@@ -11,10 +11,9 @@ const MAX_SAMPLE_SIZE: usize = 2048;
 
 fn main() {
     // wasmer run target/wasm32-wasi/release/rust-wasm32-wasi.wasm --mapdir /:../../docs/vgm -- /ym2612.vgm
-    //  Error while importing "wasi_snapshot_preview1"."proc_exit": unknown import. Expected Function(FunctionType { params: [I32], results: [] })
-    //  https://github.com/wasmerio/wasmer/issues/2461
-
-    // Error while importing "wasi_snapshot_preview1"."args_sizes_get": unknown import. Expected Function(FunctionType { params: [I32, I32], results: [I32] })
+    // thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Custom { kind: Uncategorized, error: "failed to find a pre-opened file descriptor through which \"/ym2612.vgm\" could be opened" }', src/main.rs:25:41
+    // WASI: Cannot open paths with nightly >= 2021-03-11 when linked with LLD 11.1
+    //  https://github.com/rust-lang/rust/issues/85840
     let args: Vec<String> = env::args().collect();
     play(&args[1]);
 }
