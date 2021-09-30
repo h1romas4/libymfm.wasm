@@ -2,6 +2,7 @@
 linker = "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/bin/lld"
 rustflags = [
   "-L", "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/share/wasi-sysroot/lib/wasm32-wasi",
+  # "-Ctarget-feature=+bulk-memory",
   "-lc++",
   "-lc++abi",
   # "-lc-printscan-long-double",
