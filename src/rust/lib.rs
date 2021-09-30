@@ -6,5 +6,5 @@ extern crate serde_json;
 
 pub mod sound;
 pub mod driver;
-#[cfg(target_arch = "wasm32")]
+#[cfg(feature = "bindgen")]
 pub mod wasm;
