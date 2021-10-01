@@ -26,6 +26,7 @@ add_compile_flags(CXX
     -fno-exceptions
     -Wno-array-bounds
     -fPIC
+#   -mbulk-memory
 )
 
 add_compile_flags(LD
