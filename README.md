@@ -31,6 +31,14 @@ example source code:
 
 Setup [wasi-sdk-12](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-12)
 
+`.bashrc`
+
+```
+export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-12.0
+export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
+export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
+```
+
 ```
 $ echo ${WASI_SDK_PATH}
 /home/hiromasa/devel/toolchain/wasi-sdk-12.0
@@ -77,16 +85,6 @@ Install wasm-bindgen
 
 ```
 cargo install wasm-bindgen-cli
-```
-
-Fix linker path
-
-```
-$ cat .cargo/config # fix linker path
-[target.wasm32-wasi]
-linker = "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/bin/lld"
-rustflags = [
-  "-L", "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/share/wasi-sysroot/lib/wasm32-wasi",
 ```
 
 Rust build and wasm-bindgen
