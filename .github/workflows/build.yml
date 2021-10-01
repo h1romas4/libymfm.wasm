@@ -21,7 +21,7 @@ jobs:
         tar zxvf wasi-sdk-12.0-linux.tar.gz
     - name: Build libymfm
       run: |
-        export WASI_SDK_PATH=$(pwd)/wasi-sdk-12.0-linux
+        export WASI_SDK_PATH=$(pwd)/wasi-sdk-12.0
         export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
         export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
         (mkdir build && cd build && cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake .. && make -j4)
