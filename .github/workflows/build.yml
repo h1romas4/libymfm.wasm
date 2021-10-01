@@ -13,12 +13,10 @@ jobs:
       with:
         submodules: recursive
         token: ${{secrets.GITHUB_TOKEN}}
-    - name: Rust Toolchain Setup
-      uses: actions-rs/toolchain@v1
-      with:
-        target: wasm32-wasi
     - name: wasi-sdk Toolchain Setup
       run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+        rustup target add wasm32-wasi
         wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk-12.0-linux.tar.gz
         tar zxvf wasi-sdk-12.0-linux.tar.gz
     - name: Build libymfm
