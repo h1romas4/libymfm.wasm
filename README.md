@@ -1,5 +1,7 @@
 # libymfm.wasm
 
+![](https://github.com/h1romas4/libymfm.wasm/workflows/Build/badge.svg)
+
 This repository is an experimental WebAssembly build of the [ymfm](https://github.com/aaronsgiles/ymfm) Yamaha FM sound cores library.
 
 > [aaronsgiles / ymfm](https://github.com/aaronsgiles/ymfm)
