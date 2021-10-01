@@ -1,5 +1,7 @@
 # libymfm.wasm
 
+![](https://github.com/h1romas4/libymfm.wasm/workflows/Build/badge.svg)
+
 This repository is an experimental WebAssembly build of the [ymfm](https://github.com/aaronsgiles/ymfm) Yamaha FM sound cores library.
 
 > [aaronsgiles / ymfm](https://github.com/aaronsgiles/ymfm)
@@ -30,6 +32,14 @@ example source code:
 ## Build `vgmrender.wasi`
 
 Setup [wasi-sdk-12](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-12)
+
+`.bashrc`
+
+```
+export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-12.0
+export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
+export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
+```
 
 ```
 $ echo ${WASI_SDK_PATH}
@@ -79,19 +89,10 @@ Install wasm-bindgen
 cargo install wasm-bindgen-cli
 ```
 
-Fix linker path
-
-```
-$ cat .cargo/config # fix linker path
-[target.wasm32-wasi]
-linker = "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/bin/lld"
-rustflags = [
-  "-L", "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/share/wasi-sysroot/lib/wasm32-wasi",
-```
-
 Rust build and wasm-bindgen
 
 ```
+rustup target add wasm32-wasi
 cargo build --release --target wasm32-wasi
 wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
 ```

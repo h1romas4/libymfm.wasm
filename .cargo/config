@@ -1,7 +1,10 @@
 [target.wasm32-wasi]
-linker = "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/bin/lld"
+# CARGO_TARGET_wasi_LINKER
+# linker = "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/bin/lld"
 rustflags = [
-  "-L", "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/share/wasi-sysroot/lib/wasm32-wasi",
+  # "-Ctarget-feature=+bulk-memory",
+  # CARGO_TARGET_<triple>_RUSTFLAGS
+  # "-L", "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/share/wasi-sysroot/lib/wasm32-wasi",
   "-lc++",
   "-lc++abi",
   # "-lc-printscan-long-double",
