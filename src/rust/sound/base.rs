@@ -117,13 +117,13 @@ impl SoundSlot {
                 }
             };
 
-            let sound_chip_tick_rate = sound_chip.init(clock);
+            let sound_chip_sampling_rate = sound_chip.init(clock);
             self.sound_device
                 .entry(sound_chip_type)
                 .or_insert_with(Vec::new)
                 .push(SoundDevice {
                     sound_chip,
-                    sound_stream: SoundStream::new(sound_chip_tick_rate, self.output_sampling_rate),
+                    sound_stream: SoundStream::new(sound_chip_sampling_rate, self.output_sampling_rate),
                 });
         }
     }
@@ -284,47 +284,47 @@ impl SoundDevice {
 /// Sound stream for sound chip
 ///
 pub struct SoundStream {
-    sound_chip_tick_rate: u32,
-    sound_chip_tick_pos: u64,
-    sound_chip_tick_step: u64,
+    input_sampling_rate: u32,
+    input_sampling_pos: u64,
+    input_sampling_step: u64,
     output_sampling_rate: u32,
     output_sampling_pos: u64,
     output_sampling_step: u64,
-    now_chip_sampling_l: f32,
-    now_chip_sampling_r: f32,
+    now_input_sampling_l: f32,
+    now_input_sampling_r: f32,
 }
 
 impl SoundStream {
-    pub fn new(sound_chip_tick_rate: u32, output_sampling_rate: u32) -> Self {
+    pub fn new(input_sampling_rate: u32, output_sampling_rate: u32) -> Self {
         SoundStream {
-            sound_chip_tick_rate,
-            sound_chip_tick_pos: 0,
-            sound_chip_tick_step: 0x100000000_u64 / sound_chip_tick_rate as u64,
+            input_sampling_rate,
+            input_sampling_pos: 0,
+            input_sampling_step: 0x100000000_u64 / input_sampling_rate as u64,
             output_sampling_rate,
             output_sampling_pos: 0,
             output_sampling_step: 0x100000000_u64 / output_sampling_rate as u64,
-            now_chip_sampling_l: 0_f32,
-            now_chip_sampling_r: 0_f32,
+            now_input_sampling_l: 0_f32,
+            now_input_sampling_r: 0_f32,
         }
     }
 
     ///
-    /// Compare the native tick rate of the sound chip to the output sampling rate
+    /// Compare the native sampling rate to the output sampling rate
     /// to determine if it needs to be ticked.
     ///
     pub fn is_tick(&self) -> Tick {
         // TODO: better up-sampling
-        if self.sound_chip_tick_rate < self.output_sampling_rate
-            && self.sound_chip_tick_pos > self.output_sampling_pos
+        if self.input_sampling_rate < self.output_sampling_rate
+            && self.input_sampling_pos > self.output_sampling_pos
         {
             return Tick::No;
         }
         // down-sampling
-        if self.sound_chip_tick_rate > self.output_sampling_rate {
+        if self.input_sampling_rate > self.output_sampling_rate {
             #[allow(clippy::comparison_chain)]
-            return if self.sound_chip_tick_pos < self.output_sampling_pos {
+            return if self.input_sampling_pos < self.output_sampling_pos {
                 Tick::More
-            } else if self.sound_chip_tick_pos == self.output_sampling_pos {
+            } else if self.input_sampling_pos == self.output_sampling_pos {
                 Tick::One
             } else {
                 Tick::No
@@ -337,10 +337,10 @@ impl SoundStream {
     /// The interface through which the sound chip pushes the stream.
     ///
     pub fn push(&mut self, sampling_l: f32, sampling_r: f32) {
-        self.sound_chip_tick_pos =
-            Self::next_pos(self.sound_chip_tick_pos, self.sound_chip_tick_step);
-        self.now_chip_sampling_l = sampling_l;
-        self.now_chip_sampling_r = sampling_r;
+        self.input_sampling_pos =
+            Self::next_pos(self.input_sampling_pos, self.input_sampling_step);
+        self.now_input_sampling_l = sampling_l;
+        self.now_input_sampling_r = sampling_r;
     }
 
     ///
@@ -350,7 +350,7 @@ impl SoundStream {
         self.output_sampling_pos =
             Self::next_pos(self.output_sampling_pos, self.output_sampling_step);
         // TODO: better upsampling
-        (self.now_chip_sampling_l, self.now_chip_sampling_r)
+        (self.now_input_sampling_l, self.now_input_sampling_r)
     }
 
     ///
