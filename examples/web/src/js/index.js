@@ -4,11 +4,10 @@ import { memory } from "../wasm/libymfm_bg.wasm";
 /**
  * vgm setting
  */
-const MAX_SAMPLING_BUFFER = 2048;
+const MAX_SAMPLING_BUFFER = 1024;
 const DEFAULT_SAMPLING_RATE = 44100;
 const LOOP_MAX_COUNT = 2;
 const FEED_OUT_SECOND = 2;
-const FEED_OUT_REMAIN = (DEFAULT_SAMPLING_RATE * FEED_OUT_SECOND) / MAX_SAMPLING_BUFFER;
 
 /**
  * canvas settings
@@ -76,11 +75,13 @@ if(location.hash != "") {
     if(sample != null) {
         samplingRate = parseInt(sample[1]);
         if(samplingRate != samplingRate /* isNan */
-            || !(samplingRate == 44100 || samplingRate == 48000 || samplingRate == 96000)) {
+            || !(samplingRate == 44100 || samplingRate == 48000 || samplingRate == 88200 || samplingRate == 96000)) {
             samplingRate = DEFAULT_SAMPLING_RATE;
         }
     }
 }
+
+const feedOutRemain = (samplingRate * FEED_OUT_SECOND) / MAX_SAMPLING_BUFFER;
 
 /**
  * load sample vgm data
@@ -296,7 +297,7 @@ const play = function() {
                     audioGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + FEED_OUT_SECOND);
                 }
                 feedOutCount++;
-                if(feedOutCount > FEED_OUT_REMAIN) {
+                if(feedOutCount > feedOutRemain) {
                     stop = true;
                 }
             }
