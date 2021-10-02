@@ -55,9 +55,11 @@ pub type RomBank = Option<Rc<RefCell<RomSet>>>;
 /// Sound Slot
 ///
 pub struct SoundSlot {
-    external_tick_rate: u32,
-    sampling_tick_ratio: f32,
+    external_tick_pos: u64,
+    external_tick_step: u64,
     output_sampling_rate: u32,
+    output_sampling_pos: u64,
+    output_sampling_step: u64,
     output_sample_chunk_size: usize,
     output_sampling_l: Vec<f32>,
     output_sampling_r: Vec<f32>,
@@ -75,9 +77,11 @@ impl SoundSlot {
     ) -> Self {
         assert!(output_sampling_rate >= external_tick_rate); // TODO:
         SoundSlot {
-            external_tick_rate,
-            sampling_tick_ratio: output_sampling_rate as f32 / external_tick_rate as f32,
+            external_tick_pos: 0,
+            external_tick_step: SoundStream::get_resolution(external_tick_rate as u64),
             output_sampling_rate,
+            output_sampling_pos: 0,
+            output_sampling_step: SoundStream::get_resolution(output_sampling_rate as u64),
             output_sample_chunk_size,
             output_sampling_l: vec![0_f32; output_sample_chunk_size],
             output_sampling_r: vec![0_f32; output_sample_chunk_size],
@@ -117,13 +121,16 @@ impl SoundSlot {
                 }
             };
 
-            let sound_chip_tick_rate = sound_chip.init(clock);
+            let sound_chip_sampling_rate = sound_chip.init(clock);
             self.sound_device
                 .entry(sound_chip_type)
                 .or_insert_with(Vec::new)
                 .push(SoundDevice {
                     sound_chip,
-                    sound_stream: SoundStream::new(sound_chip_tick_rate, self.output_sampling_rate),
+                    sound_stream: SoundStream::new(
+                        sound_chip_sampling_rate,
+                        self.output_sampling_rate,
+                    ),
                 });
         }
     }
@@ -155,21 +162,22 @@ impl SoundSlot {
     /// Update sound chip.
     ///
     pub fn update(&mut self, tick_count: usize) {
-        let mut tick_count = tick_count;
-        if self.external_tick_rate != self.output_sampling_rate {
-            // TODO: Invalid because of the need to absorb errors.
-            tick_count = f32::round(tick_count as f32 * self.sampling_tick_ratio) as usize;
-        }
         for _ in 0..tick_count {
-            self.output_sampling_buffer_l.push_back(0_f32);
-            self.output_sampling_buffer_r.push_back(0_f32);
-            let buffer_pos = self.output_sampling_buffer_l.len() - 1;
-            for (_, sound_devices) in self.sound_device.iter_mut() {
-                for (index, sound_device) in sound_devices.iter_mut().enumerate() {
-                    let (l, r) = sound_device.generate(index);
-                    self.output_sampling_buffer_l[buffer_pos] += l;
-                    self.output_sampling_buffer_r[buffer_pos] += r;
+            self.external_tick_pos =
+                SoundStream::next_pos(self.external_tick_pos, self.external_tick_step);
+            while self.external_tick_pos > self.output_sampling_pos {
+                self.output_sampling_buffer_l.push_back(0_f32);
+                self.output_sampling_buffer_r.push_back(0_f32);
+                let buffer_pos = self.output_sampling_buffer_l.len() - 1;
+                for (_, sound_devices) in self.sound_device.iter_mut() {
+                    for (index, sound_device) in sound_devices.iter_mut().enumerate() {
+                        let (l, r) = sound_device.generate(index);
+                        self.output_sampling_buffer_l[buffer_pos] += l;
+                        self.output_sampling_buffer_r[buffer_pos] += r;
+                    }
                 }
+                self.output_sampling_pos =
+                    SoundStream::next_pos(self.output_sampling_pos, self.output_sampling_step);
             }
         }
     }
@@ -177,13 +185,8 @@ impl SoundSlot {
     ///
     /// Remaining tickable in sampling buffers.
     ///
-    pub fn ready(&self) -> usize {
-        let mut tickable = self.output_sample_chunk_size - self.output_sampling_buffer_l.len();
-        if self.external_tick_rate != self.output_sampling_rate {
-            // TODO: Invalid because of the need to absorb errors.
-            tickable = f32::round(tickable as f32 / self.sampling_tick_ratio) as usize;
-        }
-        tickable
+    pub fn ready(&self) -> bool {
+        self.output_sample_chunk_size as isize - self.output_sampling_buffer_l.len() as isize > 0
     }
 
     ///
@@ -284,47 +287,47 @@ impl SoundDevice {
 /// Sound stream for sound chip
 ///
 pub struct SoundStream {
-    sound_chip_tick_rate: u32,
-    sound_chip_tick_pos: u64,
-    sound_chip_tick_step: u64,
+    input_sampling_rate: u32,
+    input_sampling_pos: u64,
+    input_sampling_step: u64,
     output_sampling_rate: u32,
     output_sampling_pos: u64,
     output_sampling_step: u64,
-    now_chip_sampling_l: f32,
-    now_chip_sampling_r: f32,
+    now_input_sampling_l: f32,
+    now_input_sampling_r: f32,
 }
 
 impl SoundStream {
-    pub fn new(sound_chip_tick_rate: u32, output_sampling_rate: u32) -> Self {
+    pub fn new(input_sampling_rate: u32, output_sampling_rate: u32) -> Self {
         SoundStream {
-            sound_chip_tick_rate,
-            sound_chip_tick_pos: 0,
-            sound_chip_tick_step: 0x100000000_u64 / sound_chip_tick_rate as u64,
+            input_sampling_rate,
+            input_sampling_pos: 0,
+            input_sampling_step: Self::get_resolution(input_sampling_rate as u64),
             output_sampling_rate,
             output_sampling_pos: 0,
-            output_sampling_step: 0x100000000_u64 / output_sampling_rate as u64,
-            now_chip_sampling_l: 0_f32,
-            now_chip_sampling_r: 0_f32,
+            output_sampling_step: Self::get_resolution(output_sampling_rate as u64),
+            now_input_sampling_l: 0_f32,
+            now_input_sampling_r: 0_f32,
         }
     }
 
     ///
-    /// Compare the native tick rate of the sound chip to the output sampling rate
+    /// Compare the native sampling rate to the output sampling rate
     /// to determine if it needs to be ticked.
     ///
     pub fn is_tick(&self) -> Tick {
         // TODO: better up-sampling
-        if self.sound_chip_tick_rate < self.output_sampling_rate
-            && self.sound_chip_tick_pos > self.output_sampling_pos
+        if self.input_sampling_rate < self.output_sampling_rate
+            && self.input_sampling_pos > self.output_sampling_pos
         {
             return Tick::No;
         }
         // down-sampling
-        if self.sound_chip_tick_rate > self.output_sampling_rate {
+        if self.input_sampling_rate > self.output_sampling_rate {
             #[allow(clippy::comparison_chain)]
-            return if self.sound_chip_tick_pos < self.output_sampling_pos {
+            return if self.input_sampling_pos < self.output_sampling_pos {
                 Tick::More
-            } else if self.sound_chip_tick_pos == self.output_sampling_pos {
+            } else if self.input_sampling_pos == self.output_sampling_pos {
                 Tick::One
             } else {
                 Tick::No
@@ -337,10 +340,9 @@ impl SoundStream {
     /// The interface through which the sound chip pushes the stream.
     ///
     pub fn push(&mut self, sampling_l: f32, sampling_r: f32) {
-        self.sound_chip_tick_pos =
-            Self::next_pos(self.sound_chip_tick_pos, self.sound_chip_tick_step);
-        self.now_chip_sampling_l = sampling_l;
-        self.now_chip_sampling_r = sampling_r;
+        self.input_sampling_pos = Self::next_pos(self.input_sampling_pos, self.input_sampling_step);
+        self.now_input_sampling_l = sampling_l;
+        self.now_input_sampling_r = sampling_r;
     }
 
     ///
@@ -350,7 +352,7 @@ impl SoundStream {
         self.output_sampling_pos =
             Self::next_pos(self.output_sampling_pos, self.output_sampling_step);
         // TODO: better upsampling
-        (self.now_chip_sampling_l, self.now_chip_sampling_r)
+        (self.now_input_sampling_l, self.now_input_sampling_r)
     }
 
     ///
@@ -362,6 +364,13 @@ impl SoundStream {
             return (u64::MAX as u128 - next) as u64;
         }
         next as u64
+    }
+
+    ///
+    /// Get sound stream step resolution
+    ///
+    fn get_resolution(rate: u64) -> u64 {
+        0x100000000_u64 / rate
     }
 }
 

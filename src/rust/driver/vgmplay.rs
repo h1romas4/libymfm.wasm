@@ -197,12 +197,12 @@ impl VgmPlay {
     /// Play Sound.
     ///
     pub fn play(&mut self, repeat: bool) -> usize {
-        while self.sound_slot.ready() > 0 && !self.vgm_end {
+        while self.sound_slot.ready() && !self.vgm_end {
             for _ in 0..self.remain_tick_count {
                 self.update_pcm_stream();
                 self.sound_slot.update(1);
                 self.remain_tick_count -= 1;
-                if self.sound_slot.ready() == 0 {
+                if !self.sound_slot.ready() {
                     break;
                 }
             }
@@ -653,7 +653,7 @@ mod tests {
         let _ = file.read_to_end(&mut buffer).unwrap();
 
         let mut vgmplay = VgmPlay::new(
-            SoundSlot::new(44100, 44100, MAX_SAMPLE_SIZE),
+            SoundSlot::new(44100, 96000, MAX_SAMPLE_SIZE),
             file.metadata().unwrap().len() as usize,
         );
         // set vgmdata (Wasm simulation)
