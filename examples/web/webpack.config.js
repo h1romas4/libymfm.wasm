@@ -6,7 +6,8 @@ module.exports = {
   entry: "./src/js/bootstrap.js",
   output: {
     path: path.resolve(__dirname, "./dist"), // eslint-disable-line
-    filename: "bootstrap.js"
+    filename: "bootstrap.js",
+    publicPath: "", // Automatic publicPath is not supported in this browser
   },
   plugins: [
     new CopyPlugin({ patterns: ['./src/www/index.html', './src/www/style.css'] })
