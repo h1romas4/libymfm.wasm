@@ -19,18 +19,11 @@ module.exports = {
         use: [{
           loader: 'babel-loader',
           options: {
-            presets: ['@babel/preset-env'],
-            plugins: ['@babel/plugin-transform-runtime'],
+            presets: ['@babel/preset-env']
           }
         }]
       }
-    ],
-    parser: {
-      javascript: {
-        // https://github.com/webpack/webpack/issues/11543#issuecomment-826938252
-        worker: ["AudioWorklet from audio-worklet", "..."]
-      }
-    },
+    ]
   },
   experiments: {
     // for use alias wasi_snapshot_preview1
@@ -49,8 +42,6 @@ module.exports = {
       // build for workaround patch examples/web/node_modules/webpack/lib/wasm-sync/WebAssemblyParser.js
       //  const JS_COMPAT_TYPES = new Set(["i32", "i64", "f32", "f64"]);
       "wasi_snapshot_preview1": path.resolve(__dirname, './src/js/wasi_snapshot_preview1.js'), // eslint-disable-line
-      // https://github.com/webpack/webpack/issues/11543#issuecomment-826938252
-      "audio-worklet": path.resolve(__dirname, "./src/js/audio-worklet.js"), // eslint-disable-line
     }
   },
   performance: {

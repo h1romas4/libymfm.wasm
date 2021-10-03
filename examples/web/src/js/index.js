@@ -1,6 +1,5 @@
 import { WgmPlay } from "../wasm/libymfm";
 import { memory } from "../wasm/libymfm_bg.wasm";
-import { AudioWorklet } from "audio-worklet";
 
 /**
  * vgm setting
@@ -259,16 +258,13 @@ const disconnect = function() {
 /**
  * play
  */
-const play = async () => {
+const play = function() {
     canvas.removeEventListener('click', play, false);
     // recreate audio node for prevent memory leak.
     disconnect();
     // iOS only sounds AudioContext that created by the click event.
     if(audioContext == null) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
-        await audioContext.audioWorklet.addModule(
-            new AudioWorklet(new URL("./sound-generator.js", import.meta.url))
-        );
     }
     audioNode = audioContext.createScriptProcessor(MAX_SAMPLING_BUFFER, 2, 2);
     feedOutCount = 0;
