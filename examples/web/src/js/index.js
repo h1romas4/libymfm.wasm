@@ -23,13 +23,13 @@ const FONT_MAIN_STYLE = '16px sans-serif';
  */
 let wgmplay = null;
 let seqdata;
-let feedOutCount = 0;
 let playlist = [];
 let totalPlaylistCount;
 let musicMeta;
 let samplingRate = DEFAULT_SAMPLING_RATE;
 let samplingChunk;
 let feedOutRemain
+
 /**
  * audio contect
  */
@@ -39,6 +39,17 @@ let audioGain;
 let audioAnalyser;
 let audioAnalyserBuffer;
 let audioAnalyserBufferLength;
+
+/**
+ * buffering
+ */
+const MAX_BUFFER_SIZE = 10;
+let samplingBufferL;
+let samplingBufferR;
+let bufferd;
+let playBufferPos;
+let bufferdPos;
+let feedOutPos
 
 /**
  * canvas member
@@ -251,6 +262,56 @@ const init = function(vgmfile) {
 
     musicMeta = createGd3meta(JSON.parse(wgmplay.get_seq_gd3()));
 
+    // init buffer
+    samplingBufferL = [];
+    samplingBufferR = [];
+    playBufferPos = 0;
+    bufferdPos = 0;
+
+    let stop = false;
+    let feedOutCount = 0;
+    bufferd = false;
+    let bufferTimer = setInterval(() => {
+        if(stop) {
+            clearInterval(bufferTimer);
+        }
+        let loop;
+        try {
+            if(samplingBufferL.length < MAX_BUFFER_SIZE && !stop) {
+                loop = wgmplay.play();
+                // clone buffer
+                let bufferL = new Float32Array(samplingChunk);
+                let bufferR = new Float32Array(samplingChunk);
+                bufferL.set(new Float32Array(memory.buffer, wgmplay.get_sampling_l_ref(), samplingChunk));
+                bufferR.set(new Float32Array(memory.buffer, wgmplay.get_sampling_r_ref(), samplingChunk));
+                samplingBufferL.push(bufferL);
+                samplingBufferR.push(bufferR);
+                if(samplingBufferL.length >= MAX_BUFFER_SIZE) {
+                    bufferd = true;
+                }
+                if(loop >= LOOP_MAX_COUNT) {
+                    if(feedOutCount == 0 && loop > LOOP_MAX_COUNT) {
+                        // no loop track
+                        stop = true;
+                    } else {
+                        // feedout loop track
+                        if(feedOutCount == 0 ) {
+                            feedOutPos = bufferdPos;
+                        }
+                        feedOutCount++;
+                        if(feedOutCount > feedOutRemain) {
+                            stop = true;
+                        }
+                    }
+                }
+                bufferdPos++;
+            }
+        } catch(e) {
+            alert(`ymfm:\n\nAn unexpected error has occurred. System has stoped. Please reload brwoser.\n\n${e}`);
+            stop = true;
+        }
+    }, samplingChunk / samplingRate / 4 * 1000);
+
     return true;
 }
 
@@ -279,40 +340,18 @@ const play = function() {
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
     }
     audioNode = audioContext.createScriptProcessor(samplingChunk, 2, 2);
-    feedOutCount = 0;
-    let stop = false;
-    audioNode.onaudioprocess = function(ev) {
-        // flash last sampling
-        if(stop) {
-            disconnect();
-            next();
-            return;
-        }
-        let loop;
-        try {
-            loop = wgmplay.play();
-        } catch(e) {
-            alert(`ymfm:\n\nAn unexpected error has occurred. System has stoped. Please reload brwoser.\n\n${e}`);
-            stop = true;
-        }
-        // set sampling buffer (re-attach view every cycle)
-        ev.outputBuffer.getChannelData(0).set(new Float32Array(memory.buffer, wgmplay.get_sampling_l_ref(), samplingChunk));
-        ev.outputBuffer.getChannelData(1).set(new Float32Array(memory.buffer, wgmplay.get_sampling_r_ref(), samplingChunk));
-        if(loop >= LOOP_MAX_COUNT) {
-            if(feedOutCount == 0 && loop > LOOP_MAX_COUNT) {
-                // no loop track
-                stop = true;
-            } else {
-                // feedout loop track
-                if(feedOutCount == 0 ) {
-                    audioGain.gain.setValueAtTime(1, audioContext.currentTime);
-                    audioGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + FEED_OUT_SECOND);
-                }
-                feedOutCount++;
-                if(feedOutCount > feedOutRemain) {
-                    stop = true;
-                }
+    audioNode.onaudioprocess = (ev) => {
+        if(bufferd == true && samplingBufferL.length > 0) {
+            // set sampling buffer (re-attach view every cycle)
+            ev.outputBuffer.getChannelData(0).set(samplingBufferL[0]);
+            ev.outputBuffer.getChannelData(1).set(samplingBufferR[0]);
+            samplingBufferL.shift();
+            samplingBufferR.shift();
+            if(playBufferPos == feedOutPos) {
+                audioGain.gain.setValueAtTime(1, audioContext.currentTime);
+                audioGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + FEED_OUT_SECOND);
             }
+            playBufferPos++;
         }
     };
     // connect gain
