@@ -352,6 +352,9 @@ const play = function() {
                 audioGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + FEED_OUT_SECOND);
             }
             playBufferPos++;
+        } else if (bufferd == true && samplingBufferL.length == 0) {
+            disconnect();
+            next();
         }
     };
     // connect gain
