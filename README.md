@@ -126,10 +126,12 @@ npm run start
 
 - [ ] Better upsampling.
 - [ ] To BSD license. (import SN76489/PWM from MAME)
-- [ ] Add buffering mode.
+- [x] Add buffering mode.
 - [ ] Add direct ymfm intarfece.
 - [ ] Support yfmf's all sound chips.
 - [x] YM2141 clock worng?
 - [x] Fix SEGAPCM.
 - [ ] Refactoring.
     - [x] Separate the sound stream from the sound driver.
+    - [x] Support for arbitrary input tick rate and output sampling rate.
+    - [ ] Examples
