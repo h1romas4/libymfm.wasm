@@ -266,12 +266,10 @@ const play = async () => {
     // iOS only sounds AudioContext that created by the click event.
     if(audioContext == null) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
-        // https://github.com/webpack/webpack/issues/11543#issuecomment-826938252
         await audioContext.audioWorklet.addModule(
             new AudioWorklet(new URL("./sound-generator.js", import.meta.url))
         );
     }
-    const _soundGenerator = new AudioWorkletNode(audioContext, "sound-generator");
     audioNode = audioContext.createScriptProcessor(MAX_SAMPLING_BUFFER, 2, 2);
     feedOutCount = 0;
     let stop = false;

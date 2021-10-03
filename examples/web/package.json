@@ -19,8 +19,7 @@
         "webpack-cli": "^4.8.0",
         "webpack-dev-server": "^4.2.1",
         "webpack-merge": "^5.8.0",
-        "websocket-extensions": ">=0.1.4",
-        "worker-url": "^1.1.0"
+        "websocket-extensions": ">=0.1.4"
     },
     "scripts": {
         "build": "webpack --config webpack.config.js",
