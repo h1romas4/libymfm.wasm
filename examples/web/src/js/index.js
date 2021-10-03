@@ -267,6 +267,7 @@ const init = function(vgmfile) {
     samplingBufferR = [];
     playBufferPos = 0;
     bufferdPos = 0;
+    feedOutPos = 0;
 
     let stop = false;
     let feedOutCount = 0;
