@@ -5,7 +5,7 @@ import { memory } from "../wasm/libymfm_bg.wasm";
  * vgm setting
  */
 const DEFAULT_SAMPLING_RATE = 44100;
-const SAMPLING_CHUNK = 1024;
+const DEFAULT_SAMPLING_CHUNK = 2048;
 const LOOP_MAX_COUNT = 2;
 const FEED_OUT_SECOND = 2;
 
@@ -28,7 +28,8 @@ let playlist = [];
 let totalPlaylistCount;
 let musicMeta;
 let samplingRate = DEFAULT_SAMPLING_RATE;
-
+let samplingChunk;
+let feedOutRemain
 /**
  * audio contect
  */
@@ -49,15 +50,17 @@ let animId = null;
 /**
  * canvas setting
  */
-canvas = document.getElementById('screen');
-canvas.setAttribute('width', CANVAS_WIDTH);
-canvas.setAttribute('height', CANVAS_HEIGHT);
-let pixelRatio = window.devicePixelRatio ? window.devicePixelRatio : 1;
-if(pixelRatio > 1 && window.screen.width < CANVAS_WIDTH) {
-    canvas.style.width = 320 + "px";
-    canvas.style.heigth = 240 + "px";
-}
-canvasContext = canvas.getContext('2d');
+(function() {
+    canvas = document.getElementById('screen');
+    canvas.setAttribute('width', CANVAS_WIDTH);
+    canvas.setAttribute('height', CANVAS_HEIGHT);
+    let pixelRatio = window.devicePixelRatio ? window.devicePixelRatio : 1;
+    if(pixelRatio > 1 && window.screen.width < CANVAS_WIDTH) {
+        canvas.style.width = 320 + "px";
+        canvas.style.heigth = 240 + "px";
+    }
+    canvasContext = canvas.getContext('2d');
+})();
 
 /**
  * Switch sampling rate for test (ex. https://.../#s=48000)
@@ -70,18 +73,31 @@ canvasContext = canvas.getContext('2d');
  * There is probably some downsampling going on inside the browser.
  * Also, the setting itself may be invalid in Safari.
  */
-if(location.hash != "") {
-    const sample = location.hash.match(/^#s=(\d+)/);
-    if(sample != null) {
-        samplingRate = parseInt(sample[1]);
-        if(samplingRate != samplingRate /* isNan */
-            || !(samplingRate == 44100 || samplingRate == 48000 || samplingRate == 88200 || samplingRate == 96000)) {
-            samplingRate = DEFAULT_SAMPLING_RATE;
+(function() {
+    if(location.hash != "") {
+        const sample = location.hash.match(/^#s=(\d+)/);
+        if(sample != null) {
+            samplingRate = parseInt(sample[1]);
+            if(samplingRate != samplingRate /* isNan */
+                || !(samplingRate == 44100 || samplingRate == 48000 || samplingRate == 88200 || samplingRate == 96000)) {
+                samplingRate = DEFAULT_SAMPLING_RATE;
+            }
         }
     }
-}
+})();
 
-const feedOutRemain = (samplingRate * FEED_OUT_SECOND) / SAMPLING_CHUNK;
+/**
+ * AudioContext Setting (TODO:)
+ */
+(function() {
+    // hack for AudioContext opening is delayed on Linux.
+    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
+    const scriptNode = audioContext.createScriptProcessor(0, 2, 2);
+    samplingChunk = scriptNode? scriptNode.bufferSize: DEFAULT_SAMPLING_CHUNK;
+    console.log(samplingChunk);
+    audioContext = null;
+    feedOutRemain = (samplingRate * FEED_OUT_SECOND) / samplingChunk;
+})();
 
 /**
  * load sample vgm data
@@ -113,9 +129,6 @@ fetch('./vgm/ym2612.vgm')
             track_author: "@h1romas4",
             track_author_j: ""
         });
-        // hack for AudioContext opening is delayed on Linux.
-        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
-        audioContext = null;
         // ready to go
         startScreen();
     });
@@ -227,7 +240,7 @@ const createGd3meta = function(meta) {
 const init = function(vgmfile) {
     if(wgmplay != null) wgmplay.free();
     // create wasm instanse
-    wgmplay = new WgmPlay(samplingRate, SAMPLING_CHUNK, vgmfile.byteLength);
+    wgmplay = new WgmPlay(samplingRate, samplingChunk, vgmfile.byteLength);
     // set vgmdata
     seqdata = new Uint8Array(memory.buffer, wgmplay.get_seq_data_ref(), vgmfile.byteLength);
     seqdata.set(new Uint8Array(vgmfile));
@@ -266,7 +279,7 @@ const play = function() {
     if(audioContext == null) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
     }
-    audioNode = audioContext.createScriptProcessor(SAMPLING_CHUNK, 2, 2);
+    audioNode = audioContext.createScriptProcessor(samplingChunk, 2, 2);
     feedOutCount = 0;
     let stop = false;
     audioNode.onaudioprocess = function(ev) {
@@ -284,8 +297,8 @@ const play = function() {
             stop = true;
         }
         // set sampling buffer (re-attach view every cycle)
-        ev.outputBuffer.getChannelData(0).set(new Float32Array(memory.buffer, wgmplay.get_sampling_l_ref(), SAMPLING_CHUNK));
-        ev.outputBuffer.getChannelData(1).set(new Float32Array(memory.buffer, wgmplay.get_sampling_r_ref(), SAMPLING_CHUNK));
+        ev.outputBuffer.getChannelData(0).set(new Float32Array(memory.buffer, wgmplay.get_sampling_l_ref(), samplingChunk));
+        ev.outputBuffer.getChannelData(1).set(new Float32Array(memory.buffer, wgmplay.get_sampling_r_ref(), samplingChunk));
         if(loop >= LOOP_MAX_COUNT) {
             if(feedOutCount == 0 && loop > LOOP_MAX_COUNT) {
                 // no loop track
