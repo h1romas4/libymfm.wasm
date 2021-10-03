@@ -94,7 +94,6 @@ let animId = null;
     audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
     const scriptNode = audioContext.createScriptProcessor(0, 2, 2);
     samplingChunk = scriptNode? scriptNode.bufferSize: DEFAULT_SAMPLING_CHUNK;
-    console.log(samplingChunk);
     audioContext = null;
     feedOutRemain = (samplingRate * FEED_OUT_SECOND) / samplingChunk;
 })();
