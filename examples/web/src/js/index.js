@@ -5,7 +5,7 @@ import { memory } from "../wasm/libymfm_bg.wasm";
  * vgm setting
  */
 const DEFAULT_SAMPLING_RATE = 44100;
-const MAX_SAMPLING_BUFFER = 1024;
+const SAMPLING_CHUNK = 1024;
 const LOOP_MAX_COUNT = 2;
 const FEED_OUT_SECOND = 2;
 
@@ -81,7 +81,7 @@ if(location.hash != "") {
     }
 }
 
-const feedOutRemain = (samplingRate * FEED_OUT_SECOND) / MAX_SAMPLING_BUFFER;
+const feedOutRemain = (samplingRate * FEED_OUT_SECOND) / SAMPLING_CHUNK;
 
 /**
  * load sample vgm data
@@ -227,7 +227,7 @@ const createGd3meta = function(meta) {
 const init = function(vgmfile) {
     if(wgmplay != null) wgmplay.free();
     // create wasm instanse
-    wgmplay = new WgmPlay(samplingRate, MAX_SAMPLING_BUFFER, vgmfile.byteLength);
+    wgmplay = new WgmPlay(samplingRate, SAMPLING_CHUNK, vgmfile.byteLength);
     // set vgmdata
     seqdata = new Uint8Array(memory.buffer, wgmplay.get_seq_data_ref(), vgmfile.byteLength);
     seqdata.set(new Uint8Array(vgmfile));
@@ -266,7 +266,7 @@ const play = function() {
     if(audioContext == null) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
     }
-    audioNode = audioContext.createScriptProcessor(MAX_SAMPLING_BUFFER, 2, 2);
+    audioNode = audioContext.createScriptProcessor(SAMPLING_CHUNK, 2, 2);
     feedOutCount = 0;
     let stop = false;
     audioNode.onaudioprocess = function(ev) {
@@ -284,8 +284,8 @@ const play = function() {
             stop = true;
         }
         // set sampling buffer (re-attach view every cycle)
-        ev.outputBuffer.getChannelData(0).set(new Float32Array(memory.buffer, wgmplay.get_sampling_l_ref(), MAX_SAMPLING_BUFFER));
-        ev.outputBuffer.getChannelData(1).set(new Float32Array(memory.buffer, wgmplay.get_sampling_r_ref(), MAX_SAMPLING_BUFFER));
+        ev.outputBuffer.getChannelData(0).set(new Float32Array(memory.buffer, wgmplay.get_sampling_l_ref(), SAMPLING_CHUNK));
+        ev.outputBuffer.getChannelData(1).set(new Float32Array(memory.buffer, wgmplay.get_sampling_r_ref(), SAMPLING_CHUNK));
         if(loop >= LOOP_MAX_COUNT) {
             if(feedOutCount == 0 && loop > LOOP_MAX_COUNT) {
                 // no loop track
