@@ -50,6 +50,7 @@ let bufferd;
 let playBufferPos;
 let bufferdPos;
 let feedOutPos
+let bufferTimerId = null;
 
 /**
  * canvas member
@@ -269,12 +270,17 @@ const init = function(vgmfile) {
     bufferdPos = 0;
     feedOutPos = null;
 
+    if(bufferTimerId != null) {
+        clearInterval(bufferTimerId);
+        bufferTimerId = null;
+    }
+
     let stop = false;
     let feedOutCount = 0;
     bufferd = false;
-    let bufferTimer = setInterval(() => {
+    bufferTimerId = setInterval(() => {
         if(stop) {
-            clearInterval(bufferTimer);
+            clearInterval(bufferTimerId);
         }
         let loop;
         try {
