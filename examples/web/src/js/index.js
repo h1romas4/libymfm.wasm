@@ -113,36 +113,40 @@ let animId = null;
 /**
  * load sample vgm data
  */
-fetch('./vgm/ym2612.vgm')
-    .then(response => response.arrayBuffer())
-    .then(bytes => { init(bytes); })
-    .then(() => {
-        // enable UI
-        canvas.addEventListener('click', play, false);
-        canvas.addEventListener('dragover', function(e) {
-            prevent(e);
-            canvas.style.border = '4px dotted #333333';
-            return false;
-        }, false);
-        canvas.addEventListener('dragleave', function(e) {
-            prevent(e);
-            canvas.style.border = 'none';
-            return false;
-        });
-        canvas.addEventListener('drop', onDrop, false);
-        // for sample vgm
-        totalPlaylistCount = 1;
-        musicMeta = createGd3meta({
-            track_name: "WebAssembly 👾 VGM Player",
-            track_name_j: "",
-            game_name: "",
-            game_name_j: "YM2612 sample VGM",
-            track_author: "@h1romas4",
-            track_author_j: ""
-        });
-        // ready to go
-        startScreen();
+(async function() {
+    // load sample vgm
+    const response = await fetch('./vgm/ym2612.vgm');
+    const bytes = await response.arrayBuffer();
+
+    // ready for sample vgm to play
+    init(bytes);
+
+    // enable UI
+    canvas.addEventListener('click', play, false);
+    canvas.addEventListener('dragover', function(e) {
+        prevent(e);
+        canvas.style.border = '4px dotted #333333';
+        return false;
+    }, false);
+    canvas.addEventListener('dragleave', function(e) {
+        prevent(e);
+        canvas.style.border = 'none';
+        return false;
     });
+    canvas.addEventListener('drop', onDrop, false);
+    // for sample vgm
+    totalPlaylistCount = 1;
+    musicMeta = createGd3meta({
+        track_name: "WebAssembly 👾 VGM Player",
+        track_name_j: "",
+        game_name: "",
+        game_name_j: "YM2612 sample VGM",
+        track_author: "@h1romas4",
+        track_author_j: ""
+    });
+    // ready to go
+    startScreen();
+})();
 
 /**
  * fill text center
