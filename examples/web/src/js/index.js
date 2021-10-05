@@ -321,7 +321,7 @@ const init = function(vgmfile) {
             alert(`ymfm:\n\nAn unexpected error has occurred. System has stoped. Please reload brwoser.\n\n${e}`);
             stop = true;
         }
-    }, samplingChunk / samplingRate / 4 * 1000);
+    }, samplingChunk / samplingRate / 2 * 1000);
 
     return true;
 }
