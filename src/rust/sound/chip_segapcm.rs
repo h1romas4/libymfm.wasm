@@ -10,7 +10,9 @@
  *  https://github.com/mamedev/mame/blob/master/src/devices/sound/segapcm.cpp
  *  rev. 70743c6fb2602a5c2666c679b618706eabfca2ad
  */
-use crate::sound::base::*;
+use crate::sound::SoundChipType;
+
+use super::{interface::{RomBank, RomDevice, SoundChip}, stream::{SoundStream, convert_sample_i2f}};
 
 #[allow(clippy::upper_case_acronyms)]
 pub struct SEGAPCM {
@@ -132,7 +134,7 @@ impl SoundChip for SEGAPCM {
         self.write(offset, data as u8);
     }
 
-    fn tick(&mut self, _: usize, sound_stream: &mut SoundStream) {
+    fn tick(&mut self, _: usize, sound_stream: &mut dyn SoundStream) {
         let mut l: [f32; 1] = [0_f32];
         let mut r: [f32; 1] = [0_f32];
         self.update(&mut l, &mut r, 1, 0);

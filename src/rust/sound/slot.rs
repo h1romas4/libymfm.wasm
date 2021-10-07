@@ -4,62 +4,28 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
-use crate::sound::pwm::PWM;
-use crate::sound::segapcm::SEGAPCM;
-use crate::sound::sn76489::SN76489;
-use crate::sound::ymfm::YmFm;
+use crate::sound::chip_pwm::PWM;
+use crate::sound::chip_segapcm::SEGAPCM;
+use crate::sound::chip_sn76489::SN76489;
+use crate::sound::chip_ymfm::YmFm;
+use crate::sound::interface::RomDevice;
+use crate::sound::interface::SoundChip;
+use crate::sound::stream::NearestDownSampleStream;
+use crate::sound::stream::NativeStream;
+use crate::sound::stream::LinearUpSamplingStream;
 
-///
-/// Sound chip type
-///
-#[allow(non_camel_case_types)]
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-pub enum SoundChipType {
-    YM2151,
-    YM2203,
-    YM2149,
-    YM2612,
-    YM2413,
-    YM2602,
-    SEGAPSG,
-    PWM,
-    SEGAPCM,
-}
-
-///
-/// Sound Chip Interface
-///
-pub trait SoundChip {
-    fn new(sound_device_name: SoundChipType) -> Self
-    where
-        Self: Sized;
-    fn init(&mut self, clock: u32) -> u32;
-    fn reset(&mut self);
-    fn write(&mut self, index: usize, port: u32, data: u32);
-    fn tick(&mut self, index: usize, sound_stream: &mut SoundStream);
-}
-
-///
-/// Rom Device Interface
-///
-pub trait RomDevice {
-    fn set_rom(&mut self, rombank: RomBank);
-    fn read_rom(rombank: &RomBank, address: usize) -> u8 {
-        rombank.as_ref().unwrap().borrow().read(address)
-    }
-}
-
-pub type RomBank = Option<Rc<RefCell<RomSet>>>;
+use super::rom::RomSet;
+use super::stream::SoundStream;
+use super::stream::Tick;
+use super::SoundChipType;
 
 ///
 /// Sound Slot
 ///
 pub struct SoundSlot {
-    external_tick_pos: u64,
-    external_tick_step: u64,
     output_sampling_rate: u32,
-    output_sampling_pos: u64,
-    output_sampling_step: u64,
+    output_sampling_pos: f64,
+    output_sampling_step: f64,
     output_sample_chunk_size: usize,
     output_sampling_l: Vec<f32>,
     output_sampling_r: Vec<f32>,
@@ -75,13 +41,11 @@ impl SoundSlot {
         output_sampling_rate: u32,
         output_sample_chunk_size: usize,
     ) -> Self {
-        assert!(output_sampling_rate >= external_tick_rate); // TODO:
+        assert!(output_sampling_rate >= external_tick_rate);
         SoundSlot {
-            external_tick_pos: 0,
-            external_tick_step: SoundStream::get_resolution(external_tick_rate as u64),
             output_sampling_rate,
-            output_sampling_pos: 0,
-            output_sampling_step: SoundStream::get_resolution(output_sampling_rate as u64),
+            output_sampling_pos: 0_f64,
+            output_sampling_step: external_tick_rate as f64 / output_sampling_rate as f64,
             output_sample_chunk_size,
             output_sampling_l: vec![0_f32; output_sample_chunk_size],
             output_sampling_r: vec![0_f32; output_sample_chunk_size],
@@ -122,15 +86,27 @@ impl SoundSlot {
             };
 
             let sound_chip_sampling_rate = sound_chip.init(clock);
+            #[allow(clippy::comparison_chain)]
+            let sound_stream: Box<dyn SoundStream> = if sound_chip_sampling_rate == self.output_sampling_rate {
+                Box::new(NativeStream::new())
+            } else if sound_chip_sampling_rate > self.output_sampling_rate {
+                Box::new(NearestDownSampleStream::new(
+                    sound_chip_sampling_rate,
+                    self.output_sampling_rate,
+                ))
+            } else {
+                Box::new(LinearUpSamplingStream::new(
+                    sound_chip_sampling_rate,
+                    self.output_sampling_rate,
+                ))
+            };
+
             self.sound_device
                 .entry(sound_chip_type)
                 .or_insert_with(Vec::new)
                 .push(SoundDevice {
                     sound_chip,
-                    sound_stream: SoundStream::new(
-                        sound_chip_sampling_rate,
-                        self.output_sampling_rate,
-                    ),
+                    sound_stream,
                 });
         }
     }
@@ -163,9 +139,7 @@ impl SoundSlot {
     ///
     pub fn update(&mut self, tick_count: usize) {
         for _ in 0..tick_count {
-            self.external_tick_pos =
-                SoundStream::next_pos(self.external_tick_pos, self.external_tick_step);
-            while self.external_tick_pos > self.output_sampling_pos {
+            while self.output_sampling_pos < 1_f64 {
                 self.output_sampling_buffer_l.push_back(0_f32);
                 self.output_sampling_buffer_r.push_back(0_f32);
                 let buffer_pos = self.output_sampling_buffer_l.len() - 1;
@@ -176,9 +150,9 @@ impl SoundSlot {
                         self.output_sampling_buffer_r[buffer_pos] += r;
                     }
                 }
-                self.output_sampling_pos =
-                    SoundStream::next_pos(self.output_sampling_pos, self.output_sampling_step);
+                self.output_sampling_pos += self.output_sampling_step;
             }
+            self.output_sampling_pos -= 1_f64;
         }
     }
 
@@ -259,7 +233,7 @@ impl SoundSlot {
 ///
 pub struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
-    sound_stream: SoundStream,
+    sound_stream: Box<dyn SoundStream>,
 }
 
 impl SoundDevice {
@@ -274,186 +248,11 @@ impl SoundDevice {
             is_tick != Tick::No
         } {
             self.sound_chip
-                .tick(sound_chip_index, &mut self.sound_stream);
+                .tick(sound_chip_index, &mut *self.sound_stream);
             if is_tick == Tick::One {
                 break;
             }
         }
-        self.sound_stream.pop()
-    }
-}
-
-///
-/// Sound stream for sound chip
-///
-pub struct SoundStream {
-    input_sampling_rate: u32,
-    input_sampling_pos: u64,
-    input_sampling_step: u64,
-    output_sampling_rate: u32,
-    output_sampling_pos: u64,
-    output_sampling_step: u64,
-    now_input_sampling_l: f32,
-    now_input_sampling_r: f32,
-}
-
-impl SoundStream {
-    pub fn new(input_sampling_rate: u32, output_sampling_rate: u32) -> Self {
-        SoundStream {
-            input_sampling_rate,
-            input_sampling_pos: 0,
-            input_sampling_step: Self::get_resolution(input_sampling_rate as u64),
-            output_sampling_rate,
-            output_sampling_pos: 0,
-            output_sampling_step: Self::get_resolution(output_sampling_rate as u64),
-            now_input_sampling_l: 0_f32,
-            now_input_sampling_r: 0_f32,
-        }
-    }
-
-    ///
-    /// Compare the native sampling rate to the output sampling rate
-    /// to determine if it needs to be ticked.
-    ///
-    pub fn is_tick(&self) -> Tick {
-        // TODO: better up-sampling
-        if self.input_sampling_rate < self.output_sampling_rate
-            && self.input_sampling_pos > self.output_sampling_pos
-        {
-            return Tick::No;
-        }
-        // down-sampling
-        if self.input_sampling_rate > self.output_sampling_rate {
-            #[allow(clippy::comparison_chain)]
-            return if self.input_sampling_pos < self.output_sampling_pos {
-                Tick::More
-            } else if self.input_sampling_pos == self.output_sampling_pos {
-                Tick::One
-            } else {
-                Tick::No
-            };
-        }
-        Tick::One
-    }
-
-    ///
-    /// The interface through which the sound chip pushes the stream.
-    ///
-    pub fn push(&mut self, sampling_l: f32, sampling_r: f32) {
-        self.input_sampling_pos = Self::next_pos(self.input_sampling_pos, self.input_sampling_step);
-        self.now_input_sampling_l = sampling_l;
-        self.now_input_sampling_r = sampling_r;
-    }
-
-    ///
-    /// Get the stream of the sound chip.
-    ///
-    pub fn pop(&mut self) -> (f32, f32) {
-        self.output_sampling_pos =
-            Self::next_pos(self.output_sampling_pos, self.output_sampling_step);
-        // TODO: better upsampling
-        (self.now_input_sampling_l, self.now_input_sampling_r)
-    }
-
-    ///
-    /// Calculate the position of the stream.
-    ///
-    fn next_pos(now: u64, step: u64) -> u64 {
-        let next: u128 = (now + step).into();
-        if next > u64::MAX.into() {
-            return (u64::MAX as u128 - next) as u64;
-        }
-        next as u64
-    }
-
-    ///
-    /// Get sound stream step resolution
-    ///
-    fn get_resolution(rate: u64) -> u64 {
-        0x100000000_u64 / rate
-    }
-}
-
-#[derive(PartialEq)]
-pub enum Tick {
-    One,
-    More,
-    No,
-}
-
-///
-/// convert_sample_i2f
-///
-pub fn convert_sample_i2f(i32_sample: i32) -> f32 {
-    let mut f32_sample: f32;
-    if i32_sample < 0 {
-        f32_sample = i32_sample as f32 / 32768_f32;
-    } else {
-        f32_sample = i32_sample as f32 / 32767_f32;
-    }
-    if f32_sample > 1_f32 {
-        f32_sample = 1_f32;
-    }
-    if f32_sample < -1_f32 {
-        f32_sample = -1_f32;
-    }
-    f32_sample
-}
-
-///
-/// Rom
-///
-pub struct Rom {
-    start_address: usize,
-    end_address: usize,
-    memory: Vec<u8>,
-}
-
-///
-/// Rom set
-///
-#[derive(Default)]
-pub struct RomSet {
-    rom: Vec<Rom>,
-}
-
-impl RomSet {
-    pub fn new() -> RomSet {
-        RomSet { rom: Vec::new() }
-    }
-
-    ///
-    /// Add a ROM to the rom set.
-    ///
-    pub fn add_rom(&mut self, memory: &[u8], start_address: usize, end_address: usize) {
-        // println!("rom: {:<08x} - {:<08x}, {:<08x}, {:<02x}", start_address, end_address, memory.len(), memory[0]);
-        // to_vec(clone) is external SPI memory simulation.
-        self.rom.push(Rom {
-            start_address,
-            end_address,
-            memory: memory.to_vec(),
-        });
-    }
-
-    ///
-    /// Read the data from the ROM address.
-    ///
-    pub fn read(&self, address: usize) -> u8 {
-        for r in self.rom.iter() {
-            if r.start_address <= address && r.end_address >= address {
-                return r.memory[address - r.start_address];
-            }
-        }
-        0
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::sound::base::SoundStream;
-
-    #[test]
-    fn make_stream_1() {
-        let _stream = SoundStream::new(44100, 44100);
+        self.sound_stream.drain()
     }
 }

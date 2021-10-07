@@ -1,3 +1,4 @@
+
 // license:GPL-2
 /**
  * Rust PWM emulation
@@ -34,7 +35,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc., *
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.           *
  ***************************************************************************/
-use crate::sound::base::*;
+use super::{SoundChipType, interface::SoundChip, stream::{SoundStream, convert_sample_i2f}};
 
 // const CHILLY_WILLY_SCALE: u8 = 1;
 // const PWM_BUF_SIZE: usize = 4;
@@ -335,7 +336,7 @@ impl SoundChip for PWM {
         self.pwm_chn_w(0, port as u8, data as u16);
     }
 
-    fn tick(&mut self, _: usize, sound_stream: &mut SoundStream) {
+    fn tick(&mut self, _: usize, sound_stream: &mut dyn SoundStream) {
         let mut l: [f32; 1] = [0_f32];
         let mut r: [f32; 1] = [0_f32];
         self.pwm_update_chip(0, &mut l,&mut r, 1, 0);

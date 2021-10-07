@@ -124,7 +124,7 @@ npm run start
 
 ## TODO / known issues
 
-- [ ] Better upsampling.
+- [x] Better upsampling.
 - [ ] To BSD license. (import SN76489/PWM from MAME)
 - [x] Add buffering mode.
 - [ ] Add direct ymfm intarfece.
