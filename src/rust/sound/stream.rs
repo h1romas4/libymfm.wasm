@@ -72,7 +72,7 @@ impl SoundStream for NearestDownSampleStream {
             return Tick::More;
         }
         let prev_sampling_pos = self.output_sampling_pos - self.output_sampling_step;
-        if 1_f64 - prev_sampling_pos > self.output_sampling_pos - 1_f64 {
+        if 1_f64 - prev_sampling_pos < self.output_sampling_pos - 1_f64 {
             self.output_sampling_l = self.prev_input_sampling_l;
             self.output_sampling_r = self.prev_input_sampling_r;
         } else {
