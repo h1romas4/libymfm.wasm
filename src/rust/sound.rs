@@ -1,9 +1,13 @@
 // license:BSD-3-Clause
-mod base;
-mod pwm;
-mod segapcm;
-mod sn76489;
-mod ymfm;
+mod slot;
+mod interface;
+mod stream;
+mod rom;
 
-pub use crate::sound::base::SoundSlot as SoundSlot;
-pub use crate::sound::base::SoundChipType as SoundChipType;
+mod chip_ymfm;
+mod chip_sn76489;
+mod chip_pwm;
+mod chip_segapcm;
+
+pub use crate::sound::slot::SoundSlot as SoundSlot;
+pub use crate::sound::interface::SoundChipType as SoundChipType;

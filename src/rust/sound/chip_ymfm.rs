@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-use crate::sound::base::*;
+use super::{SoundChipType, interface::SoundChip, stream::{SoundStream, convert_sample_i2f}};
 
 ///
 /// FFI interface
@@ -101,7 +101,7 @@ impl SoundChip for YmFm {
         self.write_chip(index, offset, data as u8);
     }
 
-    fn tick(&mut self, index: usize, sound_stream: &mut SoundStream) {
+    fn tick(&mut self, index: usize, sound_stream: &mut dyn SoundStream) {
         let mut buffer: [i32; 2] = [0, 0];
         self.generate(index, &mut buffer);
         sound_stream.push(convert_sample_i2f(buffer[0]), convert_sample_i2f(buffer[1]));
