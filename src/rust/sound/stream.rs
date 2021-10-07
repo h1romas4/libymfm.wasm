@@ -136,21 +136,6 @@ impl SoundStream for LinearUpSamplingStream {
     ///
     fn is_tick(&mut self) -> Tick {
         if self.output_sampling_pos < 1_f64 {
-            // if crossing a sample boundary, blend with the neighbor
-            //
-            // using stream_buffer::sample_t = float
-            // stream_buffer::sample_t step = stream_buffer::sample_t(input.sample_rate()) / stream_buffer::sample_t(output.sample_rate());
-            // stream_buffer::sample_t stepinv = 1.0 / step;
-            // stream_buffer::sample_t prevsample = cursample;
-            // cursample = rebased.get(srcindex++);
-            // srcpos += step;
-            // srcpos -= 1.0;
-            //
-            // stepinv * (prevsample * (step - srcpos) + srcpos * cursample)
-            //
-            // n = floor(t/Ts);
-            // y(t/Ts) = x[n] + (t/Ts-n)(x[n+1]-x[n]);
-            //
             self.output_sampling_l = (self.output_sampling_inv
                 * (self.prev_input_sampling_l as f64
                     * (self.output_sampling_step - self.output_sampling_pos)
