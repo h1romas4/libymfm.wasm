@@ -1,3 +1,4 @@
+// license:BSD-3-Clause
 ///
 /// Sound stream interface
 ///
