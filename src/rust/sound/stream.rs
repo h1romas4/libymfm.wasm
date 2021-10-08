@@ -127,6 +127,10 @@ impl LinearUpSamplingStream {
         }
     }
 
+    ///
+    /// Calc linear upsampling.
+    /// y(t/Ts) = x[n] + (t/Ts-n)(x[n+1]-x[n]);
+    ///
     fn calc_sample(&self, prev_sample: f32, now_sample: f32) -> f32 {
         let output_pos = self.output_sampling_pos + self.output_sampling_step;
         (prev_sample as f64
@@ -154,7 +158,6 @@ impl SoundStream for LinearUpSamplingStream {
                 self.output_sampling_l = 0_f32;
                 self.output_sampling_r = 0_f32;
             } else {
-                // y(t/Ts) = x[n] + (t/Ts-n)(x[n+1]-x[n]);
                 self.output_sampling_l = self.calc_sample(
                     self.prev_input_sampling_l.unwrap(),
                     self.now_input_sampling_l.unwrap(),
