@@ -1,3 +1,4 @@
+// license:BSD-3-Clause
 use std::cell::RefCell;
 use std::rc::Rc;
 
