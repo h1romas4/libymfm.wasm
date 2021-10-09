@@ -74,6 +74,7 @@ impl SoundSlot {
                 | SoundChipType::YM2413 => Box::new(YmFm::new(sound_chip_type)),
                 SoundChipType::YM2602 => todo!(),
                 SoundChipType::SEGAPSG => Box::new(SN76489::new(SoundChipType::SEGAPSG)),
+                SoundChipType::SN76489 => Box::new(SN76489::new(SoundChipType::SN76489)),
                 SoundChipType::PWM => Box::new(PWM::new(SoundChipType::PWM)),
                 SoundChipType::SEGAPCM => {
                     // connect PCM ROM

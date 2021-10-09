@@ -594,7 +594,7 @@ mod tests {
 
     #[test]
     fn sn76489_1() {
-        play("./docs/vgm/sn76489.vgm")
+        play("./docs/vgm/segapsg.vgm")
     }
 
     #[test]
