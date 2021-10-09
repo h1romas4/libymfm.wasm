@@ -161,24 +161,24 @@ const MAX_OUTPUT: i32 = 0x7fff;
 #[allow(non_snake_case)]
 pub struct SN76489 {
     clock: u32,
-    feedback_mask: i32,     // mask for feedback
-    whitenoise_tap1: i32,   // mask for white noise tap 1 (higher one, usually bit 14)
-    whitenoise_tap2: i32,   // mask for white noise tap 2 (lower one, usually bit 13)
-    negate: bool,           // output negate flag
-    stereo: bool,           // whether we're dealing with stereo or not
-    clock_divider: i32,     // clock divider
-    ncr_style_psg: bool,    // flag to ignore writes to regs 1,3,5,6,7 with bit 7 low
-    sega_style_psg: bool,   // flag to make frequency zero acts as if it is one more than max (0x3ff+1) or if it acts like 0; the initial register is pointing to 0x3 instead of 0x0; the volume reg is preloaded with 0xF instead of 0x0
-    vol_table: [i32; 16],   // volume table (for 4-bit to db conversion)
-    register: [i32; 8],     // registers
-    last_register: i32,     // last register written
-    volume: [i32; 4],       // db volume of voice 0-2 and noise
-    RNG: u32,               // noise generator LFSR
+    feedback_mask: i32,   // mask for feedback
+    whitenoise_tap1: i32, // mask for white noise tap 1 (higher one, usually bit 14)
+    whitenoise_tap2: i32, // mask for white noise tap 2 (lower one, usually bit 13)
+    negate: bool,         // output negate flag
+    stereo: bool,         // whether we're dealing with stereo or not
+    clock_divider: i32,   // clock divider
+    ncr_style_psg: bool,  // flag to ignore writes to regs 1,3,5,6,7 with bit 7 low
+    sega_style_psg: bool, // flag to make frequency zero acts as if it is one more than max (0x3ff+1) or if it acts like 0; the initial register is pointing to 0x3 instead of 0x0; the volume reg is preloaded with 0xF instead of 0x0
+    vol_table: [i32; 16], // volume table (for 4-bit to db conversion)
+    register: [i32; 8],   // registers
+    last_register: i32,   // last register written
+    volume: [i32; 4],     // db volume of voice 0-2 and noise
+    RNG: u32,             // noise generator LFSR
     current_clock: i32,
-    stereo_mask: i32,       // the stereo output mask
-    period: [i32; 4],       // Length of 1/2 of waveform
-    count: [i32; 4],        // Position within the waveform
-    output: [i32; 4],       // 1-bit output of each channel, pre-volume
+    stereo_mask: i32, // the stereo output mask
+    period: [i32; 4], // Length of 1/2 of waveform
+    count: [i32; 4],  // Position within the waveform
+    output: [i32; 4], // 1-bit output of each channel, pre-volume
 }
 
 impl SN76489 {
@@ -259,7 +259,7 @@ impl SN76489 {
 
         // build volume table (2dB per step)
         for i in 0..15 {
-	    	// limit volume to avoid clipping
+            // limit volume to avoid clipping
             if out > (MAX_OUTPUT / 4) as f64 {
                 self.vol_table[i] = MAX_OUTPUT / 4;
             } else {
@@ -297,7 +297,8 @@ impl SN76489 {
                 // tone 1: frequency
                 // tone 2: frequency
                 if data & 0x80 == 0 {
-                    self.register[r as usize] = (self.register[r as usize] & 0x0f) | ((data as i32 & 0x3f) << 4);
+                    self.register[r as usize] =
+                        (self.register[r as usize] & 0x0f) | ((data as i32 & 0x3f) << 4);
                 }
                 if self.register[r as usize] != 0 || !self.sega_style_psg {
                     self.period[c as usize] = self.register[r as usize];
@@ -319,7 +320,8 @@ impl SN76489 {
                 // noise: volume
                 self.volume[c as usize] = self.vol_table[(data & 0x0f) as usize];
                 if data & 0x80 == 0 {
-                    self.register[r as usize] = (self.register[r as usize] & 0x3f0) | (data & 0x0f) as i32;
+                    self.register[r as usize] =
+                        (self.register[r as usize] & 0x3f0) | (data & 0x0f) as i32;
                 }
             }
             6 => {
@@ -328,11 +330,16 @@ impl SN76489 {
                     // println!("sn76496_base_device: write to reg 6 with bit 7 clear; data was {}, new write is {}! report this to LN!\n", self.register[6], data);
                 }
                 if data & 0x80 == 0 {
-                    self.register[r as usize] = (self.register[r as usize] & 0x3f0) | (data & 0x0f) as i32;
+                    self.register[r as usize] =
+                        (self.register[r as usize] & 0x3f0) | (data & 0x0f) as i32;
                 }
                 n = self.register[6];
                 // N/512,N/1024,N/2048,Tone #3 output
-                self.period[3] = if n & 3 == 3 { self.period[2] << 1 } else { 1 << (5 + (n & 3)) };
+                self.period[3] = if n & 3 == 3 {
+                    self.period[2] << 1
+                } else {
+                    1 << (5 + (n & 3))
+                };
                 if !self.ncr_style_psg {
                     self.RNG = self.feedback_mask as u32;
                 }
@@ -343,7 +350,8 @@ impl SN76489 {
         }
     }
 
-    pub fn sound_stream_update(&mut self,
+    pub fn sound_stream_update(
+        &mut self,
         buffer_l: &mut [f32],
         buffer_r: &mut [f32],
         length: usize,
@@ -376,9 +384,16 @@ impl SN76489 {
                     // if noisemode is 1, both taps are enabled
                     // if noisemode is 0, the lower tap, whitenoisetap2, is held at 0
                     // The != was a bit-XOR (^) before
-                    let tap2 = if self.ncr_style_psg { self.whitenoise_tap2 as u32 } else { 0 };
+                    let tap2 = if self.ncr_style_psg {
+                        self.whitenoise_tap2 as u32
+                    } else {
+                        0
+                    };
                     #[allow(clippy::branches_sharing_code)]
-                    if (self.RNG & self.whitenoise_tap1 as u32 != 0) != (self.RNG & self.whitenoise_tap2 as u32 != tap2) && self.in_noise_mode() {
+                    if (self.RNG & self.whitenoise_tap1 as u32 != 0)
+                        != (self.RNG & self.whitenoise_tap2 as u32 != tap2)
+                        && self.in_noise_mode()
+                    {
                         self.RNG >>= 1;
                         self.RNG |= self.feedback_mask as u32;
                     } else {
@@ -391,19 +406,58 @@ impl SN76489 {
             }
 
             if self.stereo {
-                out = if self.stereo_mask & 0x10 != 0 && self.output[0] != 0 { self.volume[0] } else { 0 }
-                    + if self.stereo_mask & 0x20 != 0 && self.output[1] != 0 { self.volume[1] } else { 0 }
-                    + if self.stereo_mask & 0x40 != 0 && self.output[2] != 0 { self.volume[2] } else { 0 }
-                    + if self.stereo_mask & 0x80 != 0 && self.output[3] != 0 { self.volume[3] } else { 0 };
-                out2 = if self.stereo_mask & 0x1 != 0 && self.output[0] != 0 { self.volume[0] } else { 0 }
-                    + if self.stereo_mask & 0x2 != 0 && self.output[1] != 0 { self.volume[1] } else { 0 }
-                    + if self.stereo_mask & 0x4 != 0 && self.output[2] != 0 { self.volume[2] } else { 0 }
-                    + if self.stereo_mask & 0x8 != 0 && self.output[3] != 0 { self.volume[3] } else { 0 };
+                out = if self.stereo_mask & 0x10 != 0 && self.output[0] != 0 {
+                    self.volume[0]
+                } else {
+                    0
+                } + if self.stereo_mask & 0x20 != 0 && self.output[1] != 0 {
+                    self.volume[1]
+                } else {
+                    0
+                } + if self.stereo_mask & 0x40 != 0 && self.output[2] != 0 {
+                    self.volume[2]
+                } else {
+                    0
+                } + if self.stereo_mask & 0x80 != 0 && self.output[3] != 0 {
+                    self.volume[3]
+                } else {
+                    0
+                };
+                out2 = if self.stereo_mask & 0x1 != 0 && self.output[0] != 0 {
+                    self.volume[0]
+                } else {
+                    0
+                } + if self.stereo_mask & 0x2 != 0 && self.output[1] != 0 {
+                    self.volume[1]
+                } else {
+                    0
+                } + if self.stereo_mask & 0x4 != 0 && self.output[2] != 0 {
+                    self.volume[2]
+                } else {
+                    0
+                } + if self.stereo_mask & 0x8 != 0 && self.output[3] != 0 {
+                    self.volume[3]
+                } else {
+                    0
+                };
             } else {
-                out = if self.output[0] != 0 { self.volume[0] } else { 0 }
-                    + if self.output[1] != 0 { self.volume[1] } else { 0 }
-                    + if self.output[2] != 0 { self.volume[2] } else { 0 }
-                    + if self.output[3] != 0 { self.volume[3] } else { 0 };
+                out = if self.output[0] != 0 {
+                    self.volume[0]
+                } else {
+                    0
+                } + if self.output[1] != 0 {
+                    self.volume[1]
+                } else {
+                    0
+                } + if self.output[2] != 0 {
+                    self.volume[2]
+                } else {
+                    0
+                } + if self.output[3] != 0 {
+                    self.volume[3]
+                } else {
+                    0
+                };
             }
 
             if self.negate {
@@ -433,9 +487,7 @@ impl SoundChip for SN76489 {
             SoundChipType::SEGAPSG => {
                 SN76489::new(0x8000, 0x01, 0x08, true, false, 8, false, false)
             }
-            SoundChipType::SN76489 => {
-                SN76489::new(0x4000, 0x01, 0x02, true, false, 8, false, true)
-            }
+            SoundChipType::SN76489 => SN76489::new(0x4000, 0x01, 0x02, true, false, 8, false, true),
             _ => {
                 panic!("not supported sound chip type");
             }
