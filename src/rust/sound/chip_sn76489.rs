@@ -384,13 +384,19 @@ impl SN76489 {
                     // if noisemode is 1, both taps are enabled
                     // if noisemode is 0, the lower tap, whitenoisetap2, is held at 0
                     // The != was a bit-XOR (^) before
-                    let hold = if self.ncr_style_psg { self.whitenoise_tap2 } else { 0 };
-                    let tap1 = if self.RNG & self.whitenoise_tap1 != 0 { 0 } else { 1 };
-                    let tap2 = if self.RNG & self.whitenoise_tap2 != hold { 0 } else { 1 };
-                    self.RNG >>= 1;
-                    if (self.register[6] & 4 != 0) && (tap1 != tap2)
+                    let tap2 = if self.ncr_style_psg {
+                        self.whitenoise_tap2
+                    } else {
+                        0
+                    };
+                    #[allow(clippy::branches_sharing_code)]
+                    if ((self.RNG & self.whitenoise_tap1) != 0)
+                        != (((self.RNG & self.whitenoise_tap2) != tap2) && self.in_noise_mode())
                     {
+                        self.RNG >>= 1;
                         self.RNG |= self.feedback_mask;
+                    } else {
+                        self.RNG >>= 1;
                     }
                     self.output[3] = (self.RNG & 1) as i32;
 
@@ -466,6 +472,11 @@ impl SN76489 {
                 buffer_r[sampindex + buffer_pos] += convert_sample_i2f(out / 2);
             }
         }
+    }
+
+    #[inline]
+    fn in_noise_mode(&self) -> bool {
+        self.register[6] & 4 != 0
     }
 }
 
