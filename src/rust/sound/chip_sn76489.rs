@@ -274,20 +274,20 @@ impl SN76489 {
     }
 
     pub fn write(&mut self, data: u8) {
-        let n;
-        let r;
-        let c;
+        let n: i32;
+        let r: i32;
+        let c: i32;
 
         if data & 0x80 != 0 {
-            r = (data & 0x70) >> 4;
-            self.last_register = r as i32;
+            r = (data as i32 & 0x70) >> 4;
+            self.last_register = r;
             if (self.ncr_style_psg && r == 6) && (data & 0x04 != self.register[6] as u8 & 0x04) {
                 // NCR-style PSG resets the LFSR only on a mode write which actually changes the state of bit 2 of register 6
                 self.RNG = self.feedback_mask as u32;
             }
-            self.register[r as usize] = (self.register[r as usize] & 0x3f0) | (data & 0x0f) as i32;
+            self.register[r as usize] = (self.register[r as usize] & 0x3f0) | (data as i32 & 0x0f);
         } else {
-            r = self.last_register as u8;
+            r = self.last_register;
         }
 
         c = r >> 1;
@@ -331,7 +331,7 @@ impl SN76489 {
                 }
                 if data & 0x80 == 0 {
                     self.register[r as usize] =
-                        (self.register[r as usize] & 0x3f0) | (data & 0x0f) as i32;
+                        (self.register[r as usize] & 0x3f0) | (data as i32 & 0x0f);
                 }
                 n = self.register[6];
                 // N/512,N/1024,N/2048,Tone #3 output
@@ -390,8 +390,8 @@ impl SN76489 {
                         0
                     };
                     #[allow(clippy::branches_sharing_code)]
-                    if (self.RNG & self.whitenoise_tap1 as u32 != 0)
-                        != (self.RNG & self.whitenoise_tap2 as u32 != tap2)
+                    if ((self.RNG & self.whitenoise_tap1 as u32 != 0)
+                        != (self.RNG & self.whitenoise_tap2 as u32 != tap2))
                         && self.in_noise_mode()
                     {
                         self.RNG >>= 1;
@@ -399,7 +399,8 @@ impl SN76489 {
                     } else {
                         self.RNG >>= 1;
                     }
-                    self.output[3] = self.RNG as i32 & 1;
+                    // println!("{0:>08}", self.RNG);
+                    self.output[3] = (self.RNG & 1) as i32;
 
                     self.count[3] = self.period[3];
                 }
