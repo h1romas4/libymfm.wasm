@@ -352,6 +352,10 @@ impl SN76489 {
         // for debug (matches MAME)
         // print!("{:<06} {:<06} {:<06} {:<06} {:<06} {:<06} {:<06} {:<06} | ", self.register[0], self.register[1], self.register[2], self.register[3], self.register[4], self.register[5], self.register[6], self.register[7]);
         // println!("{:<06} {:<06} {:<06} {:<06}", self.period[0], self.period[1], self.period[2], self.period[3]);
+        //
+        // printf("%06d %06d %06d %06d %06d %06d %06d %06d | ", m_register[0], m_register[1], m_register[2], m_register[3], m_register[4], m_register[5], m_register[6], m_register[7]);
+        // printf("%06d %06d %06d %06d\n", m_period[0], m_period[1], m_period[2], m_period[3]);
+
     }
 
     pub fn sound_stream_update(
