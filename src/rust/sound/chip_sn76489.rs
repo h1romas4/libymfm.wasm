@@ -341,7 +341,7 @@ impl SN76489 {
                     1 << (5 + (n & 3))
                 };
                 if !self.ncr_style_psg {
-                    self.RNG = self.feedback_mask as u32;
+                    self.RNG = self.feedback_mask;
                 }
             }
             _ => {
@@ -389,14 +389,12 @@ impl SN76489 {
                     } else {
                         0
                     };
-                    #[allow(clippy::branches_sharing_code)]
-                    if ((self.RNG & self.whitenoise_tap1) != 0)
-                        != (((self.RNG & self.whitenoise_tap2) != tap2) && self.in_noise_mode())
+                    let rng = self.RNG;
+                    self.RNG >>= 1;
+                    if ((rng & self.whitenoise_tap1) != 0)
+                        != (((rng & self.whitenoise_tap2) != tap2) && self.in_noise_mode())
                     {
-                        self.RNG >>= 1;
                         self.RNG |= self.feedback_mask;
-                    } else {
-                        self.RNG >>= 1;
                     }
                     self.output[3] = (self.RNG & 1) as i32;
 
