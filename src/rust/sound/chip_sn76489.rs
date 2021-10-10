@@ -348,6 +348,10 @@ impl SN76489 {
                 // Nonexistent data patterns
             }
         }
+
+        // for debug (matches MAME)
+        // print!("{:<06} {:<06} {:<06} {:<06} {:<06} {:<06} {:<06} {:<06} | ", self.register[0], self.register[1], self.register[2], self.register[3], self.register[4], self.register[5], self.register[6], self.register[7]);
+        // println!("{:<06} {:<06} {:<06} {:<06}", self.period[0], self.period[1], self.period[2], self.period[3]);
     }
 
     pub fn sound_stream_update(
