@@ -477,8 +477,8 @@ impl SN76496 {
                 buffer_l[sampindex + buffer_pos] += convert_sample_i2f(out);
                 buffer_r[sampindex + buffer_pos] += convert_sample_i2f(out2);
             } else {
-                buffer_l[sampindex + buffer_pos] += convert_sample_i2f(out / 2);
-                buffer_r[sampindex + buffer_pos] += convert_sample_i2f(out / 2);
+                buffer_l[sampindex + buffer_pos] += convert_sample_i2f(out) / 2_f32;
+                buffer_r[sampindex + buffer_pos] += convert_sample_i2f(out) / 2_f32;
             }
         }
     }
