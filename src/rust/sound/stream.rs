@@ -190,6 +190,53 @@ impl SoundStream for LinearUpSamplingStream {
     }
 }
 
+pub struct OverSampleStream {
+    now_input_sampling_l: f32,
+    now_input_sampling_r: f32,
+    output_sampling_pos: f64,
+    output_sampling_step: f64,
+    output_sampling_l: f32,
+    output_sampling_r: f32,
+}
+
+impl OverSampleStream {
+    pub fn new(input_sampling_rate: u32, output_sampling_rate: u32) -> Self {
+        assert!(input_sampling_rate >= output_sampling_rate);
+        OverSampleStream {
+            now_input_sampling_l: 0_f32,
+            now_input_sampling_r: 0_f32,
+            output_sampling_pos: 0_f64,
+            output_sampling_step: output_sampling_rate as f64 / input_sampling_rate as f64,
+            output_sampling_l: 0_f32,
+            output_sampling_r: 0_f32,
+        }
+    }
+}
+
+impl SoundStream for OverSampleStream {
+    fn is_tick(&mut self) -> Tick {
+        if self.output_sampling_pos < 1_f64 {
+            return Tick::More;
+        }
+        self.output_sampling_pos -= 1_f64;
+        self.output_sampling_l = self.now_input_sampling_l;
+        self.output_sampling_r = self.now_input_sampling_r;
+        self.now_input_sampling_l = 0_f32;
+        self.now_input_sampling_r = 0_f32;
+        Tick::No
+    }
+
+    fn push(&mut self, sampling_l: f32, sampling_r: f32) {
+        self.output_sampling_pos += self.output_sampling_step;
+        self.now_input_sampling_l += sampling_l * self.output_sampling_step as f32;
+        self.now_input_sampling_r += sampling_r * self.output_sampling_step as f32;
+    }
+
+    fn drain(&mut self) -> (f32, f32) {
+        (self.output_sampling_l, self.output_sampling_r)
+    }
+}
+
 #[derive(PartialEq)]
 pub enum Tick {
     One,

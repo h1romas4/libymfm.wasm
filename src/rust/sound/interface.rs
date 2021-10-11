@@ -18,6 +18,7 @@ pub enum SoundChipType {
     YM2413,
     YM2602,
     SEGAPSG,
+    SN76489,
     PWM,
     SEGAPCM,
 }

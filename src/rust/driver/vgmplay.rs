@@ -594,7 +594,7 @@ mod tests {
 
     #[test]
     fn sn76489_1() {
-        play("./docs/vgm/sn76489.vgm")
+        play("./docs/vgm/segapsg-2.vgz")
     }
 
     #[test]
@@ -671,7 +671,8 @@ mod tests {
 
         let mut pcm = File::create("output.pcm").expect("file open error.");
         // play
-        // ffplay -f f32le -ar 44100 -ac 2 output.pcm
+        // ffplay -f f32le -ar 96000 -ac 2 output.pcm
+        // ffmpeg -f f32le -ar 96000 -ac 2 -i output.pcm output-96000.wav
         #[allow(clippy::absurd_extreme_comparisons)]
         while vgmplay.play(false) <= 0 {
             for i in 0..MAX_SAMPLE_SIZE {

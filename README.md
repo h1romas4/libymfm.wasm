@@ -21,9 +21,9 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |YM2149|ymfm|vgmplayer needs clock hack?|
 |YM2612|ymfm||
 |YM2413|ymfm||
-|PWM|vgmplay|for demo|
-|SN76489|vgmplay|for demo|
+|SN76489|mame|for demo|
 |SEGAPCM|mame|for demo|
+|PWM|vgmplay|for demo|
 
 example source code:
 
@@ -125,7 +125,9 @@ npm run start
 ## TODO / known issues
 
 - [x] Better upsampling.
-- [ ] To BSD license. (import SN76489/PWM from MAME)
+- [ ] To BSD license.
+    - [x] SN76489
+    - [ ] PWM
 - [x] Add buffering mode.
 - [ ] Add direct ymfm intarfece.
 - [ ] Support yfmf's all sound chips.

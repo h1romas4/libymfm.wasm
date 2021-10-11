@@ -6,13 +6,14 @@ use std::rc::Rc;
 
 use crate::sound::chip_pwm::PWM;
 use crate::sound::chip_segapcm::SEGAPCM;
-use crate::sound::chip_sn76489::SN76489;
+use crate::sound::chip_sn76496::SN76496;
 use crate::sound::chip_ymfm::YmFm;
 use crate::sound::interface::RomDevice;
 use crate::sound::interface::SoundChip;
 use crate::sound::stream::NearestDownSampleStream;
 use crate::sound::stream::NativeStream;
 use crate::sound::stream::LinearUpSamplingStream;
+use crate::sound::stream::OverSampleStream;
 
 use super::rom::RomSet;
 use super::stream::SoundStream;
@@ -73,7 +74,8 @@ impl SoundSlot {
                 | SoundChipType::YM2612
                 | SoundChipType::YM2413 => Box::new(YmFm::new(sound_chip_type)),
                 SoundChipType::YM2602 => todo!(),
-                SoundChipType::SEGAPSG => Box::new(SN76489::new(SoundChipType::SEGAPSG)),
+                SoundChipType::SEGAPSG => Box::new(SN76496::new(SoundChipType::SEGAPSG)),
+                SoundChipType::SN76489 => Box::new(SN76496::new(SoundChipType::SN76489)),
                 SoundChipType::PWM => Box::new(PWM::new(SoundChipType::PWM)),
                 SoundChipType::SEGAPCM => {
                     // connect PCM ROM
@@ -90,10 +92,20 @@ impl SoundSlot {
             let sound_stream: Box<dyn SoundStream> = if sound_chip_sampling_rate == self.output_sampling_rate {
                 Box::new(NativeStream::new())
             } else if sound_chip_sampling_rate > self.output_sampling_rate {
-                Box::new(NearestDownSampleStream::new(
-                    sound_chip_sampling_rate,
-                    self.output_sampling_rate,
-                ))
+                match sound_chip_type {
+                    SoundChipType::SEGAPSG | SoundChipType::SN76489 => {
+                        Box::new(OverSampleStream::new(
+                            sound_chip_sampling_rate,
+                            self.output_sampling_rate,
+                        ))
+                    }
+                    _ => {
+                        Box::new(NearestDownSampleStream::new(
+                            sound_chip_sampling_rate,
+                            self.output_sampling_rate,
+                        ))
+                    }
+                }
             } else {
                 Box::new(LinearUpSamplingStream::new(
                     sound_chip_sampling_rate,

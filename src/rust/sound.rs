@@ -6,6 +6,7 @@ mod rom;
 
 mod chip_ymfm;
 mod chip_sn76489;
+mod chip_sn76496;
 mod chip_pwm;
 mod chip_segapcm;
 
