@@ -4,9 +4,6 @@
  *  Hiromasa Tanaka <h1romas4@gmail.com>
  *  https://github.com/h1romas4/libymfm.wasm
  *
- *  There is a !!porting error in this source!!.
- *  The noise channel is not vocalized correctly.
- *
  * Converted from:
  *  SN76489 emulation by Nicola Salmoria
  *  https://github.com/mamedev/mame/blob/ee1e4f9683a4953cb9d88f9256017fcbc38e3144/src/devices/sound/sn76496.cpp
