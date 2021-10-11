@@ -181,7 +181,7 @@ pub struct SN76496 {
     stereo_mask: i32, // the stereo output mask
     period: [i32; 4], // Length of 1/2 of waveform
     count: [i32; 4],  // Position within the waveform
-    output: [i32; 4], // 1-bit output of each channel, pre-volume
+    output: [u32; 4], // 1-bit output of each channel, pre-volume
 }
 
 impl SN76496 {
@@ -235,6 +235,7 @@ impl SN76496 {
         for i in (0..8).step_by(2) {
             self.register[i] = 0;
             // volume = 0x0 (max volume) on reset; this needs testing on chips other than SN76489A and Sega VDP PSG
+            // self.register[i + 1] = 0xf;
             self.register[i + 1] = 0;
         }
 
@@ -245,7 +246,7 @@ impl SN76496 {
         }
 
         self.RNG = self.feedback_mask as u32;
-        self.output[3] = self.RNG as i32 & 1;
+        self.output[3] = self.RNG & 1;
 
         self.stereo_mask = 0xff; // all channels enabled
         self.current_clock = self.clock_divider - 1;
@@ -407,7 +408,7 @@ impl SN76496 {
                     {
                         self.RNG |= self.feedback_mask;
                     }
-                    self.output[3] = (self.RNG & 1) as i32;
+                    self.output[3] = self.RNG & 1;
 
                     self.count[3] = self.period[3];
                 }
