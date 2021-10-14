@@ -27,7 +27,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 
 example source code:
 
-> [https://github.com/h1romas4/libymfm.wasm/tree/wasm](https://github.com/h1romas4/libymfm.wasm/tree/wasm)
+> [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web)
 
 ## Build `vgmrender.wasi`
 
