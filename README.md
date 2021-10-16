@@ -122,6 +122,10 @@ alias: {
 npm run start
 ```
 
+## License
+
+BSD 3-Clause License
+
 ## TODO / known issues
 
 - [x] Better upsampling.
