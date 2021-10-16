@@ -32,7 +32,7 @@ Source code:
 ## libymfm-cli
 
 - Install [Wasmer](https://wasmer.io/) runtime
-- Download [libymfm-cli.wasm]() from pre-build release
+- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.1.0) from pre-build release
 
 Options
 
