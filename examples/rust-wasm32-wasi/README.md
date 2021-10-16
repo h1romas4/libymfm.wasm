@@ -2,6 +2,18 @@
 
 libymfm wasi32-wasi benchmark
 
+## Install lld-12
+
+```
+sudo apt install lld-12
+```
+
+`.bashrc`
+
+```
+export CARGO_TARGET_WASM32_WASI_LINKER=/usr/lib/llvm-12/bin/lld
+```
+
 ## Build
 
 ```
