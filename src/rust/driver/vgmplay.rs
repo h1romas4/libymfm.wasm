@@ -598,6 +598,11 @@ mod tests {
     }
 
     #[test]
+    fn pwm_1() {
+        play("./docs/vgm/pwm.vgz")
+    }
+
+    #[test]
     fn ym2612_1() {
         println!("1st vgm instance");
         play("./docs/vgm/ym2612.vgm");
