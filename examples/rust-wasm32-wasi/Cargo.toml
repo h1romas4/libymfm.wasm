@@ -1,9 +1,10 @@
 [package]
-name = "rust-wasm32-wasi"
+name = "libymfm-cli"
 version = "0.1.0"
+authors = ["h1romas4 <h1romas4@gmail.com>"]
+description = "libymfm CLI"
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 libymfm = { path = "/home/hiromasa/devel/amd64/libymfm.wasm", default-features = false }
+clap = "2"
