@@ -1,6 +1,6 @@
-# rust-wasm32-wasi
+# libymfm-cli
 
-libymfm wasi32-wasi benchmark
+libymfm command line interface.
 
 ## Install lld-12
 
@@ -22,8 +22,47 @@ cargo build --target=wasm32-wasi --release
 
 ## Run
 
+Options
+
 ```
-wasmer run target/wasm32-wasi/release/rust-wasm32-wasi.wasm --mapdir /:../../docs/vgm -- /ym2612.vgm
+$ wasmer run libymfm-cli.wasm -- -h
+libymfm-cli 0.1.0
+h1romas4 <h1romas4@gmail.com>
+libymfm CLI
+
+USAGE:
+    libymfm-cli.wasm [OPTIONS] <vgm filename>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -o, --output <output filepath>    Output file path
+    -r, --rate <rate>                 Output sampling rate
+
+ARGS:
+    <vgm filename>    Play .vgm/.vzg file path
+```
+
+Example 1 - specify output file name
+
+```
+$ wasmer run libymfm-cli.wasm --mapdir /:../../docs/vgm -- /ym2612.vgm -o ym2612.pcm
+$ ffplay -f f32le -ar 44100 -ac 2 ../../docs/vgm/ym2612.pcm
+```
+
+Example 2 - direct play
+
+```
+$ wasmer run libymfm-cli.wasm --mapdir /:../../docs/vgm -- /ym2612.vgm | ffplay -f f32le -ar 44100 -ac 2 -i -
+```
+
+
+Example 3 - specify samplig rate
+
+```
+$ wasmer run libymfm-cli.wasm --mapdir /:../../docs/vgm -- /ym2612.vgm -r 96000 | ffplay -f f32le -ar 96000 -ac 2 -i -
 ```
 
 ## Problem
