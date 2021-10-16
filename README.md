@@ -25,11 +25,62 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |SEGAPCM|mame|for demo|
 |PWM|mame|for demo|
 
-example source code:
+Source code:
 
 > [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web)
 
-## Build `vgmrender.wasi`
+## libymfm-cli
+
+- Install [Wasmer](https://wasmer.io/) runtime
+- Download [libymfm-cli.wasm]() from pre-build release
+
+Options
+
+```
+$ wasmer run libymfm-cli.wasm -- -h
+libymfm-cli 0.1.0
+h1romas4 <h1romas4@gmail.com>
+libymfm CLI
+
+USAGE:
+    libymfm-cli.wasm [OPTIONS] <vgm filename>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -o, --output <output filepath>    Output file path
+    -r, --rate <rate>                 Output sampling rate
+
+ARGS:
+    <vgm filename>    Play .vgm/.vzg file path
+```
+
+Example 1 - Specify output file name
+
+```
+$ wasmer run libymfm-cli.wasm --mapdir /:./docs/vgm -- /ym2612.vgm -o ym2612.pcm
+$ ffplay -f f32le -ar 44100 -ac 2 ./docs/vgm/ym2612.pcm
+```
+
+Example 2 - Direct play
+
+```
+$ wasmer run libymfm-cli.wasm --mapdir /:./docs/vgm -- /ym2612.vgm | ffplay -f f32le -ar 44100 -ac 2 -i -
+```
+
+Example 3 - Specify samplig rate
+
+```
+$ wasmer run libymfm-cli.wasm --mapdir /:./docs/vgm -- /ym2612.vgm -r 96000 | ffplay -f f32le -ar 96000 -ac 2 -i -
+```
+
+Source code:
+
+> [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/libymfm-cli](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/libymfm-cli)
+
+## Build
 
 Setup [wasi-sdk-12](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-12)
 
@@ -63,22 +114,6 @@ cd libymfm.wasm
 mkdir build && cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake  ..
 make -j4
-```
-
-## WASI vgm2wav render
-
-Install [Wasmer](https://wasmer.io/) runtime
-
-```
-$ wasmer -v
-wasmer 2.0.0
-```
-
-Play vgm file
-
-```
-wasmer run ./dist/vgmrender.wasi --mapdir /:./docs/vgm/ -- /ym2612.vgm -o ym2612.wav
-ffplay ./docs/vgm/ym2612.wav
 ```
 
 ## WebAssembly VGM Player (`examples/web`)
