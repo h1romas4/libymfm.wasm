@@ -6,7 +6,7 @@ edition = "2018"
 build = "build.rs"
 description = "WebAssembly build of the ymfm Yamaha FM sound cores library"
 repository = "https://github.com/h1romas4/libymfm.wasm"
-license = "GPL-2"
+license = "BSD-3-Clause"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

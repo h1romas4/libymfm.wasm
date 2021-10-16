@@ -2,7 +2,7 @@
 /**
  * Rust SEGAPCM emulation
  *  Hiromasa Tanaka <h1romas4@gmail.com>
- *  https://github.com/h1romas4/rust-synth-emulation
+ *  https://github.com/h1romas4/libymfm.wasm
  *
  * Converted from:
  *  MAME

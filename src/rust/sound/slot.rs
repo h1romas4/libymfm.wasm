@@ -76,7 +76,7 @@ impl SoundSlot {
                 SoundChipType::YM2602 => todo!(),
                 SoundChipType::SEGAPSG => Box::new(SN76496::new(SoundChipType::SEGAPSG)),
                 SoundChipType::SN76489 => Box::new(SN76496::new(SoundChipType::SN76489)),
-                SoundChipType::PWM => Box::new(PWM::new(SoundChipType::PWM)),
+                SoundChipType::PWM => Box::new(PWM::new()),
                 SoundChipType::SEGAPCM => {
                     // connect PCM ROM
                     let mut segapcm = Box::new(SEGAPCM::new(SoundChipType::SEGAPCM));
@@ -93,7 +93,7 @@ impl SoundSlot {
                 Box::new(NativeStream::new())
             } else if sound_chip_sampling_rate > self.output_sampling_rate {
                 match sound_chip_type {
-                    SoundChipType::SEGAPSG | SoundChipType::SN76489 => {
+                    SoundChipType::SEGAPSG | SoundChipType::SN76489 | SoundChipType::PWM => {
                         Box::new(OverSampleStream::new(
                             sound_chip_sampling_rate,
                             self.output_sampling_rate,

@@ -23,7 +23,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |YM2413|ymfm||
 |SN76489|mame|for demo|
 |SEGAPCM|mame|for demo|
-|PWM|vgmplay|for demo|
+|PWM|mame|for demo|
 
 example source code:
 
@@ -122,12 +122,16 @@ alias: {
 npm run start
 ```
 
+## License
+
+BSD 3-Clause License
+
 ## TODO / known issues
 
 - [x] Better upsampling.
-- [ ] To BSD license.
+- [x] To BSD license.
     - [x] SN76489
-    - [ ] PWM
+    - [x] PWM
 - [x] Add buffering mode.
 - [ ] Add direct ymfm intarfece.
 - [ ] Support yfmf's all sound chips.
