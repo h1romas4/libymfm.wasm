@@ -8,28 +8,28 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 >
 > BSD-licensed Yamaha FM sound cores (OPM, OPN, OPL, and others)
 
-## WebAssembly example
+|chip|from|note|
+|----|----|----|
+|YM2151|ymfm||
+|YM2203|ymfm||
+|YM2149|ymfm||
+|YM2612|ymfm||
+|YM2413|ymfm||
+|SN76489|mame|Rust ports for demo|
+|SEGAPCM|mame|Rust ports for demo|
+|PWM|mame|Rust ports for demo|
+
+## Web browser interface
 
 [WebAssembly VGM Player](https://h1romas4.github.io/libymfm.wasm/)
 
 [![](https://raw.githubusercontent.com/h1romas4/libymfm.wasm/main/docs/assets/example-web-01.png)](https://h1romas4.github.io/libymfm.wasm/)
 
-|chip|from|note|
-|----|----|----|
-|YM2151|ymfm||
-|YM2203|ymfm||
-|YM2149|ymfm|vgmplayer needs clock hack?|
-|YM2612|ymfm||
-|YM2413|ymfm||
-|SN76489|mame|for demo|
-|SEGAPCM|mame|for demo|
-|PWM|mame|for demo|
-
 Source code:
 
 > [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web)
 
-## libymfm-cli
+## WASI commnad line interface
 
 - Install [Wasmer](https://wasmer.io/) runtime
 - Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.1.0) from pre-build release
@@ -116,7 +116,7 @@ cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake  ..
 make -j4
 ```
 
-## WebAssembly VGM Player (`examples/web`)
+### Web browser interface (`examples/web`)
 
 Install wasm-bindgen
 
@@ -157,22 +157,31 @@ alias: {
 npm run start
 ```
 
+### WASI commnad line interface (`examples/libymfm-cli`)
+
+@see [libymfm command line interface](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/libymfm-cli/README.md)
+
 ## License
 
 BSD 3-Clause License
 
 ## TODO / known issues
 
-- [x] Better upsampling.
-- [x] To BSD license.
+- [x] Better upsampling
+- [x] To BSD license
     - [x] SN76489
     - [x] PWM
-- [x] Add buffering mode.
-- [ ] Add direct ymfm intarfece.
-- [ ] Support yfmf's all sound chips.
+- [x] Add buffering mode
+- [ ] Non-vgm driver support
+    - [ ] XGM
+- [ ] Multilingual Interface
+    - [x] CLI
+    - [ ] Python [wasmer-python](https://github.com/wasmerio/wasmer-python)
+- [ ] Add direct ymfm intarfece
+- [ ] Support yfmf's all sound chips
 - [x] YM2141 clock worng?
-- [x] Fix SEGAPCM.
-- [ ] Refactoring.
+- [x] Fix SEGAPCM
+- [ ] Refactoring
     - [x] Separate the sound stream from the sound driver.
     - [x] Support for arbitrary input tick rate and output sampling rate.
     - [ ] Examples
