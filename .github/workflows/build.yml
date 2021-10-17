@@ -25,6 +25,22 @@ jobs:
         export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
         export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
         (mkdir build && cd build && cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake .. && make -j4)
-        cargo install wasm-bindgen-cli
         cargo build --release --target wasm32-wasi
+        ls -laF target/wasm32-wasi/release/
+    - name: Buile examples/web
+      run: |
+        cargo install wasm-bindgen-cli
         wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
+        # Requre workaround patch examples/web/node_modules/webpack/lib/wasm-sync/WebAssemblyParser.js
+        # const JS_COMPAT_TYPES = new Set(["i32", "f32", "f64"]);
+        # const JS_COMPAT_TYPES = new Set(["i32", "i64", "f32", "f64"]);
+        #(cd examples/web && npm install && npm run build)
+        #ls -laF examples/web/dist/
+    - name: Build examples/libymfm-cli
+      run: |
+        sudo apt install lld-12
+        export WASI_SDK_PATH=$(pwd)/wasi-sdk-12.0
+        export CARGO_TARGET_WASM32_WASI_LINKER=/usr/lib/llvm-12/bin/lld # use lld 12
+        export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
+        (cd examples/libymfm-cli && cargo build --release --target wasm32-wasi)
+        ls -laF examples/libymfm-cli/target/wasm32-wasi/release/
