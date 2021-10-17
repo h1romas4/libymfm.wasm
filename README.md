@@ -25,6 +25,8 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 
 [![](https://raw.githubusercontent.com/h1romas4/libymfm.wasm/main/docs/assets/example-web-01.png)](https://h1romas4.github.io/libymfm.wasm/)
 
+Firefox or iOS Safari is recommended. Currently, Chromium and other browsers are out of tune (crackings).
+
 Source code:
 
 > [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web)
