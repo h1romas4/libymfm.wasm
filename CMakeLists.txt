@@ -36,16 +36,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../dist)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ../dist)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ../dist)
 
-add_executable(
-    vgmrender.wasi
-    ${SOURCE_FILES}
-    ./src/cpp/vgmrender/em_inflate.cpp
-    ./src/cpp/vgmrender/vgmrender.cpp
-)
-
 add_library(
     ymfm
     STATIC
     ${SOURCE_FILES}
-    ./src/cpp/ffi/ymfmffi.cpp
+    ./src/cpp/ymfmffi.cpp
 )
