@@ -4,9 +4,9 @@ use std::convert::TryInto;
 use std::io::prelude::*;
 
 use crate::driver::vgmmeta::parse_vgm_meta;
-use crate::driver::vgmmeta::Gd3;
 use crate::driver::vgmmeta::Jsonlize;
 use crate::driver::vgmmeta::VgmHeader;
+use crate::driver::gd3meta::Gd3;
 use crate::sound::{SoundChipType, SoundSlot};
 
 pub const VGM_TICK_RATE: u32 = 44100;
