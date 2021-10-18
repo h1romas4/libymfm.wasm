@@ -163,6 +163,20 @@ npm run start
 
 @see [libymfm command line interface](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/libymfm-cli/README.md)
 
+### Build note
+
+Essentially, wasm-bindgen is incompatible with wasm32-wasi.
+
+> [improve panic message when compiling to wasi #2554](https://github.com/rustwasm/wasm-bindgen/issues/2554)
+>
+> `panicked at 'unknown instruction LocalTee`
+
+To link Rust 1.55 with C/C++ using wasm32-wasi, you need LLD for LLVM 12.
+
+> [WASI: Cannot open paths with nightly >= 2021-03-11 when linked with LLD 11.1 #85840](https://github.com/rust-lang/rust/issues/85840)
+>
+> `failed to find a pre-opened file descriptor`
+
 ## License
 
 BSD 3-Clause License
