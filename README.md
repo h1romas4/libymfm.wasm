@@ -192,6 +192,7 @@ BSD 3-Clause License
     - [ ] XGM
 - [ ] Multilingual Interface
     - [x] CLI
+    - [x] Web/JavaScript
     - [ ] Python [wasmer-python](https://github.com/wasmerio/wasmer-python)
 - [ ] Add direct ymfm intarfece
 - [ ] Support yfmf's all sound chips
