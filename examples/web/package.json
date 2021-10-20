@@ -22,7 +22,7 @@
     },
     "scripts": {
         "patch": "node scripts/wasm_bindgen_patch.js",
-        "build": "npm run patch && parcel build src/www/index.html",
+        "build": "npm run patch && parcel build src/www/index.html --public-url /libymfm.wasm/",
         "start": "npm run patch && parcel src/www/index.html"
     }
 }
