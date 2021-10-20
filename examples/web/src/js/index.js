@@ -122,7 +122,6 @@ let animId = null;
     // WebAssemby init
     const exports = await initWasi();
     setWasmExport(exports);
-    console.log(exports);
     memory = exports.memory;
 
     // load sample vgm
