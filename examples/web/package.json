@@ -2,27 +2,27 @@
     "name": "wasm-vgm-player",
     "version": "0.1.0",
     "description": "wasm-vgm-player",
-    "license": "GPL-2.0-or-later",
+    "license": "BSD-3-Clause",
     "dependencies": {
-        "@wasmer/wasi": "0.12.0"
+        "@wasmer/wasi": "^0.12.0",
+        "@wasmer/wasmfs": "^0.12.0"
     },
     "devDependencies": {
-        "@babel/core": "^7.15.5",
-        "@babel/plugin-transform-runtime": "^7.15.0",
-        "@babel/preset-env": "^7.15.6",
+        "@babel/core": "^7.15.8",
+        "@babel/plugin-transform-runtime": "^7.15.8",
+        "@babel/preset-env": "^7.15.8",
+        "@parcel/source-map": "^2.0.0",
         "babel-eslint": "^10.1.0",
-        "babel-loader": "^8.2.2",
-        "copy-webpack-plugin": "^9.0.1",
-        "eslint": "^7.32.0",
+        "eslint": "^8.0.1",
         "htmlhint": "^0.15.2",
-        "webpack": "^5.56.0",
-        "webpack-cli": "^4.8.0",
-        "webpack-dev-server": "^4.2.1",
-        "webpack-merge": "^5.8.0",
-        "websocket-extensions": ">=0.1.4"
+        "parcel": "^2.0.0",
+        "parcel-reporter-static-files-copy": "^1.3.0",
+        "replace-in-file": "^6.3.1",
+        "rimraf": "^3.0.2"
     },
     "scripts": {
-        "build": "webpack --config webpack.config.js",
-        "start": "webpack serve --config webpack.dev.js"
+        "patch": "node scripts/wasm_bindgen_patch.js",
+        "build": "npm run patch && parcel build src/www/index.html",
+        "start": "npm run patch && parcel src/www/index.html"
     }
 }

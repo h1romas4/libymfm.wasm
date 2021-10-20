@@ -1,5 +1,10 @@
-import { WgmPlay } from "../wasm/libymfm";
-import { memory } from "../wasm/libymfm_bg.wasm";
+import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
+import { initWasi } from "./wasi";
+
+/**
+ * WebAssembly
+ */
+let memory;
 
 /**
  * vgm setting
@@ -114,12 +119,18 @@ let animId = null;
  * load sample vgm data
  */
 (async function() {
+    // WebAssemby init
+    const exports = await initWasi();
+    setWasmExport(exports);
+    console.log(exports);
+    memory = exports.memory;
+
     // load sample vgm
     const response = await fetch('./vgm/ym2612.vgm');
     const bytes = await response.arrayBuffer();
 
     // ready for sample vgm to play
-    init(bytes);
+    wgminit(bytes);
 
     // enable UI
     canvas.addEventListener('click', play, false);
@@ -223,7 +234,7 @@ const onDrop = function(ev) {
  */
 const next = function() {
     if(playlist.length <= 0) return;
-    if(init(playlist.shift())) {
+    if(wgminit(playlist.shift())) {
         play();
     } else {
         next();
@@ -248,11 +259,11 @@ const createGd3meta = function(meta) {
 };
 
 /**
- * init
+ * wgminit
  *
  * @param ArrayBuffer vgmfile
  */
-const init = function(vgmfile) {
+const wgminit = function(vgmfile) {
     if(wgmplay != null) wgmplay.free();
     // create wasm instanse
     wgmplay = new WgmPlay(samplingRate, samplingChunk, vgmfile.byteLength);
@@ -262,6 +273,7 @@ const init = function(vgmfile) {
     // init player
     if(!wgmplay.init()) {
         wgmplay.free();
+        wgmplay = null;
         return false;
     }
 

@@ -30,12 +30,9 @@ jobs:
     - name: Buile examples/web
       run: |
         cargo install wasm-bindgen-cli
-        wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
-        # Requre workaround patch examples/web/node_modules/webpack/lib/wasm-sync/WebAssemblyParser.js
-        # const JS_COMPAT_TYPES = new Set(["i32", "f32", "f64"]);
-        # const JS_COMPAT_TYPES = new Set(["i32", "i64", "f32", "f64"]);
-        #(cd examples/web && npm install && npm run build)
-        #ls -laF examples/web/dist/
+        wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --target web --out-dir ./examples/web/src/wasm/
+        (cd examples/web && npm install && npm run build)
+        ls -laF examples/web/dist/
     - name: Build examples/libymfm-cli
       run: |
         sudo apt install lld-12
