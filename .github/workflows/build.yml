@@ -30,7 +30,7 @@ jobs:
     - name: Buile examples/web
       run: |
         cargo install wasm-bindgen-cli
-        wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --target web --out-dir ./examples/web/src/wasm/
+        wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
         (cd examples/web && npm install && npm run build)
         ls -laF examples/web/dist/
     - name: Build examples/libymfm-cli
