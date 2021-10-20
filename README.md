@@ -131,7 +131,7 @@ Rust build and wasm-bindgen
 ```
 rustup target add wasm32-wasi
 cargo build --release --target wasm32-wasi
-wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
+wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --target web --out-dir ./examples/web/src/wasm/
 ```
 
 npm
@@ -139,23 +139,6 @@ npm
 ```
 cd examples/web
 npm install
-```
-
-workaround patch webpack/lib/wasm-sync/WebAssemblyParser.js
-
-```
-alias: {
-    // Import "fd_seek" from "wasi_snapshot_preview1" with Non-JS-compatible Func Signature (i64 as parameter)
-    //  can only be used for direct wasm to wasm dependencies
-    // webpack/lib/wasm-sync/WebAssemblyParser.js
-    //  const JS_COMPAT_TYPES = new Set(["i32", "f32", "f64"]);
-    // build for workaround patch examples/web/node_modules/webpack/lib/wasm-sync/WebAssemblyParser.js
-    //  const JS_COMPAT_TYPES = new Set(["i32", "i64", "f32", "f64"]);
-    "wasi_snapshot_preview1": path.resolve(__dirname, './src/js/wasi_snapshot_preview1.js'), // eslint-disable-line
-}
-```
-
-```
 npm run start
 ```
 
