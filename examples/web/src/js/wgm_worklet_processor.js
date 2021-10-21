@@ -9,4 +9,6 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
     }
 }
 
+console.log("aaaaa");
+
 registerProcessor('wgm-worklet-processor', WgmWorkletProcessor);
