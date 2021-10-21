@@ -1,9 +1,10 @@
-import { WASI } from '@wasmer/wasi'
-import browserBindings from '@wasmer/wasi/lib/bindings/browser'
-import { WasmFs } from '@wasmer/wasmfs'
+import { WASI } from '@wasmer/wasi';
+import { lowerI64Imports } from "@wasmer/wasm-transformer";
+import { WasmFs } from '@wasmer/wasmfs';
 
 // wasi instance
 let wasi;
+let wasiFs;
 
 // // import * as wasm from './libymfm_bg.wasm';
 // let wasm;
@@ -12,19 +13,22 @@ let wasi;
 // }
 export async function initWasi() {
     // create WASI instance
+    wasiFs = new WasmFs();
     wasi = new WASI({
         args: [""],
         env: {},
         bindings: {
-            ...browserBindings,
-            fs: new WasmFs(),
+            ...WASI.defaultBindings,
+            fs: wasiFs,
         }
     });
     // fetch wasm module
-    const res = await fetch(new URL('../wasm/libymfm_bg.wasm', import.meta.url));
-    const bytes = new Uint8Array(await res.arrayBuffer())
+    const response = await fetch(new URL('../wasm/libymfm_bg.wasm', import.meta.url));
+    const responseArrayBuffer = new Uint8Array(await response.arrayBuffer())
     // compile wasm
-    let module = await WebAssembly.compile(bytes);
+    const wasm_bytes = new Uint8Array(responseArrayBuffer).buffer;
+    const lowered_wasm = await lowerI64Imports(wasm_bytes);
+    let module = await WebAssembly.compile(lowered_wasm);
     // get WASI imports
     let imposts = wasi.getImports(module);
     // merge wasm imports
