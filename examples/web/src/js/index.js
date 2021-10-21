@@ -1,5 +1,6 @@
 import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
 import { initWasi } from "./wasi";
+import worklet from 'worklet:./wgm_worklet_processor.js';
 
 /**
  * WebAssembly
@@ -353,7 +354,7 @@ const disconnect = function() {
 /**
  * play
  */
-const play = function() {
+const play = async function() {
     canvas.removeEventListener('click', play, false);
     // recreate audio node for prevent memory leak.
     disconnect();
@@ -361,24 +362,28 @@ const play = function() {
     if(audioContext == null) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
     }
-    audioNode = audioContext.createScriptProcessor(samplingChunk, 2, 2);
-    audioNode.onaudioprocess = (ev) => {
-        if(bufferd == true && samplingBufferL.length > 0) {
-            // set sampling buffer (re-attach view every cycle)
-            ev.outputBuffer.getChannelData(0).set(samplingBufferL[0]);
-            ev.outputBuffer.getChannelData(1).set(samplingBufferR[0]);
-            samplingBufferL.shift();
-            samplingBufferR.shift();
-            if(playBufferPos == feedOutPos) {
-                audioGain.gain.setValueAtTime(1, audioContext.currentTime);
-                audioGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + FEED_OUT_SECOND);
-            }
-            playBufferPos++;
-        } else if (bufferd == true && samplingBufferL.length == 0) {
-            disconnect();
-            next();
-        }
-    };
+    // register audio worklet processor
+    await audioContext.audioWorklet.addModule(worklet);
+    audioNode = new AudioWorkletNode(audioContext, "wgm-worklet-processor");
+    // register audioNode
+    // audioNode = audioContext.createScriptProcessor(samplingChunk, 2, 2);
+    // audioNode.onaudioprocess = (ev) => {
+    //     if(bufferd == true && samplingBufferL.length > 0) {
+    //         // set sampling buffer (re-attach view every cycle)
+    //         ev.outputBuffer.getChannelData(0).set(samplingBufferL[0]);
+    //         ev.outputBuffer.getChannelData(1).set(samplingBufferR[0]);
+    //         samplingBufferL.shift();
+    //         samplingBufferR.shift();
+    //         if(playBufferPos == feedOutPos) {
+    //             audioGain.gain.setValueAtTime(1, audioContext.currentTime);
+    //             audioGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + FEED_OUT_SECOND);
+    //         }
+    //         playBufferPos++;
+    //     } else if (bufferd == true && samplingBufferL.length == 0) {
+    //         disconnect();
+    //         next();
+    //     }
+    // };
     // connect gain
     audioGain = audioContext.createGain();
     audioNode.connect(audioGain);
