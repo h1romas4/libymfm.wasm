@@ -4,9 +4,10 @@ module.exports = {
         "commonjs": true,
         "es6": true
     },
-    "parser": "babel-eslint",
+    "parser": "@babel/eslint-parser",
     "extends": "eslint:recommended",
     "parserOptions": {
-        "sourceType": "module"
+        "sourceType": "module",
+        "requireConfigFile": false
     }
 };
