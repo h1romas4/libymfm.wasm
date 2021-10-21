@@ -1,6 +1,7 @@
 import { WASI } from '@wasmer/wasi';
 import { lowerI64Imports } from "@wasmer/wasm-transformer";
 import { WasmFs } from '@wasmer/wasmfs';
+import * as worklet from '../wasm/libymfm_bg';
 
 // wasi instance
 let wasi;
@@ -34,7 +35,7 @@ export async function initWasi() {
     // merge wasm imports
     //   (import "wasi_snapshot_preview1" "fd_seek" (func $__wasi_fd_seek (type $t25)))
     //   (import "./libymfm_bg.js" "__wbg_new_59cb74e423758ede"...)
-    imposts['./libymfm_bg.js'] = await import('../wasm/libymfm_bg');
+    imposts['./libymfm_bg.js'] = worklet;
     const instance = await WebAssembly.instantiate(module, {
         ...imposts
     });

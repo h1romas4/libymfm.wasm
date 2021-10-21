@@ -1,4 +1,5 @@
 import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
+import { initWasi } from "./wasi";
 
 class WgmWorkletProcessor extends AudioWorkletProcessor {
     constructor() {
