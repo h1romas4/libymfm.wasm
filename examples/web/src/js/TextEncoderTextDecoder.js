@@ -15,7 +15,7 @@
 
 // http://encoding.spec.whatwg.org/#textencoder
 
-function TextEncoder() {
+export function TextEncoder() {
 }
 
 TextEncoder.prototype.encode = function (string) {
@@ -50,10 +50,11 @@ TextEncoder.prototype.encode = function (string) {
   return octets;
 };
 
-function TextDecoder() {
+export function TextDecoder() {
 }
 
 TextDecoder.prototype.decode = function (octets) {
+  if(octets == null) return; // wasm-bindgen hack
   var string = "";
   var i = 0;
   while (i < octets.length) {

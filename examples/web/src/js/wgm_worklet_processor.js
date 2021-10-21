@@ -1,3 +1,5 @@
+import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
+
 class WgmWorkletProcessor extends AudioWorkletProcessor {
     constructor() {
         super();

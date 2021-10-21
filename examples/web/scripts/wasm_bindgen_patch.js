@@ -8,7 +8,7 @@ try {
     const result = replace.sync({
         files: 'src/wasm/libymfm_bg.js',
         from: "import * as wasm from './libymfm_bg.wasm';",
-        to: "let wasm; export function setWasmExport(exports) { wasm = exports; }\nimport '../js/TextEncoderTextDecoder.js';",
+        to: "let wasm; export function setWasmExport(exports) { wasm = exports; }\nimport {TextEncoder, TextDecoder} from '../js/TextEncoderTextDecoder.js';",
     });
     console.log("[wasm-bindgen source patch] Success", result);
 } catch(error) {
