@@ -86,7 +86,7 @@ let animId = null;
     }
 
     /**
-     * pre-fetch WebAssemby binary module
+     * Pre-fetch WebAssemby binary module
      */
     let module = await fetch(new URL('../wasm/libymfm_bg.wasm', import.meta.url));
     module = new Uint8Array(await module.arrayBuffer())
@@ -99,7 +99,7 @@ let animId = null;
 })();
 
 /**
- * draw start screen
+ * Start event loop
  */
 const start = function() {
     canvasContext.fillStyle = 'rgb(0, 0, 0)';
@@ -126,9 +126,11 @@ const start = function() {
         return false;
     });
     canvas.addEventListener('drop', onDrop, false);
-    // Sample music data
+    // for sample music data
     let sample = async () => {
+        // one time
         canvas.removeEventListener('click', sample, false);
+        // it takes precedence over VGM metadata
         musicMeta = createGd3meta({
             track_name: "WebAssembly 👾 VGM Player",
             track_name_j: "",
@@ -196,7 +198,10 @@ const next = function() {
 }
 
 /**
- * Play
+ * Play VGM
+ *
+ * @param {*} vgmfile
+ * @param {*} altMeta
  */
 const play = async function(vgmfile, altMeta) {
     // Worklet exchange callbacks
@@ -278,7 +283,10 @@ const draw = function() {
     printStatus();
 }
 
-const printStatus = function() {
+/**
+ * Print status
+ */
+ const printStatus = function() {
     if(samplingRate == 44100) return;
 
     const status = " HD:" + samplingRate + " ";

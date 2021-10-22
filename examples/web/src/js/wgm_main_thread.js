@@ -27,6 +27,9 @@ export class WgmController {
     /**
      * Initialize Controller
      *
+     * - Initialize AudioNode Worklet and analyser
+     * - Create Worklet and compile Webassembly in Worklet
+     *
      * @param {*} context AudioContext
      */
     async init(context, callback) {
@@ -60,6 +63,12 @@ export class WgmController {
         });
     }
 
+    /**
+     * Create playable instance
+     *
+     * @param {*} vgmdata
+     * @param {*} callback(gd3meta)
+     */
     create(vgmdata, callback) {
         this.send({
             "message": "create",
@@ -67,7 +76,33 @@ export class WgmController {
         }, callback);
     }
 
+    /**
+     * Get FFT data current time
+     *
+     * @returns FFT array buffer
+     */
+    getByteFrequencyData() {
+        this.analyser.getByteFrequencyData(this.analyserBuffer);
+        return this.analyserBuffer;
+    }
+
+    /**
+     * Get FFT data length
+     *
+     * @returns FFT array length
+     */
+    getAnalyserBufferLength() {
+        return this.analyserBufferLength;
+    }
+
+    /**
+     * Send message to Worklet
+     *
+     * @param {*} message
+     * @param {function} callback
+     */
     send(message, callback) {
+        // wait for a reply from the worklet
         if(callback != null) {
             this.worklet.port.onmessage = (event) => {
                 callback(event.data);
@@ -75,15 +110,7 @@ export class WgmController {
         } else {
             this.worklet.port.onmessage = null;
         }
+        // sends a message to the Worklet
         this.worklet.port.postMessage(message);
-    }
-
-    getByteFrequencyData() {
-        this.analyser.getByteFrequencyData(this.analyserBuffer);
-        return this.analyserBuffer;
-    }
-
-    getAnalyserBufferLength() {
-        return this.analyserBufferLength;
     }
 }
