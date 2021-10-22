@@ -11,7 +11,7 @@ try {
         files: 'src/wasm/libymfm_bg.js',
         from: "import * as wasm from './libymfm_bg.wasm';",
         to: "let wasm; export function setWasmExport(exports) { wasm = exports; }\n"
-            + "import {TextEncoder, TextDecoder} from '../js/TextEncoderTextDecoder.js';",
+            + "import {TextEncoder, TextDecoder} from '../js/polyfill/TextEncoderTextDecoder.js';",
     });
     console.log("[wasm-bindgen source patch] Success", result);
 } catch(error) {
