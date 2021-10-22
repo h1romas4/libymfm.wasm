@@ -110,9 +110,8 @@ const start = function() {
     canvasContext.font = '15px sans-serif';
     fillTextCenterd("YM2151 | YM2203 | YM2149 | YM2413 | YM2612 | SN76489(MD) | PWM(32x) | SEGAPCM", CANVAS_HEIGHT / 2 - 32 * 2);
     canvasContext.font = '20px sans-serif';
-    fillTextCenterd("🎵 DRAG AND DROP VGM(vgm/vgz) HEAR", CANVAS_HEIGHT / 2);
-    // fillTextCenterd("🎵 DRAG AND DROP VGM(vgm/vgz) HEAR", CANVAS_HEIGHT / 2 - 32 * 1);
-    // fillTextCenterd("OR CLICK(TAP) TO PLAY SAMPLE VGM", CANVAS_HEIGHT / 2 + 32 * 1);
+    fillTextCenterd("🎵 DRAG AND DROP VGM(vgm/vgz) HEAR", CANVAS_HEIGHT / 2 - 32 * 1);
+    fillTextCenterd("OR CLICK(TAP) TO PLAY SAMPLE VGM", CANVAS_HEIGHT / 2 + 32 * 1);
     printStatus();
     // Set UI event
     canvas.addEventListener('dragover', function(e) {
@@ -126,6 +125,22 @@ const start = function() {
         return false;
     });
     canvas.addEventListener('drop', onDrop, false);
+    // Sample music data
+    let sample = async () => {
+        canvas.removeEventListener('click', sample, false);
+        musicMeta = createGd3meta({
+            track_name: "WebAssembly 👾 VGM Player",
+            track_name_j: "",
+            game_name: "",
+            game_name_j: "YM2612 sample VGM",
+            track_author: "@h1romas4",
+            track_author_j: ""
+        });
+        const response = await fetch('./vgm/ym2612.vgm');
+        const bytes = await response.arrayBuffer();
+        play(bytes, musicMeta);
+    };
+    canvas.addEventListener('click', sample, false);
 };
 
 /**
@@ -182,12 +197,14 @@ const next = function() {
 /**
  * Play
  */
-const play = async function(vgmfile) {
+const play = async function(vgmfile, altMeta) {
     // Worklet exchange callbacks
     const start = () => {
         player.create(vgmfile, (gd3) => {
             console.log(gd3);
-            musicMeta = createGd3meta(gd3);
+            if(altMeta == null) {
+                musicMeta = createGd3meta(gd3);
+            }
             if(animId != null) {
                 window.cancelAnimationFrame(animId);
                 animId = null;
@@ -199,6 +216,8 @@ const play = async function(vgmfile) {
     if(audioContext == null) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
         await player.init(audioContext, start);
+    } else {
+        start();
     }
 };
 
@@ -223,7 +242,7 @@ const play = async function(vgmfile) {
  * Draw
  */
 const draw = function() {
-    // animId = window.requestAnimationFrame(draw);
+    animId = window.requestAnimationFrame(draw);
     canvasContext.fillStyle = 'rgb(0, 0, 0)';
     canvasContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
