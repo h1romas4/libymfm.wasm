@@ -125,26 +125,31 @@ const start = function() {
         canvas.style.border = 'none';
         return false;
     });
+    // drag to play
     canvas.addEventListener('drop', onDrop, false);
     // for sample music data
-    let sample = async () => {
-        // one time
-        canvas.removeEventListener('click', sample, false);
-        // it takes precedence over VGM metadata
-        musicMeta = createGd3meta({
-            track_name: "WebAssembly 👾 VGM Player",
-            track_name_j: "",
-            game_name: "",
-            game_name_j: "YM2612 sample VGM",
-            track_author: "@h1romas4",
-            track_author_j: ""
-        });
-        const response = await fetch('./vgm/ym2612.vgm');
-        const bytes = await response.arrayBuffer();
-        play(bytes, musicMeta);
-    };
     canvas.addEventListener('click', sample, false);
 };
+
+/**
+ * Sample music
+ */
+const sample = async () => {
+    // sample music one time
+    canvas.removeEventListener('click', sample, false);
+    // it takes precedence over VGM metadata
+    musicMeta = createGd3meta({
+        track_name: "WebAssembly 👾 VGM Player",
+        track_name_j: "",
+        game_name: "",
+        game_name_j: "YM2612 sample VGM",
+        track_author: "@h1romas4",
+        track_author_j: ""
+    });
+    const response = await fetch('./vgm/ym2612.vgm');
+    const bytes = await response.arrayBuffer();
+    play(bytes, musicMeta);
+}
 
 /**
  * Event prevent
@@ -164,6 +169,9 @@ const prevent = function(e) {
  */
 const onDrop = function(ev) {
     prevent(ev);
+    // sample music one time
+    canvas.removeEventListener('click', sample, false);
+    // pause the drop event
     canvas.removeEventListener('drop', onDrop, false);
     canvas.style.border = 'none';
     let filelist = {};
@@ -173,6 +181,7 @@ const onDrop = function(ev) {
         reader.onload = function() {
             filelist[file.name] = reader.result;
             if(Object.keys(filelist).length >= files.length) {
+                // resume the drop event
                 canvas.addEventListener('drop', onDrop, false);
                 playlist = [];
                 Object.keys(filelist).sort().forEach(function(key) {
@@ -215,6 +224,7 @@ const play = async function(vgmfile, altMeta) {
                 window.cancelAnimationFrame(animId);
                 animId = null;
             }
+            player.play();
             draw();
         });
     };

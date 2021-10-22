@@ -46,8 +46,9 @@ export class WgmController {
         // create and compile Wasm AudioWorklet
         await this.context.audioWorklet.addModule(worklet);
         this.worklet = new AudioWorkletNode(context, "wgm-worklet-processor", {
-            "numberOfInputs": 2,
-            "numberOfOutputs": 2,
+            "numberOfInputs": 1,
+            "numberOfOutputs": 1,
+            "outputChannelCount": [2], // 2ch stereo
             "processorOptions": {
                 "module": this.module,
                 "samplingRate": this.samplingRate,
@@ -84,6 +85,13 @@ export class WgmController {
             "message": "create",
             "vgmdata": vgmdata
         }, callback);
+    }
+
+    /**
+     * Start music play
+     */
+    play() {
+        this.send({"message": "play"});
     }
 
     /**

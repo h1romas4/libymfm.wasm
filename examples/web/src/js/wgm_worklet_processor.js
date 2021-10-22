@@ -24,6 +24,8 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         // wgm instance
         this.wgmplay = null;
         this.memory = null;
+        // instance status
+        this.play = false;
         // event dispatch
         this.port.onmessage = (event) => this.dispatch(event);
     }
@@ -34,9 +36,31 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
      * @param {*} inputs
      * @param {*} outputs
      * @param {*} parameters
+     * @return {boolean} next stage
      */
     process(inputs, outputs, parameters) { // eslint-disable-line no-unused-vars
-
+        if(!this.play) return true;
+        try {
+            // create wave
+            const loop = this.wgmplay.play();
+            // clone buffer
+            let bufferL = new Float32Array(this.chunkSize);
+            let bufferR = new Float32Array(this.chunkSize);
+            bufferL.set(new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_l_ref(), this.chunkSize));
+            bufferR.set(new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_r_ref(), this.chunkSize));
+            // output
+            outputs[0][0].set(bufferL);
+            outputs[0][1].set(bufferR);
+            if(loop >= this.loopMaxCount) {
+                this.play = false;
+            }
+            // next stage
+            return true;
+        } catch(e) {
+            this.play = false;
+            console.log(`An unexpected error has occurred. System has stoped. Please reload brwoser.\n${e}`);
+            return false;
+        }
     }
 
     /**
@@ -54,6 +78,10 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
             }
             case 'create': {
                 this.port.postMessage(this.create(event.data.vgmdata));
+                break;
+            }
+            case 'play': {
+                this.play = true;
                 break;
             }
         }
