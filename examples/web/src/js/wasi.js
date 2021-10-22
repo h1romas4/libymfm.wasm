@@ -6,11 +6,17 @@ import { WasmFs } from '@wasmer/wasmfs';
 let wasi;
 let wasiFs;
 
-// // import * as wasm from './libymfm_bg.wasm';
-// let wasm;
-// export function setWasmExport(exports) {
-//     wasm = exports;
-// }
+/**
+ * Initialize WebAssembly with wasmer-js
+ *
+ * need wasm-bindgen generate source code patch for insert wasm export.
+ *
+ * > import * as wasm from './libymfm_bg.wasm';
+ * < let wasm; export function setWasmExport(exports) { wasm = exports; }
+ *
+ * @see scripts/wasm_bindgen_patch.js
+ * @returns instance.exports
+ */
 export async function initWasi() {
     // create WASI instance
     wasiFs = new WasmFs();
@@ -41,6 +47,6 @@ export async function initWasi() {
     // start wasi
     wasi.start(instance);
 
-    // return wasm exports
+    // return wasm exports(for call setWasmExport())
     return instance.exports;
 }
