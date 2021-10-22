@@ -1,5 +1,5 @@
 import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
-import { initWasi } from "./wasi";
+import { initWasi } from "./wasi-wasmer";
 import worklet from 'worklet:./wgm_worklet_processor.js';
 
 /**
