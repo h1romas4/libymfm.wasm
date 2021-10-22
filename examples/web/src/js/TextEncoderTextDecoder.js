@@ -15,7 +15,7 @@
 
 // http://encoding.spec.whatwg.org/#textencoder
 
-function TextEncoder() {
+export function TextEncoder() {
 }
 
 TextEncoder.prototype.encode = function (string) {
@@ -50,12 +50,13 @@ TextEncoder.prototype.encode = function (string) {
   return octets;
 };
 
-function TextDecoder() {
+export function TextDecoder() {
 }
 
 TextDecoder.prototype.decode = function (octets) {
   var string = "";
   var i = 0;
+  if(octets == null) return; // add hack by h1romas4
   while (i < octets.length) {
     var octet = octets[i];
     var bytesNeeded = 0;

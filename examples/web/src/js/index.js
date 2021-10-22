@@ -1,5 +1,6 @@
+// license:BSD-3-Clause
 import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
-import { initWasi } from "./wasi-wasmer";
+import { initWasi } from "./wasi_wasmer";
 import worklet from 'worklet:./wgm_worklet_processor.js';
 
 /**
