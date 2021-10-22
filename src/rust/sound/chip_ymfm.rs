@@ -1,4 +1,5 @@
 // license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
 use super::{SoundChipType, interface::SoundChip, stream::{SoundStream, convert_sample_i2f}};
 
 ///

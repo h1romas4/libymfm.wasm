@@ -1,3 +1,5 @@
+// license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
 /**
  * wasm-bindgen source code patch for Worklet/Bundler
  */

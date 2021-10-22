@@ -1,4 +1,5 @@
 // license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
 use flate2::read::GzDecoder;
 use std::convert::TryInto;
 use std::io::prelude::*;

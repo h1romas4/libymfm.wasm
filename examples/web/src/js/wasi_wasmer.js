@@ -1,4 +1,5 @@
 // license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
 /**
  * This module is not in use. (It works only with the main thread)
  * wasmer-js is using performance.now() which cannot be used inside Worklet.

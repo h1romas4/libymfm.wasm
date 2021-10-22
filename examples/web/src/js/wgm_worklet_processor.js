@@ -1,7 +1,8 @@
+// license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
 import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
 import { initWasi } from './wasi_stub';
 
-// license:BSD-3-Clause
 class WgmWorkletProcessor extends AudioWorkletProcessor {
     constructor(options) {
         super();
@@ -13,10 +14,10 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         this.wgmplay = null;
         this.memory = null;
         // event dispatch
-        this.port.onmessage = (event) => this.onMessage(event);
+        this.port.onmessage = (event) => this.dispatch(event);
     }
 
-    async onMessage(event) {
+    async dispatch(event) {
         console.log(event.data);
         switch(event.data.message) {
             case 'compile': {

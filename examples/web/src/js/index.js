@@ -1,4 +1,5 @@
 // license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
 import { WgmController } from "./wgm_main_thread";
 
 /**

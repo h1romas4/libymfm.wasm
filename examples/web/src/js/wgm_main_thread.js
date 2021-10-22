@@ -1,4 +1,5 @@
 // license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
 import worklet from 'worklet:./wgm_worklet_processor.js'; // worklet: Parcel
 
 const AUDIO_WORKLET_SAMPLING_CHUNK = 128;

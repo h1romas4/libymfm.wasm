@@ -1,4 +1,5 @@
 // license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
 /**
  * wasi_snapshot_preview1 dummy stab
  */
