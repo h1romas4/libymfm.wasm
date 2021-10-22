@@ -7,19 +7,19 @@ import { WgmController } from "./wgm_main_thread";
 let player;
 
 /**
- * audio contect
+ * Audio context
  */
 let audioContext = null;
 
 /**
- * vgm setting
+ * VGM setting
  */
 const DEFAULT_SAMPLING_RATE = 44100;
 const LOOP_MAX_COUNT = 2;
 const FEED_OUT_SECOND = 2;
 
 /**
- * canvas settings
+ * Canvas settings
  */
 const CANVAS_WIDTH = 768;
 const CANVAS_HEIGHT = 576;
@@ -28,7 +28,7 @@ const COLOR_MD_RED = '#e60012';
 const FONT_MAIN_STYLE = '16px sans-serif';
 
 /**
- * vgm member
+ * VGM member
  */
 let playlist = [];
 let totalPlaylistCount;
@@ -36,14 +36,14 @@ let musicMeta;
 let samplingRate = DEFAULT_SAMPLING_RATE;
 
 /**
- * canvas member
+ * Canvas member
  */
 let canvas;
 let canvasContext;
 let animId = null;
 
 /**
- * canvas setting
+ * Canvas setting
  */
 (function() {
     canvas = document.getElementById('screen');
@@ -96,17 +96,6 @@ let animId = null;
      */
      start();
 })();
-
-/**
- * fill text center
- *
- * @param {*} str
- * @param {*} height
- */
-const fillTextCenterd = function(str, height) {
-    let left = (CANVAS_WIDTH - canvasContext.measureText(str).width) / 2;
-    canvasContext.fillText(str, left, height);
-}
 
 /**
  * draw start screen
@@ -181,7 +170,7 @@ const onDrop = function(ev) {
 };
 
 /**
- * play next playlist
+ * Play next playlist
  */
 const next = function() {
     if(playlist.length <= 0) return;
@@ -191,13 +180,18 @@ const next = function() {
 }
 
 /**
- * play
+ * Play
  */
 const play = async function(vgmfile) {
+    // Worklet exchange callbacks
     const start = () => {
         player.create(vgmfile, (gd3) => {
             console.log(gd3);
             musicMeta = createGd3meta(gd3);
+            if(animId != null) {
+                window.cancelAnimationFrame(animId);
+                animId = null;
+            }
             draw();
         });
     };
@@ -206,16 +200,10 @@ const play = async function(vgmfile) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
         await player.init(audioContext, start);
     }
-
-    if(animId != null) {
-        window.cancelAnimationFrame(animId);
-        animId = null;
-    }
-    // draw();
 };
 
 /**
- * create GD3 meta
+ * Create GD3 meta
  *
  * @param {*} meta
  * @returns
@@ -232,7 +220,7 @@ const play = async function(vgmfile) {
 };
 
 /**
- * draw
+ * Draw
  */
 const draw = function() {
     // animId = window.requestAnimationFrame(draw);
@@ -280,4 +268,15 @@ const printStatus = function() {
     canvasContext.fillRect(CANVAS_WIDTH - measure.width, 0, CANVAS_WIDTH, 18);
     canvasContext.fillStyle = 'rgb(0, 0, 0)';
     canvasContext.fillText(status, CANVAS_WIDTH - measure.width, 16);
+}
+
+/**
+ * Fill text center
+ *
+ * @param {*} str
+ * @param {*} height
+ */
+ const fillTextCenterd = function(str, height) {
+    let left = (CANVAS_WIDTH - canvasContext.measureText(str).width) / 2;
+    canvasContext.fillText(str, left, height);
 }
