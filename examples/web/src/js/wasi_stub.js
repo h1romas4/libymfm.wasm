@@ -11,7 +11,7 @@ import * as libymfm from '../wasm/libymfm_bg';
  *
  * > import * as wasm from './libymfm_bg.wasm';
  * < let wasm; export function setWasmExport(exports) { wasm = exports; }
- * < import '../js/TextEncoderTextDecoder.js';
+ * < import '../js/polyfill/TextEncoderTextDecoder.js';
  *
  * @see scripts/wasm_bindgen_patch.js
  * @returns instance.exports
