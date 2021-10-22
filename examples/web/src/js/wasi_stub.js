@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-import * as wasi from './wasi_snapshot_preview1_stub';
+import * as wasi from './wasi_stub_snapshot_preview1';
 import * as libymfm from '../wasm/libymfm_bg';
 
 /**
