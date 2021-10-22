@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 /**
- * This module is not in use.
+ * This module is not in use. (It works only with the main thread)
  * wasmer-js is using performance.now() which cannot be used inside Worklet.
  */
 import { WASI } from '@wasmer/wasi';
@@ -36,7 +36,7 @@ export async function initWasi() {
     });
     // fetch wasm module
     const response = await fetch(new URL('../wasm/libymfm_bg.wasm', import.meta.url));
-    const responseArrayBuffer = new Uint8Array(await response.arrayBuffer())
+    const responseArrayBuffer = new Uint8Array(await response.arrayBuffer());
     // compile wasm
     const wasm_bytes = new Uint8Array(responseArrayBuffer).buffer;
     const lowered_wasm = await lowerI64Imports(wasm_bytes);

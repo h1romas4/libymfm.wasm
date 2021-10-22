@@ -15,16 +15,15 @@ import * as libymfm from '../wasm/libymfm_bg';
  * @see scripts/wasm_bindgen_patch.js
  * @returns instance.exports
  */
-export async function initWasi() {
-    // fetch wasm module
-    const module = await fetch(new URL('../wasm/libymfm_bg.wasm', import.meta.url));
+export async function initWasi(module) {
+    let wasm = await WebAssembly.compile(module);
     // merge wasm imports
     //   (import "wasi_snapshot_preview1" "fd_seek" (func $__wasi_fd_seek (type $t25)))
     //   (import "./libymfm_bg.js" "__wbg_new_59cb74e423758ede"...)
-    let imposts;
+    let imposts = {};
     imposts['wasi_snapshot_preview1'] = wasi;
     imposts['./libymfm_bg.js'] = libymfm;
-    const instance = await WebAssembly.instantiateStreaming(module, {
+    const instance = await WebAssembly.instantiate(wasm, {
         ...imposts
     });
 
