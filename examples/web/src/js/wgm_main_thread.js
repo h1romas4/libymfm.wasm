@@ -8,6 +8,14 @@ const AUDIO_WORKLET_SAMPLING_CHUNK = 128;
  * AudioWorklet Controller
  */
 export class WgmController {
+    /**
+     * Constructor
+     *
+     * @param {*} module WebAssembly module binary
+     * @param {*} samplingRate Sampling rate
+     * @param {*} loopMaxCount Max loop count
+     * @param {*} feedOutSecond Music feed out second
+     */
     constructor(module, samplingRate, loopMaxCount, feedOutSecond) {
         // WebAssembly binary
         this.module = module;
@@ -43,7 +51,9 @@ export class WgmController {
             "processorOptions": {
                 "module": this.module,
                 "samplingRate": this.samplingRate,
-                "chunkSize": AUDIO_WORKLET_SAMPLING_CHUNK
+                "chunkSize": AUDIO_WORKLET_SAMPLING_CHUNK,
+                "loopMaxCount": this.loopMaxCount,
+                "feedOutRemain": this.feedOutRemain,
             }
         });
         this.send({ "message": "compile" }, () => {
