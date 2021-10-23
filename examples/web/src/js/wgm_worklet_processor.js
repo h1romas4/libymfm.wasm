@@ -59,7 +59,7 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
                     }
                     this.feedOutCount++;
                     // feed out end and next track
-                    if(this.feedOutCount > this.feedOutRemain) {
+                    if(this.feedOutCount >= this.feedOutRemain) {
                         this.play = false;
                         this.port.postMessage({"message": "callback", "data": "OK"});
                     }
