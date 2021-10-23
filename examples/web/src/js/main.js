@@ -220,8 +220,8 @@ const play = async function(vgmfile, altMeta) {
                 window.cancelAnimationFrame(animId);
                 animId = null;
             }
-            player.play(next);
             draw();
+            player.play(next);
         });
     };
     // iOS only sounds AudioContext that created by the click event.

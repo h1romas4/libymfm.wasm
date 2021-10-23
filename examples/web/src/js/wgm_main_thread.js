@@ -23,7 +23,7 @@ export class WgmController {
         this.samplingRate = samplingRate;
         this.loopMaxCount = loopMaxCount;
         this.feedOutSecond = feedOutSecond;
-        this.feedOutRemain = (samplingRate * feedOutSecond) / AUDIO_WORKLET_SAMPLING_CHUNK;
+        this.feedOutRemain = Math.floor((samplingRate * feedOutSecond) / AUDIO_WORKLET_SAMPLING_CHUNK);
         // init audio contexts
         this.context = null;
         this.worklet = null;
@@ -86,7 +86,6 @@ export class WgmController {
      * @param {*} callback(gd3meta)
      */
     create(vgmdata, callback) {
-        this.gain.gain.setValueAtTime(1, this.context.currentTime);
         this.send({"message": "create", "vgmdata": vgmdata}, callback);
     }
 
@@ -122,8 +121,12 @@ export class WgmController {
      * Feed out music
      */
     feedout() {
-        this.gain.gain.setValueAtTime(1, this.context.currentTime);
-        this.gain.gain.linearRampToValueAtTime(0, this.context.currentTime + this.feedOutSecond);
+        const now = this.context.currentTime;
+        // feed out to 0.0
+        this.gain.gain.setValueAtTime(1, now);
+        this.gain.gain.linearRampToValueAtTime(0, now + this.feedOutSecond);
+        // return to 1.0
+        this.gain.gain.setValueAtTime(1, now + this.feedOutSecond);
     }
 
     /**
