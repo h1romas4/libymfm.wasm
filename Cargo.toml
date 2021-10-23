@@ -1,7 +1,7 @@
 [package]
 name = "libymfm"
 version = "0.1.0"
-authors = ["h1romas4 <h1romas4@gmail.com>"]
+authors = ["Hiromasa Tanaka <h1romas4@gmail.com>"]
 edition = "2018"
 build = "build.rs"
 description = "WebAssembly build of the ymfm Yamaha FM sound cores library"

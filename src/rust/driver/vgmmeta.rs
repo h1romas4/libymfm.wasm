@@ -1,4 +1,5 @@
 // license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
 use nom::bytes::complete::{tag, take};
 use nom::number::complete::{le_u16, le_u32, le_u8};
 use nom::IResult;

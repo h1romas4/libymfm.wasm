@@ -1,3 +1,9 @@
+// license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
+/**
+ * This module is not in use. (It works only with the main thread)
+ * wasmer-js is using performance.now() which cannot be used inside Worklet.
+ */
 import { WASI } from '@wasmer/wasi';
 import { lowerI64Imports } from "@wasmer/wasm-transformer";
 import { WasmFs } from '@wasmer/wasmfs';
@@ -6,11 +12,18 @@ import { WasmFs } from '@wasmer/wasmfs';
 let wasi;
 let wasiFs;
 
-// // import * as wasm from './libymfm_bg.wasm';
-// let wasm;
-// export function setWasmExport(exports) {
-//     wasm = exports;
-// }
+/**
+ * Initialize WebAssembly with wasmer-js
+ *
+ * Need wasm-bindgen generate source code patch for insert wasm export.
+ * A patch is needed to insert wasmer-js WASI instance.
+ *
+ * > import * as wasm from './libymfm_bg.wasm';
+ * < let wasm; export function setWasmExport(exports) { wasm = exports; }
+ *
+ * @see scripts/wasm_bindgen_patch.js
+ * @returns instance.exports
+ */
 export async function initWasi() {
     // create WASI instance
     wasiFs = new WasmFs();
@@ -24,7 +37,7 @@ export async function initWasi() {
     });
     // fetch wasm module
     const response = await fetch(new URL('../wasm/libymfm_bg.wasm', import.meta.url));
-    const responseArrayBuffer = new Uint8Array(await response.arrayBuffer())
+    const responseArrayBuffer = new Uint8Array(await response.arrayBuffer());
     // compile wasm
     const wasm_bytes = new Uint8Array(responseArrayBuffer).buffer;
     const lowered_wasm = await lowerI64Imports(wasm_bytes);
@@ -41,6 +54,6 @@ export async function initWasi() {
     // start wasi
     wasi.start(instance);
 
-    // return wasm exports
+    // return wasm exports(for call setWasmExport())
     return instance.exports;
 }

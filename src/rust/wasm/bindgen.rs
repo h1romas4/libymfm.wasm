@@ -1,4 +1,5 @@
 // license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
 use wasm_bindgen::prelude::*;
 
 use crate::{driver::VgmPlay, driver::VGM_TICK_RATE, sound::SoundSlot};

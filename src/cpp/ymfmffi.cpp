@@ -1,3 +1,5 @@
+// license:BSD-3-Clause
+// copyright-holders:Aaron Giles, Hiromasa Tanaka
 #include <cmath>
 #include <cstdio>
 #include <cstdint>

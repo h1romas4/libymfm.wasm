@@ -1,4 +1,5 @@
 // license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
 use std::cell::RefCell;
 use std::rc::Rc;
 
