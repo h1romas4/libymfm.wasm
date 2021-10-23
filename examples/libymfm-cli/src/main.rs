@@ -1,3 +1,5 @@
+// license:BSD-3-Clause
+// copyright-holders:Hiromasa Tanaka
 #[macro_use]
 extern crate clap;
 extern crate libymfm;
