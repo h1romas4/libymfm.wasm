@@ -34,19 +34,26 @@ export class WgmController {
     }
 
     /**
-     * Initialize Controller
+     * prepare AudioContext and AudioWorklet
      *
-     * - Initialize AudioNode Worklet and analyser
-     * - Create Worklet and compile Webassembly in Worklet
+     * Create Worklet and compile Webassembly in Worklet
      *
      * @param {*} context AudioContext
      */
-    async init(context, callback) {
+    async prepare(context) {
         // set audio context
         this.context = context;
         // create and compile Wasm AudioWorklet
         await this.context.audioWorklet.addModule(worklet);
-        this.worklet = new AudioWorkletNode(context, "wgm-worklet-processor", {
+    }
+
+    /**
+     * Initialize Controller
+     *
+     * Initialize AudioNode Worklet and analyser
+     */
+    init(callback) {
+        this.worklet = new AudioWorkletNode(this.context, "wgm-worklet-processor", {
             "numberOfInputs": 1,
             "numberOfOutputs": 1,
             "outputChannelCount": [2], // 2ch stereo
@@ -64,7 +71,7 @@ export class WgmController {
         // wasm compile
         this.send({ "message": "compile" }, () => {
             // connect gain
-            this.gain = context.createGain();
+            this.gain = this.context.createGain();
             this.gain.connect(this.context.destination);
             // connect node
             this.worklet.connect(this.gain);
@@ -77,6 +84,18 @@ export class WgmController {
             // call main
             callback();
         });
+    }
+
+    /**
+     * Instance ready?
+     *
+     * @returns {boolean}
+     */
+    ready() {
+        if(this.worklet == null) {
+            return false;
+        }
+        return true;
     }
 
     /**
