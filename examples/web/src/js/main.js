@@ -92,6 +92,12 @@ let animId = null;
     player = new WgmController(module, samplingRate, LOOP_MAX_COUNT, FEED_OUT_SECOND);
 
     /**
+     * Create AudioContext and load WebAssembly module
+     */
+    audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
+    await player.prepare(audioContext);
+
+    /**
      * Start event loop
      */
      start();
@@ -209,7 +215,7 @@ const next = function() {
  * @param {*} vgmfile
  * @param {*} altMeta
  */
-const play = async function(vgmfile, altMeta) {
+const play = function(vgmfile, altMeta) {
     // Worklet exchange callbacks
     const start = () => {
         player.create(vgmfile, (gd3) => {
@@ -224,11 +230,16 @@ const play = async function(vgmfile, altMeta) {
             player.play(next);
         });
     };
-    // iOS only sounds AudioContext that created by the click event.
-    if(audioContext == null) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
-        // 100ms wait for Chromium stunby
-        await player.init(audioContext, () => { setTimeout(start, 100) });
+    // iOS only sounds AudioWorklet that created by the click event.
+    // In the case of ScriptProcessorNode, I had to create an AudioContext here.
+    if(!player.ready()) {
+        // for Chromium
+        // "The AudioContext was not allowed to start.
+        //  It must be resumed (or created) after a user gesture on the page."
+        audioContext.resume();
+        // create audionode and gain
+        // wait 100ms for Chromium stunby
+        player.init(() => { setTimeout(start, 100) });
     } else {
         start();
     }
