@@ -26,7 +26,7 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         this.memory = null;
         // instance status
         this.play = false;
-        // event dispatch
+        // message dispatch
         this.port.onmessage = (event) => this.dispatch(event);
     }
 
@@ -53,6 +53,7 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
             outputs[0][1].set(bufferR);
             if(loop >= this.loopMaxCount) {
                 this.play = false;
+                this.port.postMessage({"message": "callback", "data": "OK"});
             }
             // next stage
             return true;
@@ -73,11 +74,11 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         switch(event.data.message) {
             case 'compile': {
                 await this.compile();
-                this.port.postMessage("OK");
+                this.port.postMessage({"message": "callback", "data": "OK"});
                 break;
             }
             case 'create': {
-                this.port.postMessage(this.create(event.data.vgmdata));
+                this.port.postMessage({"message": "callback", "data":this.create(event.data.vgmdata)});
                 break;
             }
             case 'play': {

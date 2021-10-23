@@ -57,6 +57,10 @@ export class WgmController {
                 "feedOutRemain": this.feedOutRemain,
             }
         });
+        // message dispatch
+        this.callback = null;
+        this.worklet.port.onmessage = (event) => this.dispatch(event);
+        // wasm compile
         this.send({ "message": "compile" }, () => {
             // connect gain
             this.gain = context.createGain();
@@ -81,17 +85,16 @@ export class WgmController {
      * @param {*} callback(gd3meta)
      */
     create(vgmdata, callback) {
-        this.send({
-            "message": "create",
-            "vgmdata": vgmdata
-        }, callback);
+        this.send({"message": "create", "vgmdata": vgmdata}, callback);
     }
 
     /**
      * Start music play
+     *
+     * @param {*} callback end music callback
      */
-    play() {
-        this.send({"message": "play"});
+    play(callback) {
+        this.send({"message": "play"}, callback);
     }
 
     /**
@@ -114,6 +117,23 @@ export class WgmController {
     }
 
     /**
+     * Message dispatcher
+     *
+     * @param {*} event
+     */
+    async dispatch(event) {
+        console.log(event.data);
+        switch(event.data.message) {
+            case "callback": {
+                if(this.callback != null) {
+                    await this.callback(event.data.data);
+                }
+                break;
+            }
+        }
+    }
+
+    /**
      * Send message to Worklet
      *
      * @param {*} message
@@ -122,11 +142,9 @@ export class WgmController {
     send(message, callback) {
         // wait for a reply from the worklet
         if(callback != null) {
-            this.worklet.port.onmessage = (event) => {
-                callback(event.data);
-            }
+            this.callback = callback;
         } else {
-            this.worklet.port.onmessage = null;
+            this.callback = null;
         }
         // sends a message to the Worklet
         this.worklet.port.postMessage(message);

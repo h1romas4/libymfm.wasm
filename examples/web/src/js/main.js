@@ -103,7 +103,7 @@ let animId = null;
 /**
  * Start event loop
  */
-const start = function() {
+const start = () => {
     canvasContext.fillStyle = 'rgb(0, 0, 0)';
     canvasContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     canvasContext.font = 'bold 28px sans-serif';
@@ -169,7 +169,7 @@ const prevent = function(e) {
  * @param {*} ev
  * @returns false (prevent event)
  */
-const onDrop = function(ev) {
+const onDrop = (ev) => {
     prevent(ev);
     // sample music one time
     canvas.removeEventListener('click', sample, false);
@@ -203,9 +203,7 @@ const onDrop = function(ev) {
  */
 const next = function() {
     if(playlist.length <= 0) return;
-    if(play(playlist.shift())) {
-        next();
-    }
+    play(playlist.shift());
 }
 
 /**
@@ -218,7 +216,6 @@ const play = async function(vgmfile, altMeta) {
     // Worklet exchange callbacks
     const start = () => {
         player.create(vgmfile, (gd3) => {
-            console.log(gd3);
             if(altMeta == null) {
                 musicMeta = createGd3meta(gd3);
             }
@@ -226,14 +223,15 @@ const play = async function(vgmfile, altMeta) {
                 window.cancelAnimationFrame(animId);
                 animId = null;
             }
-            player.play();
+            player.play(next);
             draw();
         });
     };
     // iOS only sounds AudioContext that created by the click event.
     if(audioContext == null) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
-        await player.init(audioContext, start);
+        // 100ms wait for Chromium stunby
+        await player.init(audioContext, () => { setTimeout(start, 100) });
     } else {
         start();
     }
