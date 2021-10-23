@@ -73,7 +73,6 @@ let animId = null;
      * There is probably some downsampling going on inside the browser.
      * Also, the setting itself may be invalid in Safari.
      */
-    let samplingRate = DEFAULT_SAMPLING_RATE;
     if(location.hash != "") {
         const sample = location.hash.match(/^#s=(\d+)/);
         if(sample != null) {
