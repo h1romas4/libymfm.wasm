@@ -132,7 +132,6 @@ export class WgmController {
      * @param {*} event
      */
     async dispatch(event) {
-        console.log(event.data);
         switch(event.data.message) {
             case "callback": {
                 if(this.callback != null) {

@@ -80,7 +80,6 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
      * @param {*} event
      */
     async dispatch(event) {
-        console.log(event.data);
         switch(event.data.message) {
             case 'compile': {
                 await this.compile();
