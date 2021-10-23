@@ -240,7 +240,7 @@ const play = async function(vgmfile, altMeta) {
  * @param {*} meta
  * @returns
  */
- const createGd3meta = function(meta) {
+const createGd3meta = function(meta) {
     meta.game_track_name = [meta.game_name, meta.track_name].filter(str => str != "").join(" | ");
     meta.game_track_name_j = [meta.game_name_j, meta.track_name_j].filter(str => str != "").join(" / ");
     meta.track_author_full = [meta.track_author, meta.track_author_j].filter(str => str != "").join(" - ");
@@ -293,7 +293,7 @@ const draw = function() {
 /**
  * Print status
  */
- const printStatus = function() {
+const printStatus = function() {
     if(samplingRate == 44100) return;
 
     const status = " HD:" + samplingRate + " ";
@@ -311,7 +311,7 @@ const draw = function() {
  * @param {*} str
  * @param {*} height
  */
- const fillTextCenterd = function(str, height) {
+const fillTextCenterd = function(str, height) {
     let left = (CANVAS_WIDTH - canvasContext.measureText(str).width) / 2;
     canvasContext.fillText(str, left, height);
 }
