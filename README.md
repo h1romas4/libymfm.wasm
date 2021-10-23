@@ -175,17 +175,22 @@ BSD 3-Clause License
     - [x] SN76489
     - [x] PWM
 - [x] Add buffering mode
+- [ ] VGM driver
+    - [x] YM2141 clock worng?
+    - [ ] Is there a problem with the file parser? The beginning of the song may be wrong.
 - [ ] Non-vgm driver support
     - [ ] XGM
 - [ ] Multilingual Interface
     - [x] CLI
     - [x] Web/JavaScript
     - [ ] Python [wasmer-python](https://github.com/wasmerio/wasmer-python)
-- [ ] Add direct ymfm intarfece
-- [ ] Support yfmf's all sound chips
-- [x] YM2141 clock worng?
+- [ ] ymfm
+    - [ ] Add direct ymfm intarfece
+    - [ ] Support yfmf's all sound chips
 - [x] Fix SEGAPCM
+- [ ] Examples source
+    - [x] Web Frontend: AudioWorklet
+    - [ ] CLI: Support loop and feedout
 - [ ] Refactoring
     - [x] Separate the sound stream from the sound driver.
     - [x] Support for arbitrary input tick rate and output sampling rate.
-    - [ ] Examples
