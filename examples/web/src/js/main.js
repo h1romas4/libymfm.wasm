@@ -72,9 +72,6 @@ let animId = null;
      * In other browsers, the setting works, but the native connection to the audio interface drops to 44100Hz.
      * There is probably some downsampling going on inside the browser.
      * Also, the setting itself may be invalid in Safari.
-     *
-     * (2021/10)
-     * Firefox's AudioWorklet doesn't respect specify the sampling rate? (Sound cracking occurs now)
      */
     if(location.hash != "") {
         const sample = location.hash.match(/^#s=(\d+)/);

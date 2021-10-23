@@ -43,14 +43,9 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         try {
             // create wave
             const loop = this.wgmplay.play();
-            // clone buffer
-            let bufferL = new Float32Array(this.chunkSize);
-            let bufferR = new Float32Array(this.chunkSize);
-            bufferL.set(new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_l_ref(), this.chunkSize));
-            bufferR.set(new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_r_ref(), this.chunkSize));
             // output
-            outputs[0][0].set(bufferL);
-            outputs[0][1].set(bufferR);
+            outputs[0][0].set(new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_l_ref(), this.chunkSize));
+            outputs[0][1].set(new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_r_ref(), this.chunkSize));
             if(loop >= this.loopMaxCount) {
                 this.play = false;
                 this.port.postMessage({"message": "callback", "data": "OK"});

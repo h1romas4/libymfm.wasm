@@ -74,6 +74,7 @@ export class WgmController {
             this.analyserBuffer = new Uint8Array(this.analyserBufferLength);
             this.analyser.getByteTimeDomainData(this.analyserBuffer);
             this.gain.connect(this.analyser);
+            // call main
             callback();
         });
     }
