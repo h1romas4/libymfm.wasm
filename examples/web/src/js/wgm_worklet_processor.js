@@ -26,6 +26,7 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         this.memory = null;
         // instance status
         this.play = false;
+        this.feedOutCount = 0;
         // message dispatch
         this.port.onmessage = (event) => this.dispatch(event);
     }
@@ -47,8 +48,22 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
             outputs[0][0].set(new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_l_ref(), this.chunkSize));
             outputs[0][1].set(new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_r_ref(), this.chunkSize));
             if(loop >= this.loopMaxCount) {
-                this.play = false;
-                this.port.postMessage({"message": "callback", "data": "OK"});
+                if(this.feedOutCount == 0 && loop > this.loopMaxCount) {
+                    // no loop track
+                    this.play = false;
+                    this.port.postMessage({"message": "callback", "data": "OK"});
+                } else {
+                    // feed out start
+                    if(this.feedOutCount == 0) {
+                        this.port.postMessage({"message": "feedout"});
+                    }
+                    this.feedOutCount++;
+                    // feed out end and next track
+                    if(this.feedOutCount > this.feedOutRemain) {
+                        this.play = false;
+                        this.port.postMessage({"message": "callback", "data": "OK"});
+                    }
+                }
             }
             // next stage
             return true;
@@ -112,6 +127,8 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
             this.wgmplay.free();
             this.wgmplay = null;
         }
+        // init state
+        this.feedOutCount = 0;
         // return music meta
         return JSON.parse(this.wgmplay.get_seq_gd3());
     }
