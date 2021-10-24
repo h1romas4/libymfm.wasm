@@ -25,8 +25,10 @@ export class WgmController {
         this.worker = null;
         this.callback = null;
         // shared memory Worker, Worklet
-        this.sharedRing1 = null;
-        this.sharedRing2 = null;
+        this.sharedRingL1 = null;
+        this.sharedRingR1 = null;
+        this.sharedRingL2 = null;
+        this.sharedRingR2 = null;
         this.sharedStatus = null;
         // sampling rate
         this.samplingRate = samplingRate;
@@ -54,8 +56,10 @@ export class WgmController {
         this.context = context;
         // create shared memory
         try {
-            this.sharedRing1 = new SharedArrayBuffer(this.chunkSize * 4); // Float32Array
-            this.sharedRing2 = new SharedArrayBuffer(this.chunkSize * 4); // Float32Array
+            this.sharedRingL1 = new SharedArrayBuffer(this.chunkSize * 4); // Float32Array
+            this.sharedRingR1 = new SharedArrayBuffer(this.chunkSize * 4); // Float32Array
+            this.sharedRingL2 = new SharedArrayBuffer(this.chunkSize * 4); // Float32Array
+            this.sharedRingR2 = new SharedArrayBuffer(this.chunkSize * 4); // Float32Array
             this.sharedStatus = new SharedArrayBuffer(1024); // Int32Array
         } catch(e) {
             return false;
@@ -67,8 +71,10 @@ export class WgmController {
         this.sendWorker({
             "message": "compile",
             "shared": {
-                "ring1": this.sharedRing1,
-                "ring2": this.sharedRing2,
+                "ringL1": this.sharedRingL1,
+                "ringR1": this.sharedRingR1,
+                "ringL2": this.sharedRingL2,
+                "ringR2": this.sharedRingR2,
                 "status": this.sharedStatus,
             }
         }, async () => {
@@ -91,8 +97,10 @@ export class WgmController {
             "numberOfOutputs": 1,
             "outputChannelCount": [2], // 2ch stereo
             "processorOptions": {
-                "ring1": this.sharedRing1,
-                "ring2": this.sharedRing2,
+                "ringL1": this.sharedRingL1,
+                "ringR1": this.sharedRingR1,
+                "ringL2": this.sharedRingL2,
+                "ringR2": this.sharedRingR2,
                 "status": this.sharedStatus,
             }
         });
@@ -130,7 +138,10 @@ export class WgmController {
      * @param {*} callback(gd3meta)
      */
     create(vgmdata, callback) {
-        this.sendWorker({
+        // Stop the current loop if there is one
+        this.sendWorker({"message": "clear"});
+        // Interval of one event
+        setTimeout(() => this.sendWorker({
             "message": "create",
             "vgmdata": vgmdata,
             "options": {
@@ -139,15 +150,18 @@ export class WgmController {
                 "loopMaxCount": this.loopMaxCount,
                 "feedOutRemain": this.feedOutRemain,
             }
-        }, callback);
+        }, callback), 1);
     }
 
     /**
-     * Start music play
+     * Start playback
      *
      * @param {*} callback end music callback
      */
     play(callback) {
+        // start buffering
+        this.sendWorker({"message": "start"});
+        // start playback
         this.sendWorklet({"message": "play"}, callback);
     }
 

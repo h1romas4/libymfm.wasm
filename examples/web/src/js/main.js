@@ -263,8 +263,8 @@ const play = function(vgmfile, altMeta) {
             animId = null;
         }
         console.log(gd3);
-        // draw();
-        // player.play(next);
+        draw();
+        player.play(next);
     });
 };
 
