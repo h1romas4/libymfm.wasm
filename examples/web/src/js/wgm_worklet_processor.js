@@ -1,5 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+import { AUDIO_WORKLET_SAMPLING_CHUNK, NOW_PLAYING_RING, END_OF_MUSIC_CHUNK, FEED_OUT_START_CHUNK } from './const.js'
+
 /**
  * WgmWorkletProcessor
  */
@@ -42,8 +44,8 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
 
         // notify buffering next ring
         if(this.playring != this.playringBefore) {
-            Atomics.store(this.status, 0, this.playring);
-            Atomics.notify(this.status, 0, /* watcher count */ 1);
+            Atomics.store(this.status, NOW_PLAYING_RING, this.playring);
+            Atomics.notify(this.status, NOW_PLAYING_RING, /* watcher count */ 1);
             this.playringBefore = this.playring;
         }
 
@@ -58,19 +60,21 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         }
 
         // set sampling
-        let pointer = this.chunkStep * 128;
-        outputs[0][0].set(chunkL.slice(pointer, pointer + 128));
-        outputs[0][1].set(chunkR.slice(pointer, pointer + 128));
+        let pointer = this.chunkStep * AUDIO_WORKLET_SAMPLING_CHUNK;
+        outputs[0][0].set(chunkL.slice(pointer, pointer + AUDIO_WORKLET_SAMPLING_CHUNK));
+        outputs[0][1].set(chunkR.slice(pointer, pointer + AUDIO_WORKLET_SAMPLING_CHUNK));
 
         // step chunk step per AudioWorklet chunk
         this.chunkStep++;
         // next chunk
         if(this.chunkStep >= this.chunkSteps) {
             // end of music
-            if(this.status[1] != 0 && this.status[1] <= this.chunkCount) {
+            if(this.status[END_OF_MUSIC_CHUNK] != 0
+                && this.status[END_OF_MUSIC_CHUNK] <= this.chunkCount) {
                 this.play = false;
                 this.port.postMessage({"message": "callback", "data": "endofplay"});
-            } else if(this.status[2] != 0 && this.status[2] <= this.chunkCount) {
+            } else if(this.status[FEED_OUT_START_CHUNK] != 0
+                && this.status[FEED_OUT_START_CHUNK] <= this.chunkCount) {
                 // feedout
                 this.port.postMessage({"message": "feedout"});
             }
@@ -104,8 +108,8 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
             }
             case 'stop': {
                 this.play = false;
-                Atomics.store(this.status, 0, /* break loop */ 3);
-                Atomics.notify(this.status, 0, /* watcher count */ 1);
+                Atomics.store(this.status, NOW_PLAYING_RING, /* break loop */ 3);
+                Atomics.notify(this.status, NOW_PLAYING_RING, /* watcher count */ 1);
                 this.port.postMessage({"message": "callback", "data": "clear wait"});
             }
         }

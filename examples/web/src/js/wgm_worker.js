@@ -1,5 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+import { NOW_PLAYING_RING, END_OF_MUSIC_CHUNK, FEED_OUT_START_CHUNK } from './const.js'
 import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
 import { initWasi } from './wasi_wasmer';
 
@@ -66,9 +67,9 @@ class WgmWorker {
         this.viewL = new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_l_ref(), this.chunkSize);
         this.viewR = new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_r_ref(), this.chunkSize);
         // init shared status
-        this.status[0] = 0; // playing ring
-        this.status[1] = 0; // end of chunk
-        this.status[2] = 0; // feedout chunk
+        this.status[NOW_PLAYING_RING] = 0; // playing ring
+        this.status[END_OF_MUSIC_CHUNK] = 0; // end of chunk
+        this.status[FEED_OUT_START_CHUNK] = 0; // feedout chunk
         // create first buffer ring 1
         this.generate(1);
         // return music meta
@@ -84,7 +85,7 @@ class WgmWorker {
             // wait notify (first step 0 -> 1)
             Atomics.wait(this.status, 0, waitRing);
             // It's not atomic loading, but there is a time lag between next updates.
-            waitRing = this.status[0];
+            waitRing = this.status[NOW_PLAYING_RING];
             // stop event
             if(waitRing == 3) {
                 this.buffering = false;
@@ -125,18 +126,18 @@ class WgmWorker {
                 // no loop track
                 this.buffering = false;
                 // end of play chunk
-                this.status[1] = this.chunkCount;
+                this.status[END_OF_MUSIC_CHUNK] = this.chunkCount;
             } else {
                 // feed out start
                 if(this.feedOutCount == 0) {
                     // feedout start chunk
-                    this.status[2] = this.chunkCount
+                    this.status[FEED_OUT_START_CHUNK] = this.chunkCount
                 }
                 // feed out end and next track
                 if(this.feedOutCount >= this.feedOutRemain) {
                     this.buffering = false;
                     // end of play chunk
-                    this.status[1] = this.chunkCount
+                    this.status[END_OF_MUSIC_CHUNK] = this.chunkCount
                 }
                 this.feedOutCount++;
             }

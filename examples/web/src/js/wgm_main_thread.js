@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+import { AUDIO_WORKLET_SAMPLING_CHUNK, BUFFERING_CHUNK_COUNT } from './const.js'
 import worklet from 'worklet:./wgm_worklet_processor.js'; // worklet: Parcel
-
-const AUDIO_WORKLET_SAMPLING_CHUNK = 128;
-const BUFFERING_CHUNK_COUNT = 768;
 
 /**
  * AudioWorklet Controller
