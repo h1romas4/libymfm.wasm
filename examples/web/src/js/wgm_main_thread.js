@@ -139,18 +139,19 @@ export class WgmController {
      */
     create(vgmdata, callback) {
         // Stop the current loop if there is one
-        this.sendWorklet({"message": "stop"}); // stop Atomic wait via Worklet
-        // Interval of one event
-        setTimeout(() => this.sendWorker({
-            "message": "create",
-            "vgmdata": vgmdata,
-            "options": {
-                "samplingRate": this.samplingRate,
-                "chunkSize": this.chunkSize,
-                "loopMaxCount": this.loopMaxCount,
-                "feedOutRemain": this.feedOutRemain,
-            }
-        }, callback), 1);
+        // Stop Atomic wait via Worklet
+        this.sendWorklet({"message": "stop"}, () => {
+            this.sendWorker({
+                "message": "create",
+                "vgmdata": vgmdata,
+                "options": {
+                    "samplingRate": this.samplingRate,
+                    "chunkSize": this.chunkSize,
+                    "loopMaxCount": this.loopMaxCount,
+                    "feedOutRemain": this.feedOutRemain,
+                }
+            }, callback);
+        });
     }
 
     /**
@@ -202,7 +203,6 @@ export class WgmController {
      * @param {*} event
      */
     async dispatch(event) {
-        console.log(event.data);
         switch(event.data.message) {
             case "callback": {
                 if(this.callback != null) {

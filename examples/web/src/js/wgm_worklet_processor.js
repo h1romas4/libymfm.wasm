@@ -106,6 +106,7 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
                 this.play = false;
                 Atomics.store(this.status, 0, /* break loop */ 3);
                 Atomics.notify(this.status, 0, /* watcher count */ 1);
+                this.port.postMessage({"message": "callback", "data": "clear wait"});
             }
         }
     }
