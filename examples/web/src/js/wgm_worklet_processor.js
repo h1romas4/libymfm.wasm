@@ -102,6 +102,11 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
                 this.play = true;
                 break;
             }
+            case 'stop': {
+                this.play = false;
+                Atomics.store(this.status, 0, /* break loop */ 3);
+                Atomics.notify(this.status, 0, /* watcher count */ 1);
+            }
         }
     }
 }

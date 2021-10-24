@@ -139,7 +139,7 @@ export class WgmController {
      */
     create(vgmdata, callback) {
         // Stop the current loop if there is one
-        this.sendWorker({"message": "clear"});
+        this.sendWorklet({"message": "stop"}); // stop Atomic wait via Worklet
         // Interval of one event
         setTimeout(() => this.sendWorker({
             "message": "create",

@@ -86,7 +86,10 @@ class WgmWorker {
             // It's not atomic loading, but there is a time lag between next updates.
             waitRing = this.status[0];
             // stop event
-            if(waitRing == 3) break;
+            if(waitRing == 3) {
+                this.buffering = false;
+                break;
+            }
             // create buffer
             this.generate(waitRing == 1? 2: 1);
         }
@@ -170,14 +173,6 @@ class WgmWorker {
             case 'start': {
                 // start buffering loop (Atomic status wait)
                 this.loop();
-                break;
-            }
-            case 'clear': {
-                // stop loop
-                this.buffering = false
-                // stop Atomic wait
-                Atomics.store(this.status, 0, /* break loop */ 3);
-                Atomics.notify(this.status, 0, /* watcher count */ 1);
                 break;
             }
         }
