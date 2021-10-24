@@ -190,6 +190,7 @@ BSD 3-Clause License
 - [x] Fix SEGAPCM
 - [ ] Examples source
     - [x] Web Frontend: AudioWorklet
+    - [x] Web Frontend: Web Worker and SharedArrayBuffer (The Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers cannot be set in github pages, so they cannot be deployed)
     - [ ] CLI: Support loop and feedout
 - [ ] Refactoring
     - [x] Separate the sound stream from the sound driver.
