@@ -1,6 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-
 /**
  * WgmWorkletProcessor
  */
@@ -18,6 +17,7 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         this.playringBefore = null;
         this.chunkStep = null;
         this.chunkCount = null;
+        this.chunkSteps = options.processorOptions.chunkSteps;
         // shared memory
         this.ringL1 = new Float32Array(options.processorOptions.ringL1);
         this.ringR1 = new Float32Array(options.processorOptions.ringR1);
@@ -64,7 +64,7 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         // step chunk step per AudioWorklet chunk
         this.chunkStep++;
         // next chunk
-        if(this.chunkStep >= 32) {
+        if(this.chunkStep >= this.chunkSteps) {
             // count chunk
             this.chunkCount++;
             // end of music

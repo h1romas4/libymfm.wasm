@@ -3,7 +3,7 @@
 import worklet from 'worklet:./wgm_worklet_processor.js'; // worklet: Parcel
 
 const AUDIO_WORKLET_SAMPLING_CHUNK = 128;
-const BUFFERING_CHUNK_COUNT = 32;
+const BUFFERING_CHUNK_COUNT = 768;
 
 /**
  * AudioWorklet Controller
@@ -102,6 +102,7 @@ export class WgmController {
                 "ringL2": this.sharedRingL2,
                 "ringR2": this.sharedRingR2,
                 "status": this.sharedStatus,
+                "chunkSteps": BUFFERING_CHUNK_COUNT
             }
         });
         // message dispatch
