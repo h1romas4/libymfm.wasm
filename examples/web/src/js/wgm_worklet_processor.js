@@ -24,6 +24,8 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         // wgm instance
         this.wgmplay = null;
         this.memory = null;
+        this.viewL = null;
+        this.viewR = null;
         // instance status
         this.play = false;
         this.feedOutCount = 0;
@@ -45,8 +47,8 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
             // create wave
             const loop = this.wgmplay.play();
             // output
-            outputs[0][0].set(new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_l_ref(), this.chunkSize));
-            outputs[0][1].set(new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_r_ref(), this.chunkSize));
+            outputs[0][0].set(this.viewL);
+            outputs[0][1].set(this.viewR);
             if(loop >= this.loopMaxCount) {
                 if(this.feedOutCount == 0 && loop > this.loopMaxCount) {
                     // no loop track
@@ -126,6 +128,9 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
             this.wgmplay.free();
             this.wgmplay = null;
         }
+        // set view
+        this.viewL = new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_l_ref(), this.chunkSize);
+        this.viewR = new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_r_ref(), this.chunkSize);
         // init state
         this.feedOutCount = 0;
         // return music meta
