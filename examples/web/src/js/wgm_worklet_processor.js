@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-import { AUDIO_WORKLET_SAMPLING_CHUNK, NOW_PLAYING_RING, END_OF_MUSIC_CHUNK, FEED_OUT_START_CHUNK } from './const.js'
+import { BUFFER_RING_COUNT, AUDIO_WORKLET_SAMPLING_CHUNK, NOW_PLAYING_RING, END_OF_MUSIC_CHUNK, FEED_OUT_START_CHUNK } from './const.js'
 
 /**
  * WgmWorkletProcessor
@@ -21,10 +21,12 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         this.chunkCount = null;
         this.chunkSteps = options.processorOptions.chunkSteps;
         // shared memory
-        this.ringL1 = new Float32Array(options.processorOptions.ringL1);
-        this.ringR1 = new Float32Array(options.processorOptions.ringR1);
-        this.ringL2 = new Float32Array(options.processorOptions.ringL2);
-        this.ringR2 = new Float32Array(options.processorOptions.ringR2);
+        this.ringL = [];
+        this.ringR = [];
+        for(let i = 0; i < BUFFER_RING_COUNT; i++) {
+            this.ringL[i] = new Float32Array(options.processorOptions.ringL[i]);
+            this.ringR[i] = new Float32Array(options.processorOptions.ringR[i]);
+        }
         this.status = new Int32Array(options.processorOptions.status);
         // message dispatch
         this.port.onmessage = (event) => this.dispatch(event);
@@ -49,15 +51,8 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
             this.playringBefore = this.playring;
         }
 
-        let chunkL;
-        let chunkR;
-        if(this.playring == 1) {
-            chunkL = this.ringL1;
-            chunkR = this.ringR1;
-        } else {
-            chunkL = this.ringL2;
-            chunkR = this.ringR2;
-        }
+        let chunkL = this.ringL[this.playring];
+        let chunkR = this.ringR[this.playring];
 
         // set sampling
         let pointer = this.chunkStep * AUDIO_WORKLET_SAMPLING_CHUNK;
@@ -79,7 +74,10 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
                 this.port.postMessage({"message": "feedout"});
             }
             // change ring
-            this.playring = this.playring == 1? 2: 1;
+            this.playring++;
+            if(this.playring >= BUFFER_RING_COUNT) {
+                this.playring = 0;
+            }
             // clear chunk step
             this.chunkStep = 0;
             // count chunk
@@ -98,7 +96,7 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         switch(event.data.message) {
             case 'play': {
                 // init status
-                this.playring = 1;
+                this.playring = 0;
                 this.playringBefore = null;
                 this.chunkCount = 1; // 1:first buffer
                 this.chunkStep = 0;

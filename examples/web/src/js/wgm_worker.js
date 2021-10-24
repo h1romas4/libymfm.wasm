@@ -1,8 +1,10 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-import { NOW_PLAYING_RING, END_OF_MUSIC_CHUNK, FEED_OUT_START_CHUNK } from './const.js'
+import { BUFFER_RING_COUNT, NOW_PLAYING_RING, END_OF_MUSIC_CHUNK, FEED_OUT_START_CHUNK } from './const.js'
 import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
 import { initWasi } from './wasi_wasmer';
+
+const INIT_NOW_PLAYING_RING = 999;
 
 class WgmWorker {
     constructor(worker) {
@@ -10,8 +12,8 @@ class WgmWorker {
         this.worker = worker;
         this.memory = null;
         // shared memory
-        this.ring1 = null;
-        this.ring2 = null;
+        this.ringL = [];
+        this.ringR = [];
         this.status = null;
         // wgm instance
         this.wgmplay = null;
@@ -67,7 +69,7 @@ class WgmWorker {
         this.viewL = new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_l_ref(), this.chunkSize);
         this.viewR = new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_r_ref(), this.chunkSize);
         // init shared status
-        this.status[NOW_PLAYING_RING] = 0; // playing ring
+        this.status[NOW_PLAYING_RING] = INIT_NOW_PLAYING_RING; // playing ring
         this.status[END_OF_MUSIC_CHUNK] = 0; // end of chunk
         this.status[FEED_OUT_START_CHUNK] = 0; // feedout chunk
         // create first buffer ring 1
@@ -80,9 +82,9 @@ class WgmWorker {
      * Buffering loop
      */
     loop() {
-        let waitRing = 0;
+        let waitRing = INIT_NOW_PLAYING_RING;
         while(this.buffering) {
-            // wait notify (first step 0 -> 1)
+            // wait notify (first step INIT_NOW_PLAYING_RING -> 0)
             Atomics.wait(this.status, 0, waitRing);
             // It's not atomic loading, but there is a time lag between next updates.
             waitRing = this.status[NOW_PLAYING_RING];
@@ -110,13 +112,10 @@ class WgmWorker {
         let bufferR = new Float32Array(this.chunkSize);
         bufferL.set(new Float32Array(this.viewL));
         bufferR.set(new Float32Array(this.viewR));
-        if(ring == 1) {
-            this.ringL1.set(bufferL);
-            this.ringR1.set(bufferR);
-        } else {
-            this.ringL2.set(bufferL);
-            this.ringR2.set(bufferR);
-        }
+        // set clone
+        this.ringL[ring].set(bufferL);
+        this.ringR[ring].set(bufferR);
+
         this.chunkCount++;
 
         // loop
@@ -153,10 +152,10 @@ class WgmWorker {
         switch(event.data.message) {
             case 'compile': {
                 await this.compile();
-                this.ringL1 = new Float32Array(event.data.shared.ringL1);
-                this.ringR1 = new Float32Array(event.data.shared.ringR1);
-                this.ringL2 = new Float32Array(event.data.shared.ringL2);
-                this.ringR2 = new Float32Array(event.data.shared.ringR2);
+                for(let i = 0; i < BUFFER_RING_COUNT; i++) {
+                    this.ringL[i] = new Float32Array(event.data.shared.ringL[i]);
+                    this.ringR[i] = new Float32Array(event.data.shared.ringR[i]);
+                }
                 this.status = new Int32Array(event.data.shared.status);
                 this.worker.postMessage({
                     "message": "callback",

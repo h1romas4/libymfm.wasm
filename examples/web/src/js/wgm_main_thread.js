@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-import { AUDIO_WORKLET_SAMPLING_CHUNK, BUFFERING_CHUNK_COUNT } from './const.js'
+import { BUFFER_RING_COUNT, AUDIO_WORKLET_SAMPLING_CHUNK, BUFFERING_CHUNK_COUNT } from './const.js'
 import worklet from 'worklet:./wgm_worklet_processor.js'; // worklet: Parcel
 
 /**
@@ -22,10 +22,8 @@ export class WgmController {
         this.worker = null;
         this.callback = null;
         // shared memory Worker, Worklet
-        this.sharedRingL1 = null;
-        this.sharedRingR1 = null;
-        this.sharedRingL2 = null;
-        this.sharedRingR2 = null;
+        this.sharedRingL = [];
+        this.sharedRingR = [];
         this.sharedStatus = null;
         // sampling rate
         this.samplingRate = samplingRate;
@@ -53,10 +51,10 @@ export class WgmController {
         this.context = context;
         // create shared memory
         try {
-            this.sharedRingL1 = new SharedArrayBuffer(this.chunkSize * 4); // Float32Array
-            this.sharedRingR1 = new SharedArrayBuffer(this.chunkSize * 4); // Float32Array
-            this.sharedRingL2 = new SharedArrayBuffer(this.chunkSize * 4); // Float32Array
-            this.sharedRingR2 = new SharedArrayBuffer(this.chunkSize * 4); // Float32Array
+            for(let i = 0; i < BUFFER_RING_COUNT; i++) {
+                this.sharedRingL[i] = new SharedArrayBuffer(this.chunkSize * 4); // * 4: Float32Array;
+                this.sharedRingR[i] = new SharedArrayBuffer(this.chunkSize * 4); // * 4: Float32Array;
+            }
             this.sharedStatus = new SharedArrayBuffer(1024); // Int32Array
         } catch(e) {
             return false;
@@ -68,10 +66,8 @@ export class WgmController {
         this.sendWorker({
             "message": "compile",
             "shared": {
-                "ringL1": this.sharedRingL1,
-                "ringR1": this.sharedRingR1,
-                "ringL2": this.sharedRingL2,
-                "ringR2": this.sharedRingR2,
+                "ringL": this.sharedRingL,
+                "ringR": this.sharedRingR,
                 "status": this.sharedStatus,
             }
         }, async () => {
@@ -94,10 +90,8 @@ export class WgmController {
             "numberOfOutputs": 1,
             "outputChannelCount": [2], // 2ch stereo
             "processorOptions": {
-                "ringL1": this.sharedRingL1,
-                "ringR1": this.sharedRingR1,
-                "ringL2": this.sharedRingL2,
-                "ringR2": this.sharedRingR2,
+                "ringL": this.sharedRingL,
+                "ringR": this.sharedRingR,
                 "status": this.sharedStatus,
                 "chunkSteps": BUFFERING_CHUNK_COUNT
             }

@@ -4,6 +4,7 @@
 // Audio
 export const AUDIO_WORKLET_SAMPLING_CHUNK = 128;
 export const BUFFERING_CHUNK_COUNT = 768;
+export const BUFFER_RING_COUNT = 5;
 
 // Status SharedBuffer
 export const NOW_PLAYING_RING = 0;
