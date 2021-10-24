@@ -1,16 +1,12 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-/**
- * This module is not in use. (It works only with the main thread)
- * wasmer-js is using performance.now() which cannot be used inside Worklet.
- */
 import { WASI } from '@wasmer/wasi';
 import { lowerI64Imports } from "@wasmer/wasm-transformer";
 import { WasmFs } from '@wasmer/wasmfs';
 
 // wasi instance
-let wasi;
-let wasiFs;
+export let wasi;
+export let wasiFs;
 
 /**
  * Initialize WebAssembly with wasmer-js

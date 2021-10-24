@@ -9,5 +9,9 @@ module.exports = {
     "parserOptions": {
         "sourceType": "module",
         "requireConfigFile": false
+    },
+    "globals": {
+        "Atomics": "readonly",
+        "SharedArrayBuffer": "readonly"
     }
 };
