@@ -1,8 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+import * as def from './const.js'
 import worklet from 'worklet:./wgm_worklet_processor.js'; // worklet: Parcel
-
-const AUDIO_WORKLET_SAMPLING_CHUNK = 128;
 
 /**
  * AudioWorklet Controller
@@ -14,19 +13,26 @@ export class WgmController {
      * @param {*} module WebAssembly module binary
      * @param {*} samplingRate Sampling rate
      * @param {*} loopMaxCount Max loop count
-     * @param {*} feedOutSecond Music feed out second
      */
-    constructor(module, samplingRate, loopMaxCount, feedOutSecond) {
+    constructor(module, samplingRate, loopMaxCount) {
         // WebAssembly binary
         this.module = module;
+        // Worker and Worklet
+        this.worklet = null;
+        this.worker = null;
+        this.callback = null;
+        // shared memory Worker, Worklet
+        this.sharedRingL = [];
+        this.sharedRingR = [];
+        this.sharedStatus = null;
         // sampling rate
         this.samplingRate = samplingRate;
         this.loopMaxCount = loopMaxCount;
-        this.feedOutSecond = feedOutSecond;
-        this.feedOutRemain = Math.floor((samplingRate * feedOutSecond) / AUDIO_WORKLET_SAMPLING_CHUNK);
+        this.chunkSize = def.AUDIO_WORKLET_SAMPLING_CHUNK * def.BUFFERING_CHUNK_COUNT;
+        this.feedOutRemain = 1; // 1chunk
+        this.feedOutSecond = Math.ceil(this.chunkSize * this.feedOutRemain / samplingRate);
         // init audio contexts
         this.context = null;
-        this.worklet = null;
         this.gain = null;
         this.analyser = null;
         this.analyserBuffer = null;
@@ -40,11 +46,37 @@ export class WgmController {
      *
      * @param {*} context AudioContext
      */
-    async prepare(context) {
+    async prepare(context, callback) {
         // set audio context
         this.context = context;
-        // create and compile Wasm AudioWorklet
-        await this.context.audioWorklet.addModule(worklet);
+        // create shared memory
+        try {
+            for(let i = 0; i < def.BUFFER_RING_COUNT; i++) {
+                this.sharedRingL[i] = new SharedArrayBuffer(this.chunkSize * 4); // * 4: Float32Array;
+                this.sharedRingR[i] = new SharedArrayBuffer(this.chunkSize * 4); // * 4: Float32Array;
+            }
+            this.sharedStatus = new SharedArrayBuffer(1024); // Int32Array
+        } catch(e) {
+            return false;
+        }
+        // create Worker
+        this.worker = new Worker(new URL('wgm_worker.js', import.meta.url), {type: 'module'});
+        this.worker.onmessage = (event) => this.dispatch(event);
+        // create and compile Wasm Worker
+        this.sendWorker({
+            "message": "compile",
+            "shared": {
+                "ringL": this.sharedRingL,
+                "ringR": this.sharedRingR,
+                "status": this.sharedStatus,
+            }
+        }, async () => {
+            // create worklet
+            await this.context.audioWorklet.addModule(worklet);
+            callback();
+        });
+
+        return true;
     }
 
     /**
@@ -52,38 +84,31 @@ export class WgmController {
      *
      * Initialize AudioNode Worklet and analyser
      */
-    init(callback) {
+    init() {
         this.worklet = new AudioWorkletNode(this.context, "wgm-worklet-processor", {
             "numberOfInputs": 1,
             "numberOfOutputs": 1,
             "outputChannelCount": [2], // 2ch stereo
             "processorOptions": {
-                "module": this.module,
-                "samplingRate": this.samplingRate,
-                "chunkSize": AUDIO_WORKLET_SAMPLING_CHUNK,
-                "loopMaxCount": this.loopMaxCount,
-                "feedOutRemain": this.feedOutRemain,
+                "ringL": this.sharedRingL,
+                "ringR": this.sharedRingR,
+                "status": this.sharedStatus,
+                "chunkSteps": def.BUFFERING_CHUNK_COUNT
             }
         });
         // message dispatch
-        this.callback = null;
         this.worklet.port.onmessage = (event) => this.dispatch(event);
-        // wasm compile
-        this.send({ "message": "compile" }, () => {
-            // connect gain
-            this.gain = this.context.createGain();
-            this.gain.connect(this.context.destination);
-            // connect node
-            this.worklet.connect(this.gain);
-            // connect fft
-            this.analyser = this.context.createAnalyser();
-            this.analyserBufferLength = this.analyser.frequencyBinCount;
-            this.analyserBuffer = new Uint8Array(this.analyserBufferLength);
-            this.analyser.getByteTimeDomainData(this.analyserBuffer);
-            this.gain.connect(this.analyser);
-            // call main
-            callback();
-        });
+        // connect gain
+        this.gain = this.context.createGain();
+        this.gain.connect(this.context.destination);
+        // connect node
+        this.worklet.connect(this.gain);
+        // connect fft
+        this.analyser = this.context.createAnalyser();
+        this.analyserBufferLength = this.analyser.frequencyBinCount;
+        this.analyserBuffer = new Uint8Array(this.analyserBufferLength);
+        this.analyser.getByteTimeDomainData(this.analyserBuffer);
+        this.gain.connect(this.analyser);
     }
 
     /**
@@ -105,16 +130,32 @@ export class WgmController {
      * @param {*} callback(gd3meta)
      */
     create(vgmdata, callback) {
-        this.send({"message": "create", "vgmdata": vgmdata}, callback);
+        // Stop the current loop if there is one
+        // Stop Atomic wait via Worklet
+        this.sendWorklet({"message": "stop"}, () => {
+            this.sendWorker({
+                "message": "create",
+                "vgmdata": vgmdata,
+                "options": {
+                    "samplingRate": this.samplingRate,
+                    "chunkSize": this.chunkSize,
+                    "loopMaxCount": this.loopMaxCount,
+                    "feedOutRemain": this.feedOutRemain,
+                }
+            }, callback);
+        });
     }
 
     /**
-     * Start music play
+     * Start playback
      *
      * @param {*} callback end music callback
      */
     play(callback) {
-        this.send({"message": "play"}, callback);
+        // start buffering
+        this.sendWorker({"message": "start"});
+        // start playback
+        this.sendWorklet({"message": "play"}, callback);
     }
 
     /**
@@ -143,7 +184,7 @@ export class WgmController {
         const now = this.context.currentTime;
         // feed out to 0.0
         this.gain.gain.setValueAtTime(1, now);
-        this.gain.gain.linearRampToValueAtTime(0, now + this.feedOutSecond);
+        this.gain.gain.linearRampToValueAtTime(0, now + this.feedOutSecond / 2);
         // return to 1.0
         this.gain.gain.setValueAtTime(1, now + this.feedOutSecond);
     }
@@ -174,7 +215,7 @@ export class WgmController {
      * @param {*} message
      * @param {function} callback
      */
-    send(message, callback) {
+    sendWorklet(message, callback) {
         // wait for a reply from the worklet
         if(callback != null) {
             this.callback = callback;
@@ -183,5 +224,22 @@ export class WgmController {
         }
         // sends a message to the Worklet
         this.worklet.port.postMessage(message);
+    }
+
+    /**
+     * Send message to Worklet
+     *
+     * @param {*} message
+     * @param {function} callback
+     */
+     sendWorker(message, callback) {
+        // wait for a reply from the worklet
+        if(callback != null) {
+            this.callback = callback;
+        } else {
+            this.callback = null;
+        }
+        // sends a message to the Worklet
+        this.worker.postMessage(message);
     }
 }
