@@ -30,7 +30,7 @@ export class WgmController {
         this.loopMaxCount = loopMaxCount;
         this.chunkSize = def.AUDIO_WORKLET_SAMPLING_CHUNK * def.BUFFERING_CHUNK_COUNT;
         this.feedOutRemain = 1; // 1chunk
-        this.feedOutSecond = Math.ceil(this.chunkSize * this.feedOutRemain / samplingRate);
+        this.feedOutSecond = Math.floor(this.chunkSize * this.feedOutRemain / samplingRate);
         // init audio contexts
         this.context = null;
         this.gain = null;
@@ -152,6 +152,8 @@ export class WgmController {
      * @param {*} callback end music callback
      */
     play(callback) {
+        // return to 1.0
+        this.gain.gain.setValueAtTime(1, this.context.currentTime);
         // start buffering
         this.sendWorker({"message": "start"});
         // start playback
@@ -185,8 +187,6 @@ export class WgmController {
         // feed out to 0.0
         this.gain.gain.setValueAtTime(1, now);
         this.gain.gain.linearRampToValueAtTime(0, now + this.feedOutSecond);
-        // return to 1.0
-        this.gain.gain.setValueAtTime(1, now + this.feedOutSecond);
     }
 
     /**
