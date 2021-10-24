@@ -98,7 +98,6 @@ class WgmWorker {
      * @param {*} ring
      */
     generate(ring) {
-        // wait messege
         // create wave
         const loop = this.wgmplay.play();
 
@@ -114,6 +113,7 @@ class WgmWorker {
             this.ringL2.set(bufferL);
             this.ringR2.set(bufferR);
         }
+        this.chunkCount++;
 
         // loop
         if(loop >= this.loopMaxCount) {
@@ -122,23 +122,22 @@ class WgmWorker {
                 // no loop track
                 this.buffering = false;
                 // end of play chunk
-                this.status[1] = this.chunkCount
+                this.status[1] = this.chunkCount;
             } else {
                 // feed out start
                 if(this.feedOutCount == 0) {
                     // feedout start chunk
                     this.status[2] = this.chunkCount
                 }
-                this.feedOutCount++;
                 // feed out end and next track
                 if(this.feedOutCount >= this.feedOutRemain) {
                     this.buffering = false;
                     // end of play chunk
                     this.status[1] = this.chunkCount
                 }
+                this.feedOutCount++;
             }
         }
-        this.chunkCount++;
     }
 
     /**
@@ -147,7 +146,6 @@ class WgmWorker {
      * @param {*} event
      */
     async dispatch(event) {
-        console.log(`worker: ${event.data.message}`);
         switch(event.data.message) {
             case 'compile': {
                 await this.compile();

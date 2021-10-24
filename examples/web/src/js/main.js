@@ -17,7 +17,6 @@ let audioContext = null;
  */
 const DEFAULT_SAMPLING_RATE = 44100;
 const LOOP_MAX_COUNT = 2;
-const FEED_OUT_SECOND = 2;
 
 /**
  * Canvas settings
@@ -89,7 +88,7 @@ let animId = null;
      */
     let module = await fetch(new URL('../wasm/libymfm_bg.wasm', import.meta.url));
     module = new Uint8Array(await module.arrayBuffer())
-    player = new WgmController(module, samplingRate, LOOP_MAX_COUNT, FEED_OUT_SECOND);
+    player = new WgmController(module, samplingRate, LOOP_MAX_COUNT);
 
     /**
      * Create AudioContext and load WebAssembly module
@@ -262,7 +261,6 @@ const play = function(vgmfile, altMeta) {
             window.cancelAnimationFrame(animId);
             animId = null;
         }
-        console.log(gd3);
         draw();
         player.play(next);
     });

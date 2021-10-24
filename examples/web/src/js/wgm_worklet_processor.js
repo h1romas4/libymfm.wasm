@@ -39,6 +39,7 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
     process(inputs, outputs, parameters) { // eslint-disable-line no-unused-vars
         // stop music
         if(!this.play) return true;
+
         // notify buffering next ring
         if(this.playring != this.playringBefore) {
             Atomics.store(this.status, 0, this.playring);
@@ -65,21 +66,20 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         this.chunkStep++;
         // next chunk
         if(this.chunkStep >= this.chunkSteps) {
-            // count chunk
-            this.chunkCount++;
             // end of music
-            if(this.status[1] > this.chunkCount) {
+            if(this.status[1] != 0 && this.status[1] <= this.chunkCount) {
                 this.play = false;
                 this.port.postMessage({"message": "callback", "data": "endofplay"});
-            }
-            // feedout
-            if(this.status[2] > this.chunkCount) {
+            } else if(this.status[2] != 0 && this.status[2] <= this.chunkCount) {
+                // feedout
                 this.port.postMessage({"message": "feedout"});
             }
             // change ring
             this.playring = this.playring == 1? 2: 1;
             // clear chunk step
             this.chunkStep = 0;
+            // count chunk
+            this.chunkCount++;
         }
 
         return true;
@@ -96,7 +96,7 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
                 // init status
                 this.playring = 1;
                 this.playringBefore = null;
-                this.chunkCount = 0;
+                this.chunkCount = 1; // 1:first buffer
                 this.chunkStep = 0;
                 // start play
                 this.play = true;

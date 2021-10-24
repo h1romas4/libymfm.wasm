@@ -15,9 +15,8 @@ export class WgmController {
      * @param {*} module WebAssembly module binary
      * @param {*} samplingRate Sampling rate
      * @param {*} loopMaxCount Max loop count
-     * @param {*} feedOutSecond Music feed out second
      */
-    constructor(module, samplingRate, loopMaxCount, feedOutSecond) {
+    constructor(module, samplingRate, loopMaxCount) {
         // WebAssembly binary
         this.module = module;
         // Worker and Worklet
@@ -33,9 +32,9 @@ export class WgmController {
         // sampling rate
         this.samplingRate = samplingRate;
         this.loopMaxCount = loopMaxCount;
-        this.feedOutSecond = feedOutSecond;
-        this.feedOutRemain = Math.floor((samplingRate * feedOutSecond) / AUDIO_WORKLET_SAMPLING_CHUNK);
         this.chunkSize = AUDIO_WORKLET_SAMPLING_CHUNK * BUFFERING_CHUNK_COUNT;
+        this.feedOutRemain = 1; // 1chunk
+        this.feedOutSecond = Math.ceil(this.chunkSize * this.feedOutRemain / samplingRate);
         // init audio contexts
         this.context = null;
         this.gain = null;
@@ -192,7 +191,7 @@ export class WgmController {
         const now = this.context.currentTime;
         // feed out to 0.0
         this.gain.gain.setValueAtTime(1, now);
-        this.gain.gain.linearRampToValueAtTime(0, now + this.feedOutSecond);
+        this.gain.gain.linearRampToValueAtTime(0, now + this.feedOutSecond / 2);
         // return to 1.0
         this.gain.gain.setValueAtTime(1, now + this.feedOutSecond);
     }
@@ -203,6 +202,7 @@ export class WgmController {
      * @param {*} event
      */
     async dispatch(event) {
+        console.log(event.data);
         switch(event.data.message) {
             case "callback": {
                 if(this.callback != null) {
