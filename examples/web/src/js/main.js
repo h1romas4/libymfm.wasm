@@ -59,7 +59,7 @@ let animId = null;
 })();
 
 /**
- * Initialize system
+ * Initialize system and start
  */
 (async function() {
     /**
@@ -95,23 +95,22 @@ let animId = null;
      * Create AudioContext and load WebAssembly module
      */
     audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
-    await player.prepare(audioContext);
-
-    /**
-     * Start event loop
-     */
-     start();
+    if(!await player.prepare(audioContext, () => {
+        /**
+         * Start event loop
+         */
+        start();
+    })) {
+        systemError();
+    }
 })();
 
 /**
  * Start event loop
  */
 const start = () => {
-    canvasContext.fillStyle = 'rgb(0, 0, 0)';
-    canvasContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    canvasContext.font = 'bold 28px sans-serif';
-    canvasContext.fillStyle = COLOR_MD_RED;
-    fillTextCenterd("WebAssembly 🎮 VGM Player", CANVAS_HEIGHT / 2 - 32 * 4);
+    // print information
+    title();
     canvasContext.fillStyle = COLOR_MD_GREEN;
     canvasContext.font = '15px sans-serif';
     fillTextCenterd("YM2151 | YM2203 | YM2149 | YM2413 | YM2612 | SN76489(MD) | PWM(32x) | SEGAPCM", CANVAS_HEIGHT / 2 - 32 * 2);
@@ -135,6 +134,34 @@ const start = () => {
     // for sample music data
     canvas.addEventListener('click', sample, false);
 };
+
+/**
+ * System error
+ */
+const systemError = () => {
+    title();
+    fillTextCenterd("System initialize error.", CANVAS_HEIGHT / 2 - 32 * 2);
+    canvasContext.font = '20px sans-serif';
+    canvasContext.fillStyle = COLOR_MD_GREEN;
+    if(crossOriginIsolated) { // eslint-disable-line no-undef
+        fillTextCenterd("Your browser does not support SharedArrayBuffer.", CANVAS_HEIGHT / 2);
+        fillTextCenterd("SharedArrayBuffer is supported by Firefox or Chromium systems.", CANVAS_HEIGHT / 2 + 32);
+    } else {
+        fillTextCenterd("crossOriginIsolated is not set on the server.", CANVAS_HEIGHT / 2);
+    }
+    // no set event loop
+}
+
+/**
+ * Title screen
+ */
+const title = () => {
+    canvasContext.fillStyle = 'rgb(0, 0, 0)';
+    canvasContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    canvasContext.font = 'bold 28px sans-serif';
+    canvasContext.fillStyle = COLOR_MD_RED;
+    fillTextCenterd("WebAssembly 🎮 VGM Player", CANVAS_HEIGHT / 2 - 32 * 4);
+}
 
 /**
  * Sample music
@@ -217,19 +244,6 @@ const next = function() {
  */
 const play = function(vgmfile, altMeta) {
     // Worklet exchange callbacks
-    const start = () => {
-        player.create(vgmfile, (gd3) => {
-            if(altMeta == null) {
-                musicMeta = createGd3meta(gd3);
-            }
-            if(animId != null) {
-                window.cancelAnimationFrame(animId);
-                animId = null;
-            }
-            draw();
-            player.play(next);
-        });
-    };
     // iOS only sounds AudioWorklet that created by the click event.
     // In the case of ScriptProcessorNode, I had to create an AudioContext here.
     if(!player.ready()) {
@@ -238,11 +252,20 @@ const play = function(vgmfile, altMeta) {
         //  It must be resumed (or created) after a user gesture on the page."
         audioContext.resume();
         // create audionode and gain
-        // wait 100ms for Chromium stunby
-        player.init(() => { setTimeout(start, 100) });
-    } else {
-        start();
+        player.init();
     }
+    player.create(vgmfile, (gd3) => {
+        if(altMeta == null) {
+            musicMeta = createGd3meta(gd3);
+        }
+        if(animId != null) {
+            window.cancelAnimationFrame(animId);
+            animId = null;
+        }
+        console.log(gd3);
+        // draw();
+        // player.play(next);
+    });
 };
 
 /**
