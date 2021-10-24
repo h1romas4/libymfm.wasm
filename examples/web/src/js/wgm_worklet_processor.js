@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-import { BUFFER_RING_COUNT, AUDIO_WORKLET_SAMPLING_CHUNK, NOW_PLAYING_RING, END_OF_MUSIC_CHUNK, FEED_OUT_START_CHUNK } from './const.js'
+import { INIT_NOW_PLAYING_RING, BUFFER_RING_COUNT, AUDIO_WORKLET_SAMPLING_CHUNK, NOW_PLAYING_RING, END_OF_MUSIC_CHUNK, FEED_OUT_START_CHUNK } from './const.js'
 
 /**
  * WgmWorkletProcessor
@@ -106,7 +106,7 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
             }
             case 'stop': {
                 this.play = false;
-                Atomics.store(this.status, NOW_PLAYING_RING, /* break loop */ 3);
+                Atomics.store(this.status, NOW_PLAYING_RING, INIT_NOW_PLAYING_RING);
                 Atomics.notify(this.status, NOW_PLAYING_RING, /* watcher count */ 1);
                 this.port.postMessage({"message": "callback", "data": "clear wait"});
             }

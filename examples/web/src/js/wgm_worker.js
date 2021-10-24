@@ -1,10 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-import { BUFFER_RING_COUNT, NOW_PLAYING_RING, END_OF_MUSIC_CHUNK, FEED_OUT_START_CHUNK } from './const.js'
+import { INIT_NOW_PLAYING_RING, BUFFER_RING_COUNT, NOW_PLAYING_RING, END_OF_MUSIC_CHUNK, FEED_OUT_START_CHUNK } from './const.js'
 import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
 import { initWasi } from './wasi_wasmer';
-
-const INIT_NOW_PLAYING_RING = 999;
 
 class WgmWorker {
     constructor(worker) {
@@ -72,8 +70,8 @@ class WgmWorker {
         this.status[NOW_PLAYING_RING] = INIT_NOW_PLAYING_RING; // playing ring
         this.status[END_OF_MUSIC_CHUNK] = 0; // end of chunk
         this.status[FEED_OUT_START_CHUNK] = 0; // feedout chunk
-        // create first buffer ring 1
-        this.generate(1);
+        // create first buffer ring 0
+        this.generate(0);
         // return music meta
         return JSON.parse(this.wgmplay.get_seq_gd3());
     }
@@ -89,12 +87,11 @@ class WgmWorker {
             // It's not atomic loading, but there is a time lag between next updates.
             waitRing = this.status[NOW_PLAYING_RING];
             // stop event
-            if(waitRing == 3) {
+            if(waitRing == INIT_NOW_PLAYING_RING) {
                 this.buffering = false;
                 break;
             }
-            // create buffer
-            this.generate(waitRing == 1? 2: 1);
+            this.generate(waitRing == 0? 1: 0);
         }
     }
 
