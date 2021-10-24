@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-import { BUFFER_RING_COUNT, AUDIO_WORKLET_SAMPLING_CHUNK, BUFFERING_CHUNK_COUNT } from './const.js'
+import * as def from './const.js'
 import worklet from 'worklet:./wgm_worklet_processor.js'; // worklet: Parcel
 
 /**
@@ -28,7 +28,7 @@ export class WgmController {
         // sampling rate
         this.samplingRate = samplingRate;
         this.loopMaxCount = loopMaxCount;
-        this.chunkSize = AUDIO_WORKLET_SAMPLING_CHUNK * BUFFERING_CHUNK_COUNT;
+        this.chunkSize = def.AUDIO_WORKLET_SAMPLING_CHUNK * def.BUFFERING_CHUNK_COUNT;
         this.feedOutRemain = 1; // 1chunk
         this.feedOutSecond = Math.ceil(this.chunkSize * this.feedOutRemain / samplingRate);
         // init audio contexts
@@ -51,7 +51,7 @@ export class WgmController {
         this.context = context;
         // create shared memory
         try {
-            for(let i = 0; i < BUFFER_RING_COUNT; i++) {
+            for(let i = 0; i < def.BUFFER_RING_COUNT; i++) {
                 this.sharedRingL[i] = new SharedArrayBuffer(this.chunkSize * 4); // * 4: Float32Array;
                 this.sharedRingR[i] = new SharedArrayBuffer(this.chunkSize * 4); // * 4: Float32Array;
             }
@@ -93,7 +93,7 @@ export class WgmController {
                 "ringL": this.sharedRingL,
                 "ringR": this.sharedRingR,
                 "status": this.sharedStatus,
-                "chunkSteps": BUFFERING_CHUNK_COUNT
+                "chunkSteps": def.BUFFERING_CHUNK_COUNT
             }
         });
         // message dispatch

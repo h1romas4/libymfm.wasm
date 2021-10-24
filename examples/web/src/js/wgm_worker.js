@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-import { INIT_NOW_PLAYING_RING, BUFFER_RING_COUNT, NOW_PLAYING_RING, END_OF_MUSIC_CHUNK, FEED_OUT_START_CHUNK } from './const.js'
+import * as def from './const.js'
 import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
 import { initWasi } from './wasi_wasmer';
 
@@ -67,9 +67,9 @@ class WgmWorker {
         this.viewL = new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_l_ref(), this.chunkSize);
         this.viewR = new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_r_ref(), this.chunkSize);
         // init shared status
-        this.status[NOW_PLAYING_RING] = INIT_NOW_PLAYING_RING; // playing ring
-        this.status[END_OF_MUSIC_CHUNK] = 0; // end of chunk
-        this.status[FEED_OUT_START_CHUNK] = 0; // feedout chunk
+        this.status[def.NOW_PLAYING_RING] = def.INIT_NOW_PLAYING_RING; // playing ring
+        this.status[def.END_OF_MUSIC_CHUNK] = 0; // end of chunk
+        this.status[def.FEED_OUT_START_CHUNK] = 0; // feedout chunk
         // create first buffer ring 0
         this.generate(0);
         // return music meta
@@ -80,28 +80,28 @@ class WgmWorker {
      * Buffering loop
      */
     loop() {
-        let waitRing = INIT_NOW_PLAYING_RING;
+        let waitRing = def.INIT_NOW_PLAYING_RING;
         let bufnum = 999; // hack
         while(this.buffering) {
             // wait notify (first step INIT_NOW_PLAYING_RING -> 0)
             Atomics.wait(this.status, 0, waitRing);
             // It's not atomic loading, but there is a time lag between next updates.
-            waitRing = this.status[NOW_PLAYING_RING];
+            waitRing = this.status[def.NOW_PLAYING_RING];
             // stop event
-            if(waitRing == INIT_NOW_PLAYING_RING) {
+            if(waitRing == def.INIT_NOW_PLAYING_RING) {
                 this.buffering = false;
                 break;
             }
             // TODO: first step fill all buffer (hack)
             if(bufnum == 999) {
-                for(let i = waitRing + 1; i < BUFFER_RING_COUNT; i++) {
+                for(let i = waitRing + 1; i < def.BUFFER_RING_COUNT; i++) {
                     this.generate(i);
                 }
                 bufnum = 0;
             } else {
                 this.generate(bufnum);
                 bufnum++;
-                if(bufnum >= BUFFER_RING_COUNT) {
+                if(bufnum >= def.BUFFER_RING_COUNT) {
                     bufnum = 0;
                 }
             }
@@ -135,18 +135,18 @@ class WgmWorker {
                 // no loop track
                 this.buffering = false;
                 // end of play chunk
-                this.status[END_OF_MUSIC_CHUNK] = this.chunkCount;
+                this.status[def.END_OF_MUSIC_CHUNK] = this.chunkCount;
             } else {
                 // feed out start
                 if(this.feedOutCount == 0) {
                     // feedout start chunk
-                    this.status[FEED_OUT_START_CHUNK] = this.chunkCount
+                    this.status[def.FEED_OUT_START_CHUNK] = this.chunkCount
                 }
                 // feed out end and next track
                 if(this.feedOutCount >= this.feedOutRemain) {
                     this.buffering = false;
                     // end of play chunk
-                    this.status[END_OF_MUSIC_CHUNK] = this.chunkCount
+                    this.status[def.END_OF_MUSIC_CHUNK] = this.chunkCount
                 }
                 this.feedOutCount++;
             }
@@ -162,7 +162,7 @@ class WgmWorker {
         switch(event.data.message) {
             case 'compile': {
                 await this.compile();
-                for(let i = 0; i < BUFFER_RING_COUNT; i++) {
+                for(let i = 0; i < def.BUFFER_RING_COUNT; i++) {
                     this.ringL[i] = new Float32Array(event.data.shared.ringL[i]);
                     this.ringR[i] = new Float32Array(event.data.shared.ringR[i]);
                 }

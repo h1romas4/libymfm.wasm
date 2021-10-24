@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-import { INIT_NOW_PLAYING_RING, BUFFER_RING_COUNT, AUDIO_WORKLET_SAMPLING_CHUNK, NOW_PLAYING_RING, END_OF_MUSIC_CHUNK, FEED_OUT_START_CHUNK } from './const.js'
+import * as def from './const.js'
 
 /**
  * WgmWorkletProcessor
@@ -23,7 +23,7 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         // shared memory
         this.ringL = [];
         this.ringR = [];
-        for(let i = 0; i < BUFFER_RING_COUNT; i++) {
+        for(let i = 0; i < def.BUFFER_RING_COUNT; i++) {
             this.ringL[i] = new Float32Array(options.processorOptions.ringL[i]);
             this.ringR[i] = new Float32Array(options.processorOptions.ringR[i]);
         }
@@ -46,8 +46,8 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
 
         // notify buffering next ring
         if(this.playring != this.playringBefore) {
-            Atomics.store(this.status, NOW_PLAYING_RING, this.playring);
-            Atomics.notify(this.status, NOW_PLAYING_RING, /* watcher count */ 1);
+            Atomics.store(this.status, def.NOW_PLAYING_RING, this.playring);
+            Atomics.notify(this.status, def.NOW_PLAYING_RING, /* watcher count */ 1);
             this.playringBefore = this.playring;
         }
 
@@ -55,27 +55,27 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
         let chunkR = this.ringR[this.playring];
 
         // set sampling
-        let pointer = this.chunkStep * AUDIO_WORKLET_SAMPLING_CHUNK;
-        outputs[0][0].set(chunkL.slice(pointer, pointer + AUDIO_WORKLET_SAMPLING_CHUNK));
-        outputs[0][1].set(chunkR.slice(pointer, pointer + AUDIO_WORKLET_SAMPLING_CHUNK));
+        let pointer = this.chunkStep * def.AUDIO_WORKLET_SAMPLING_CHUNK;
+        outputs[0][0].set(chunkL.slice(pointer, pointer + def.AUDIO_WORKLET_SAMPLING_CHUNK));
+        outputs[0][1].set(chunkR.slice(pointer, pointer + def.AUDIO_WORKLET_SAMPLING_CHUNK));
 
         // step chunk step per AudioWorklet chunk
         this.chunkStep++;
         // next chunk
         if(this.chunkStep >= this.chunkSteps) {
             // end of music
-            if(this.status[END_OF_MUSIC_CHUNK] != 0
-                && this.status[END_OF_MUSIC_CHUNK] <= this.chunkCount) {
+            if(this.status[def.END_OF_MUSIC_CHUNK] != 0
+                && this.status[def.END_OF_MUSIC_CHUNK] <= this.chunkCount) {
                 this.play = false;
                 this.port.postMessage({"message": "callback", "data": "endofplay"});
-            } else if(this.status[FEED_OUT_START_CHUNK] != 0
-                && this.status[FEED_OUT_START_CHUNK] <= this.chunkCount) {
+            } else if(this.status[def.FEED_OUT_START_CHUNK] != 0
+                && this.status[def.FEED_OUT_START_CHUNK] <= this.chunkCount) {
                 // feedout
                 this.port.postMessage({"message": "feedout"});
             }
             // change ring
             this.playring++;
-            if(this.playring >= BUFFER_RING_COUNT) {
+            if(this.playring >= def.BUFFER_RING_COUNT) {
                 this.playring = 0;
             }
             // clear chunk step
@@ -106,8 +106,8 @@ class WgmWorkletProcessor extends AudioWorkletProcessor {
             }
             case 'stop': {
                 this.play = false;
-                Atomics.store(this.status, NOW_PLAYING_RING, INIT_NOW_PLAYING_RING);
-                Atomics.notify(this.status, NOW_PLAYING_RING, /* watcher count */ 1);
+                Atomics.store(this.status, def.NOW_PLAYING_RING, def.INIT_NOW_PLAYING_RING);
+                Atomics.notify(this.status, def.NOW_PLAYING_RING, /* watcher count */ 1);
                 this.port.postMessage({"message": "callback", "data": "clear wait"});
             }
         }
