@@ -184,7 +184,7 @@ export class WgmController {
         const now = this.context.currentTime;
         // feed out to 0.0
         this.gain.gain.setValueAtTime(1, now);
-        this.gain.gain.linearRampToValueAtTime(0, now + this.feedOutSecond / 2);
+        this.gain.gain.linearRampToValueAtTime(0, now + this.feedOutSecond);
         // return to 1.0
         this.gain.gain.setValueAtTime(1, now + this.feedOutSecond);
     }
