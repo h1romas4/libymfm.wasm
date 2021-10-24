@@ -81,6 +81,7 @@ class WgmWorker {
      */
     loop() {
         let waitRing = INIT_NOW_PLAYING_RING;
+        let bufnum = 999; // hack
         while(this.buffering) {
             // wait notify (first step INIT_NOW_PLAYING_RING -> 0)
             Atomics.wait(this.status, 0, waitRing);
@@ -91,7 +92,19 @@ class WgmWorker {
                 this.buffering = false;
                 break;
             }
-            this.generate(waitRing == 0? 1: 0);
+            // TODO: first step fill all buffer (hack)
+            if(bufnum == 999) {
+                for(let i = waitRing + 1; i < BUFFER_RING_COUNT; i++) {
+                    this.generate(i);
+                }
+                bufnum = 0;
+            } else {
+                this.generate(bufnum);
+                bufnum++;
+                if(bufnum >= BUFFER_RING_COUNT) {
+                    bufnum = 0;
+                }
+            }
         }
     }
 
