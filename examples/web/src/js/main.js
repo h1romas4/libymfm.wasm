@@ -142,12 +142,11 @@ const systemError = () => {
     fillTextCenterd("System initialize error.", CANVAS_HEIGHT / 2 - 32 * 2);
     canvasContext.font = '20px sans-serif';
     canvasContext.fillStyle = COLOR_MD_GREEN;
-    if(crossOriginIsolated) { // eslint-disable-line no-undef
-        fillTextCenterd("Your browser does not support SharedArrayBuffer.", CANVAS_HEIGHT / 2);
-        fillTextCenterd("SharedArrayBuffer is supported by Firefox or Chromium systems.", CANVAS_HEIGHT / 2 + 32);
-    } else {
-        fillTextCenterd("crossOriginIsolated is not set on the server.", CANVAS_HEIGHT / 2);
-    }
+    fillTextCenterd("Your browser does not support SharedArrayBuffer.", CANVAS_HEIGHT / 2);
+    fillTextCenterd("SharedArrayBuffer is supported by Firefox or Chromium systems.", CANVAS_HEIGHT / 2 + 32);
+    // if(crossOriginIsolated) { // eslint-disable-line no-undef
+    //     fillTextCenterd("crossOriginIsolated is not set on the server.", CANVAS_HEIGHT / 2);
+    // }
     // no set event loop
 }
 
