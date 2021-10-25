@@ -55,6 +55,12 @@ let animId = null;
         canvas.style.heigth = 240 + "px";
     }
     canvasContext = canvas.getContext('2d');
+    canvasContext.font = '20px sans-serif';
+    canvasContext.fillStyle = COLOR_MD_GREEN;
+    // now loading
+    const nowloading = "Now Loading...";
+    let left = (CANVAS_WIDTH - canvasContext.measureText(nowloading).width) / 2;
+    canvasContext.fillText(nowloading, left, CANVAS_HEIGHT / 2 - 32);
 })();
 
 /**
