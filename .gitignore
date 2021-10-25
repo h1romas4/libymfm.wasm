@@ -11,3 +11,4 @@ examples/web/node_modules/
 *.pcm
 *.wav
 !docs/vgm/ym2612.vgm
+!public/vgm/ym2612.vgm

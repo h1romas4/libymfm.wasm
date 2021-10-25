@@ -17,3 +17,12 @@ canvas {
     display: block;
     background-color: black;
 }
+
+a {
+    color:#00a040;
+    text-decoration: overline;
+}
+
+#link {
+    text-align: right;
+}
