@@ -16,6 +16,7 @@ body {
 canvas {
     display: block;
     background-color: black;
+    border: 4px solid #000;
 }
 
 a {

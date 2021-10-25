@@ -125,7 +125,7 @@ const start = () => {
     }, false);
     canvas.addEventListener('dragleave', function(e) {
         prevent(e);
-        canvas.style.border = 'none';
+        canvas.style.border = '4px solid #000';
         return false;
     });
     // drag to play
