@@ -209,7 +209,7 @@ const onDrop = (ev) => {
     canvas.removeEventListener('click', sample, false);
     // pause the drop event
     canvas.removeEventListener('drop', onDrop, false);
-    canvas.style.border = 'none';
+    canvas.style.border = '4px solid #000';
     let filelist = {};
     let files = ev.dataTransfer.files;
     [].forEach.call(files, function(file) {
