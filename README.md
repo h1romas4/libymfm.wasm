@@ -21,9 +21,9 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 
 ## Web browser interface
 
-[WebAssembly VGM Player](https://h1romas4.github.io/libymfm.wasm/)
+[WebAssembly VGM Player](https://chipstream.netlify.app/)
 
-[![](https://raw.githubusercontent.com/h1romas4/libymfm.wasm/main/docs/assets/example-web-01.png)](https://h1romas4.github.io/libymfm.wasm/)
+[![](https://raw.githubusercontent.com/h1romas4/libymfm.wasm/main/docs/assets/example-web-01.png)](https://chipstream.netlify.app/)
 
 Firefox or iOS Safari is recommended. Currently, Chromium and other browsers are out of tune (crackings).
 
