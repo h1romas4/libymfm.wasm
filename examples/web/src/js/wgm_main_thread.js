@@ -10,9 +10,9 @@ export class WgmController {
     /**
      * Constructor
      *
-     * @param {*} module WebAssembly module binary
-     * @param {*} samplingRate Sampling rate
-     * @param {*} loopMaxCount Max loop count
+     * @param {ArrayBuffer} module WebAssembly module binary
+     * @param {number} samplingRate Sampling rate
+     * @param {number} loopMaxCount Max loop count
      */
     constructor(module, samplingRate, loopMaxCount) {
         // WebAssembly binary
@@ -44,7 +44,7 @@ export class WgmController {
      *
      * Create Worklet and compile Webassembly in Worklet
      *
-     * @param {*} context AudioContext
+     * @param {AudioContext} context AudioContext
      */
     async prepare(context, callback) {
         // set audio context
@@ -126,8 +126,8 @@ export class WgmController {
     /**
      * Create playable instance
      *
-     * @param {*} vgmdata
-     * @param {*} callback(gd3meta)
+     * @param {ArrayBuffer} vgmdata
+     * @param {Function} callback(gd3meta)
      */
     create(vgmdata, callback) {
         // Stop the current loop if there is one
@@ -149,7 +149,7 @@ export class WgmController {
     /**
      * Start playback
      *
-     * @param {*} callback end music callback
+     * @param {Function} callback end music callback
      */
     play(callback) {
         // return to 1.0
@@ -213,7 +213,7 @@ export class WgmController {
      * Send message to Worklet
      *
      * @param {*} message
-     * @param {function} callback
+     * @param {Function} callback
      */
     sendWorklet(message, callback) {
         // wait for a reply from the worklet
@@ -230,7 +230,7 @@ export class WgmController {
      * Send message to Worklet
      *
      * @param {*} message
-     * @param {function} callback
+     * @param {Function} callback
      */
      sendWorker(message, callback) {
         // wait for a reply from the worklet
