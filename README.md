@@ -23,7 +23,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 
 [WebAssembly VGM Player](https://chipstream.netlify.app/)
 
-[![](https://raw.githubusercontent.com/h1romas4/libymfm.wasm/main/docs/assets/example-web-01.png)](https://chipstream.netlify.app/)
+[![](https://github.com/h1romas4/libymfm.wasm/raw/main/public/images/ogp.png)](https://chipstream.netlify.app/)
 
 Firefox or Chromium is recommended. Currently, Safari does not support SharedArrayBuffer because it is not available.
 
