@@ -3,29 +3,31 @@
 import { WgmController } from "./wgm_main_thread";
 
 /**
+ * VGM setting
+ */
+ const DEFAULT_SAMPLING_RATE = 44100;
+ const LOOP_MAX_COUNT = 2;
+
+ /**
+  * Canvas settings
+  */
+ const CANVAS_WIDTH = 768;
+ const CANVAS_HEIGHT = 576;
+ const COLOR_MD_GREEN = '#00a040';
+ const COLOR_MD_RED = '#e60012';
+ const FONT_MAIN_STYLE = '16px sans-serif';
+
+/**
  * AudioWorklet Player
+ * @type {WgmController}
  */
 let player;
 
 /**
  * Audio context
+ * @type {AudioContext}
  */
 let audioContext = null;
-
-/**
- * VGM setting
- */
-const DEFAULT_SAMPLING_RATE = 44100;
-const LOOP_MAX_COUNT = 2;
-
-/**
- * Canvas settings
- */
-const CANVAS_WIDTH = 768;
-const CANVAS_HEIGHT = 576;
-const COLOR_MD_GREEN = '#00a040';
-const COLOR_MD_RED = '#e60012';
-const FONT_MAIN_STYLE = '16px sans-serif';
 
 /**
  * VGM member
@@ -36,10 +38,17 @@ let musicMeta;
 let samplingRate = DEFAULT_SAMPLING_RATE;
 
 /**
- * Canvas member
+ * Canvas
+ * @type {HTMLCanvasElement}
  */
 let canvas;
+
+/**
+ * CanvasContext
+ * @type {CanvasRenderingContext2D}
+ */
 let canvasContext;
+
 let animId = null;
 
 /**
@@ -190,7 +199,7 @@ const sample = async () => {
 /**
  * Event prevent
  *
- * @param {*} e
+ * @param {Event} e
  */
 const prevent = function(e) {
     e.preventDefault();
@@ -200,7 +209,7 @@ const prevent = function(e) {
 /**
  * Drag and Drop
  *
- * @param {*} ev
+ * @param {DragEvent} ev
  * @returns false (prevent event)
  */
 const onDrop = (ev) => {
@@ -243,7 +252,7 @@ const next = function() {
 /**
  * Play VGM
  *
- * @param {*} vgmfile
+ * @param {ArrayBuffer} vgmfile
  * @param {*} altMeta
  */
 const play = function(vgmfile, altMeta) {
