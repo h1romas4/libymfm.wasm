@@ -16,6 +16,7 @@ use crate::sound::stream::NativeStream;
 use crate::sound::stream::LinearUpSamplingStream;
 use crate::sound::stream::OverSampleStream;
 
+use super::rom::RomIndex;
 use super::rom::RomSet;
 use super::stream::SoundStream;
 use super::stream::Tick;
@@ -34,7 +35,7 @@ pub struct SoundSlot {
     output_sampling_buffer_l: VecDeque<f32>,
     output_sampling_buffer_r: VecDeque<f32>,
     sound_device: HashMap<SoundChipType, Vec<SoundDevice>>,
-    sound_romset: HashMap<usize, Rc<RefCell<RomSet>>>,
+    sound_romset: HashMap<RomIndex, Rc<RefCell<RomSet>>>,
 }
 
 impl SoundSlot {
@@ -69,21 +70,37 @@ impl SoundSlot {
     ) {
         for _n in 0..number_of {
             let mut sound_chip: Box<dyn SoundChip> = match sound_chip_type {
-                SoundChipType::YM2151
+                SoundChipType::YM2149
+                | SoundChipType::YM2151
                 | SoundChipType::YM2203
-                | SoundChipType::YM2149
+                | SoundChipType::YM2413
+                | SoundChipType::YM2608
+                | SoundChipType::YM2610
                 | SoundChipType::YM2612
-                | SoundChipType::YM2413 => Box::new(YmFm::new(sound_chip_type)),
-                SoundChipType::YM2602 => todo!(),
+                | SoundChipType::YM3526
+                | SoundChipType::Y8950
+                | SoundChipType::YM3812
+                | SoundChipType::YMF262
+                | SoundChipType::YMF278B => {
+                    let mut ymfm = Box::new(YmFm::new(sound_chip_type));
+                    let rom_index: Option<Vec<RomIndex>> = match sound_chip_type {
+                        SoundChipType::YM2608 => Some(vec![RomIndex::YM2608_DELTA_T]),
+                        SoundChipType::YM2610 => Some(vec![RomIndex::YM2610_ADPCM, RomIndex::YM2610_DELTA_T]),
+                        SoundChipType::Y8950 => Some(vec![RomIndex::Y8950_ROM]),
+                        SoundChipType::YMF278B => Some(vec![RomIndex::YMF278B_ROM, RomIndex::YMF278B_RAM]),
+                        _ => None
+                    };
+                    if let Some(rom_index) = rom_index {
+                        self.add_rombank(rom_index, &mut *ymfm);
+                    }
+                    ymfm
+                }
                 SoundChipType::SEGAPSG => Box::new(SN76496::new(SoundChipType::SEGAPSG)),
                 SoundChipType::SN76489 => Box::new(SN76496::new(SoundChipType::SN76489)),
                 SoundChipType::PWM => Box::new(PWM::new()),
                 SoundChipType::SEGAPCM => {
-                    // connect PCM ROM
                     let mut segapcm = Box::new(SEGAPCM::new(SoundChipType::SEGAPCM));
-                    let segapcm_romset = Rc::new(RefCell::new(RomSet::new()));
-                    RomDevice::set_rom(&mut *segapcm, Some(segapcm_romset.clone()));
-                    self.sound_romset.insert(0x80, segapcm_romset); // 0x80 segapcm
+                    self.add_rombank(vec![RomIndex::SEGAPCM_ROM], &mut *segapcm);
                     segapcm
                 }
             };
@@ -127,13 +144,14 @@ impl SoundSlot {
     ///
     /// Add ROM for sound chip.
     ///
-    pub fn add_rom(&self, index: usize, memory: &[u8], start_address: usize, end_address: usize) {
+    pub fn add_rom(&self, index: RomIndex, memory: &[u8], start_address: usize, end_address: usize) {
         if self.sound_romset.contains_key(&index) {
             self.sound_romset.get(&index).unwrap().borrow_mut().add_rom(
                 memory,
                 start_address,
                 end_address,
             );
+            // notify sound chip
         }
     }
 
@@ -218,6 +236,20 @@ impl SoundSlot {
     ///
     pub fn get_output_sampling_r_ref(&self) -> *const f32 {
         self.output_sampling_r.as_ptr()
+    }
+
+    ///
+    /// Add Rombank
+    ///
+    fn add_rombank<T: RomDevice>(&mut self, rom_index: Vec<RomIndex>, sound_chip: &mut T) {
+        for &rom_index in rom_index.iter() {
+            // create new romset
+            let romset = Rc::new(RefCell::new(RomSet::new()));
+            // trancefer romset to soundchip
+            sound_chip.set_rombank(rom_index, Some(romset.clone()));
+            // hold romset in slot
+            self.sound_romset.insert(rom_index, romset);
+        }
     }
 
     ///

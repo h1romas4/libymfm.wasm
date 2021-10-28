@@ -10,5 +10,6 @@ examples/web/node_modules/
 *.vgz
 *.pcm
 *.wav
+*.bin
 !docs/vgm/ym2612.vgm
 !public/vgm/ym2612.vgm

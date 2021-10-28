@@ -12,8 +12,11 @@
  *  rev. 70743c6fb2602a5c2666c679b618706eabfca2ad
  */
 use crate::sound::SoundChipType;
-
-use super::{interface::{RomBank, RomDevice, SoundChip}, stream::{SoundStream, convert_sample_i2f}};
+use super::{
+    interface::{RomBank, RomDevice, SoundChip},
+    stream::{convert_sample_i2f, SoundStream},
+    RomIndex,
+};
 
 #[allow(clippy::upper_case_acronyms)]
 pub struct SEGAPCM {
@@ -98,7 +101,8 @@ impl SEGAPCM {
                         }
                     }
                     /* fetch the sample */
-                    let v = Self::read_rom(&self.rombank, offset as usize + (addr >> 8) as usize);
+                    let v =
+                        Self::read_rombank(&self.rombank, offset as usize + (addr >> 8) as usize);
                     let v: i32 = i32::from(v) - 0x80;
                     /* apply panning and advance */
                     buffer_l[buffer_pos + i] += convert_sample_i2f(v * (regs[2] & 0x7f) as i32);
@@ -144,7 +148,10 @@ impl SoundChip for SEGAPCM {
 }
 
 impl RomDevice for SEGAPCM {
-    fn set_rom(&mut self, rombank: RomBank) {
+    fn set_rombank(&mut self, _ /* SEGAPCM has only one RomBan */: RomIndex, rombank: RomBank) {
         self.rombank = rombank;
+    }
+    fn notify_add_rom(&mut self, _: RomIndex, _: usize) {
+        /* nothing to do */
     }
 }

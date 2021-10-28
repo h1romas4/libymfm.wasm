@@ -1,5 +1,19 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+
+#[allow(non_camel_case_types)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+pub enum RomIndex {
+    SEGAPCM_ROM = 0x80,
+    YM2608_DELTA_T = 0x81,
+    YM2610_ADPCM = 0x82,
+    YM2610_DELTA_T = 0x83,
+    YMF278B_ROM = 0x84,
+    YMF278B_RAM = 0x87,
+    Y8950_ROM = 0x88,
+    NOT_SUPPOTED = 0xff,
+}
+
 ///
 /// Rom
 ///
@@ -7,6 +21,15 @@ pub struct Rom {
     start_address: usize,
     end_address: usize,
     memory: Vec<u8>,
+}
+
+impl Rom {
+    ///
+    /// Get rom memory pointer, start address attribute and length.
+    ///
+    fn get_memory_ref(&self) -> (*const u8, usize, usize) {
+        (self.memory.as_ptr(), self.start_address, self.memory.len())
+    }
 }
 
 ///
@@ -45,5 +68,12 @@ impl RomSet {
             }
         }
         0
+    }
+
+    ///
+    /// Get specify ROM referance by index.
+    ///
+    pub fn ger_rom_ref(&self, index_no: usize) -> (*const u8, usize, usize) {
+        self.rom[index_no].get_memory_ref()
     }
 }

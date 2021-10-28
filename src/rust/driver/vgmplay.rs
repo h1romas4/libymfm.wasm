@@ -8,7 +8,7 @@ use crate::driver::vgmmeta::parse_vgm_meta;
 use crate::driver::vgmmeta::Jsonlize;
 use crate::driver::vgmmeta::VgmHeader;
 use crate::driver::gd3meta::Gd3;
-use crate::sound::{SoundChipType, SoundSlot};
+use crate::sound::{SoundChipType, SoundSlot, RomIndex};
 
 pub const VGM_TICK_RATE: u32 = 44100;
 
@@ -413,10 +413,13 @@ impl VgmPlay {
                 self.vgm_pos += size as usize;
                 // handle data block
                 if (0x00..=0x3f).contains(&data_type) {
-                    // data of recorded streams (uncompressed) (for ym2612)
-                    self.pcm_origin_pos = data_pos;
+                    // data of recorded streams (uncompressed)
+                    if data_type == 0x00 {
+                        // for ym2612
+                        self.pcm_origin_pos = data_pos;
+                    }
                 } else if (0x80..=0xbf).contains(&data_type) {
-                    // ROM/RAM Image dumps (0x80 segapcm)
+                    // ROM/RAM Image dumps
                     let rom_size = u32::from_le_bytes(
                         self.vgm_data[data_pos..(data_pos + 4)].try_into().unwrap(),
                     );
@@ -430,8 +433,18 @@ impl VgmPlay {
                         data_size = u32::min(size - 8, rom_size - start_address) as usize;
                     }
                     let start_address = start_address as usize;
+                    let rom_index: RomIndex = match data_type {
+                        0x80 => { RomIndex::SEGAPCM_ROM },
+                        0x81 => { RomIndex::YM2608_DELTA_T },
+                        0x82 => { RomIndex::YM2610_ADPCM },
+                        0x83 => { RomIndex::YM2610_DELTA_T },
+                        0x84 => { RomIndex::YMF278B_ROM },
+                        0x87 => { RomIndex::YMF278B_RAM },
+                        0x88 => { RomIndex::Y8950_ROM },
+                        _ => { RomIndex::NOT_SUPPOTED }
+                    };
                     self.sound_slot.add_rom(
-                        data_type as usize,
+                        rom_index,
                         &self.vgm_data[(data_pos + 8)..(data_pos + 8) + data_size],
                         start_address,
                         start_address + data_size - 1,

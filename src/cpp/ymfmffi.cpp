@@ -1,5 +1,5 @@
 // license:BSD-3-Clause
-// copyright-holders:Aaron Giles, Hiromasa Tanaka
+// copyright-holders:Aaron Giles, Hiromasa Tanaka (for libymfm.wasm)
 #include <cmath>
 #include <cstdio>
 #include <cstdint>
@@ -213,6 +213,10 @@ protected:
     std::vector<std::pair<uint32_t, uint8_t>> m_queue;
 };
 
+//*********************************************************
+//  GLOBAL HELPERS
+//*********************************************************
+
 // global list of active chips
 std::list<vgm_chip_base *> active_chips;
 
@@ -227,10 +231,10 @@ uint32_t add_chips(uint32_t clock, chip_type type, char const *chipname)
 
 vgm_chip_base *find_chip(chip_type type, uint8_t index)
 {
-	for (auto chip : active_chips)
-		if (chip->type() == type && index-- == 0)
-			return chip;
-	return nullptr;
+    for (auto chip : active_chips)
+        if (chip->type() == type && index-- == 0)
+            return chip;
+    return nullptr;
 }
 
 void remove_chip(chip_type type, uint8_t index)
@@ -246,68 +250,96 @@ void remove_chip(chip_type type, uint8_t index)
 //*********************************************************
 //  FFI interface
 //*********************************************************
-extern "C"
+extern "C" {
+uint32_t ymfm_add_chip(uint16_t chip_num, uint32_t clock)
 {
-    uint32_t ymfm_add_chip(uint16_t chip_num, uint32_t clock)
+    uint32_t sampling_rate = 0;
+    switch(chip_num)
     {
-        uint32_t sampling_rate = 0;
-        switch(chip_num)
-        {
-            case CHIP_YM2149:
-                sampling_rate = add_chips<ymfm::ym2149>(clock, static_cast<chip_type>(chip_num), "YM2149");
-                break;
-            case CHIP_YM2151:
-                sampling_rate = add_chips<ymfm::ym2151>(clock, static_cast<chip_type>(chip_num), "YM2151");
-                break;
-            case CHIP_YM2203:
-                sampling_rate = add_chips<ymfm::ym2203>(clock, static_cast<chip_type>(chip_num), "YM2203");
-                break;
-            case CHIP_YM2413:
-                sampling_rate = add_chips<ymfm::ym2413>(clock, static_cast<chip_type>(chip_num), "YM2413");
-                break;
-            case CHIP_YM2608:
-                sampling_rate = add_chips<ymfm::ym2608>(clock, static_cast<chip_type>(chip_num), "YM2608");
-                break;
-            case CHIP_YM2610:
-                sampling_rate = add_chips<ymfm::ym2610>(clock, static_cast<chip_type>(chip_num), "YM2610");
-                break;
-            case CHIP_YM2612:
-                sampling_rate = add_chips<ymfm::ym2612>(clock, static_cast<chip_type>(chip_num), "YM2612");
-                break;
-            case CHIP_YM3526:
-                sampling_rate = add_chips<ymfm::ym3526>(clock, static_cast<chip_type>(chip_num), "YM3526");
-                break;
-            case CHIP_Y8950:
-                sampling_rate = add_chips<ymfm::y8950>(clock, static_cast<chip_type>(chip_num), "Y8950");
-                break;
-            case CHIP_YM3812:
-                sampling_rate = add_chips<ymfm::ym3812>(clock, static_cast<chip_type>(chip_num), "YM3812");
-                break;
-            case CHIP_YMF262:
-                sampling_rate = add_chips<ymfm::ymf262>(clock, static_cast<chip_type>(chip_num), "YMF262");
-                break;
-            case CHIP_YMF278B:
-                sampling_rate = add_chips<ymfm::ymf278b>(clock, static_cast<chip_type>(chip_num), "YMF278B");
-                break;
-        }
-        return sampling_rate;
+        case CHIP_YM2149:
+            sampling_rate = add_chips<ymfm::ym2149>(clock, static_cast<chip_type>(chip_num), "YM2149");
+            break;
+        case CHIP_YM2151:
+            sampling_rate = add_chips<ymfm::ym2151>(clock, static_cast<chip_type>(chip_num), "YM2151");
+            break;
+        case CHIP_YM2203:
+            sampling_rate = add_chips<ymfm::ym2203>(clock, static_cast<chip_type>(chip_num), "YM2203");
+            break;
+        case CHIP_YM2413:
+            sampling_rate = add_chips<ymfm::ym2413>(clock, static_cast<chip_type>(chip_num), "YM2413");
+            break;
+        case CHIP_YM2608:
+            sampling_rate = add_chips<ymfm::ym2608>(clock, static_cast<chip_type>(chip_num), "YM2608");
+            break;
+        case CHIP_YM2610:
+            sampling_rate = add_chips<ymfm::ym2610>(clock, static_cast<chip_type>(chip_num), "YM2610");
+            break;
+        case CHIP_YM2612:
+            sampling_rate = add_chips<ymfm::ym2612>(clock, static_cast<chip_type>(chip_num), "YM2612");
+            break;
+        case CHIP_YM3526:
+            sampling_rate = add_chips<ymfm::ym3526>(clock, static_cast<chip_type>(chip_num), "YM3526");
+            break;
+        case CHIP_Y8950:
+            sampling_rate = add_chips<ymfm::y8950>(clock, static_cast<chip_type>(chip_num), "Y8950");
+            break;
+        case CHIP_YM3812:
+            sampling_rate = add_chips<ymfm::ym3812>(clock, static_cast<chip_type>(chip_num), "YM3812");
+            break;
+        case CHIP_YMF262:
+            sampling_rate = add_chips<ymfm::ymf262>(clock, static_cast<chip_type>(chip_num), "YMF262");
+            break;
+        case CHIP_YMF278B:
+            sampling_rate = add_chips<ymfm::ymf278b>(clock, static_cast<chip_type>(chip_num), "YMF278B");
+            break;
+    }
+    return sampling_rate;
+}
+
+void ymfm_write(uint16_t chip_num, uint16_t index, uint32_t reg, uint8_t data)
+{
+    vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), index);
+    chip->write(reg, data);
+}
+
+void ymfm_generate(uint16_t chip_num, uint16_t index, int32_t *buffer)
+{
+    vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), index);
+    chip->generate(buffer);
+}
+
+void ymfm_remove_chip(uint16_t chip_num)
+{
+    // pop chip
+    remove_chip(static_cast<chip_type>(chip_num), 0);
+}
+
+void ymfm_add_rom_data(uint16_t chip_num, uint16_t access_type,uint8_t *buffer, uint32_t length, uint32_t start_address)
+{
+    ymfm::access_class type;
+    switch(access_type) {
+        case 0x81: // YM2608_DELTA_T
+            type = ymfm::ACCESS_ADPCM_B;
+            break;
+        case 0x82: // YM2610_ADPCM
+            type = ymfm::ACCESS_ADPCM_A;
+            break;
+        case 0x83: // YM2610_DELTA_T
+            type = ymfm::ACCESS_ADPCM_B;
+            break;
+        case 0x84: // YMF278B_ROM
+        case 0x87: // YMF278B_RAM
+            type = ymfm::ACCESS_PCM;
+            break;
+        case 0x88: // Y8950_ROM
+            type = ymfm::ACCESS_ADPCM_B;
+            break;
     }
 
-    void ymfm_write(uint16_t chip_num, uint16_t index, uint32_t reg, uint8_t data)
+    for (int index = 0; index < 2; index++)
     {
-        vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), index);
-        chip->write(reg, data);
-    }
-
-    void ymfm_generate(uint16_t chip_num, uint16_t index, int32_t *buffer)
-    {
-        vgm_chip_base* chip = find_chip(static_cast<chip_type>(chip_num), index);
-        chip->generate(buffer);
-    }
-
-    void ymfm_remove_chip(uint16_t chip_num)
-    {
-        // pop chip
-        remove_chip(static_cast<chip_type>(chip_num), 0);
+        vgm_chip_base *chip = find_chip(static_cast<chip_type>(chip_num), index);
+        chip->write_data(type, start_address, length, buffer);
     }
 }
+} // extern "C"
