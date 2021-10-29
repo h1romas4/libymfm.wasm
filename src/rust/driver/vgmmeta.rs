@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use nom::bytes::complete::{tag, take};
@@ -92,6 +94,7 @@ pub struct VgmHeader {
 /// parse_vgm_header
 ///
 fn parse_vgm_header(i: &[u8]) -> IResult<&[u8], VgmHeader> {
+
     let (i, _) = tag("Vgm ")(i)?;
     let (i, eof) = le_u32(i)?;
     let (i, version) = take(4usize)(i)?;
@@ -302,7 +305,16 @@ fn parse_vgm_header(i: &[u8]) -> IResult<&[u8], VgmHeader> {
 /// parse_vgm_meta
 ///
 pub(crate) fn parse_vgm_meta(vgmdata: &[u8]) -> Result<(VgmHeader, Gd3), &'static str> {
-    let header = match parse_vgm_header(&vgmdata[..255]) {
+    // clean header
+    let mut vgm_data_offset: usize = (u32::from_le_bytes(vgmdata[0x34..=0x37].try_into().unwrap()) + 0x34) as usize;
+    if vgm_data_offset >= 0xff {
+        vgm_data_offset = 0xff;
+    }
+    // The length of vgm_data_offset takes precedence over the length of the header.
+    let mut header = [0_u8; 0xff];
+    header[..vgm_data_offset].copy_from_slice(&vgmdata[..vgm_data_offset]);
+
+    let header = match parse_vgm_header(&header) {
         Ok((_, header)) => header,
         Err(_) => return Err("vgm header parse error."),
     };
@@ -338,7 +350,12 @@ mod tests {
 
     #[test]
     fn test_1() {
-        parse("../docs/vgm/ym2612.vgm")
+        parse("./docs/vgm/ym2612.vgm")
+    }
+
+    #[test]
+    fn test_2() {
+        parse("./docs/vgm/segapcm-2.vgm")
     }
 
     fn parse(filepath: &str) {
