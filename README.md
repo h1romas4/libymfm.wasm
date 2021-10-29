@@ -41,13 +41,13 @@ Source code:
 ## WASI commnad line interface
 
 - Install [Wasmer](https://wasmer.io/) runtime
-- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.1.0) from pre-build release
+- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.2.0) from pre-build release
 
 Options
 
 ```
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.1.0
+libymfm-cli 0.2.0
 h1romas4 <h1romas4@gmail.com>
 libymfm CLI
 
