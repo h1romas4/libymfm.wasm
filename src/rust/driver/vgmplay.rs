@@ -546,7 +546,7 @@ impl VgmPlay {
                             rom_index,
                             &self.vgm_data[(data_pos + 8)..(data_pos + 8) + data_size],
                             start_address,
-                            start_address + data_size,
+                            start_address + data_size - 1,
                         );
                     }
                 }
