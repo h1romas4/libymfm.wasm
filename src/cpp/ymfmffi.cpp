@@ -289,7 +289,10 @@ uint32_t ymfm_add_chip(uint16_t chip_num, uint32_t clock)
             sampling_rate = add_chips<ymfm::ym2413>(clock, static_cast<chip_type>(chip_num), "YM2413");
             break;
         case CHIP_YM2608:
-            sampling_rate = add_chips<ymfm::ym2608>(clock, static_cast<chip_type>(chip_num), "YM2608");
+            if (clock & 0x80000000)
+                sampling_rate = add_chips<ymfm::ym2610b>(clock, static_cast<chip_type>(chip_num), "YM2610B");
+            else
+                sampling_rate = add_chips<ymfm::ym2610>(clock, static_cast<chip_type>(chip_num), "YM2610");
             break;
         case CHIP_YM2610:
             sampling_rate = add_chips<ymfm::ym2610>(clock, static_cast<chip_type>(chip_num), "YM2610");
