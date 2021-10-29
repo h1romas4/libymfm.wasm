@@ -334,7 +334,8 @@ void ymfm_remove_chip(uint16_t chip_num)
     remove_chip(static_cast<chip_type>(chip_num), 0);
 }
 
-void ymfm_add_rom_data(uint16_t chip_num, uint16_t access_type,uint8_t *buffer, uint32_t length, uint32_t start_address)
+// void ymfm_add_rom_data(uint16_t chip_num, uint16_t access_type, uint8_t *buffer, uint32_t length, uint32_t start_address)
+void ymfm_add_rom_data(uint16_t chip_num, uint16_t access_type, uint8_t *buffer, uint32_t length, uint32_t start_address)
 {
     ymfm::access_class type;
     switch(access_type) {
@@ -359,7 +360,8 @@ void ymfm_add_rom_data(uint16_t chip_num, uint16_t access_type,uint8_t *buffer, 
     for (int index = 0; index < 2; index++)
     {
         vgm_chip_base *chip = find_chip(static_cast<chip_type>(chip_num), index);
-        chip->write_data(type, start_address, length, buffer);
+        if(chip != nullptr)
+            chip->write_data(type, start_address, length, buffer);
     }
 }
 } // extern "C"

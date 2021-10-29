@@ -12,6 +12,7 @@ extern "C" {
     fn ymfm_write(chip_num: u16, index: u16, reg: u32, data: u8);
     fn ymfm_generate(chip_num: u16, index: u16, buffer: *const i32);
     fn ymfm_remove_chip(chip_num: u16);
+    // void ymfm_add_rom_data(uint16_t chip_num, uint16_t access_type, uint8_t *buffer, uint32_t length, uint32_t start_address)
     fn ymfm_add_rom_data(
         chip_num: u16,
         access_type: u16,
