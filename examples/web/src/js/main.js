@@ -127,7 +127,8 @@ const start = () => {
     title();
     canvasContext.fillStyle = COLOR_MD_GREEN;
     canvasContext.font = '15px sans-serif';
-    fillTextCenterd("YM2151 | YM2203 | YM2149 | YM2413 | YM2612 | SN76489(MD) | PWM(32x) | SEGAPCM", CANVAS_HEIGHT / 2 - 32 * 2);
+    fillTextCenterd("YM2149 | YM2151 | YM2203 | YM2413 | YM2608 | YM2610(B) | YM2612 | YM3526 | Y8950", CANVAS_HEIGHT / 2 - 32 * 4 + 16);
+    fillTextCenterd("YM3812 | YMF262 | YMF278B | SN76489(MD) | PWM(32x) | SEGAPCM", CANVAS_HEIGHT / 2 - 32 * 3 + 4);
     canvasContext.font = '20px sans-serif';
     fillTextCenterd("🎵 DRAG AND DROP VGM(vgm/vgz) HEAR", CANVAS_HEIGHT / 2 - 32 * 1);
     fillTextCenterd("OR CLICK(TAP) TO PLAY SAMPLE VGM", CANVAS_HEIGHT / 2 + 32 * 1);
@@ -173,7 +174,7 @@ const title = () => {
     canvasContext.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     canvasContext.font = 'bold 28px sans-serif';
     canvasContext.fillStyle = COLOR_MD_RED;
-    fillTextCenterd("WebAssembly 🎮 VGM Player", CANVAS_HEIGHT / 2 - 32 * 4);
+    fillTextCenterd("WebAssembly 🎮 VGM Player", CANVAS_HEIGHT / 2 - 32 * 5);
 }
 
 /**
