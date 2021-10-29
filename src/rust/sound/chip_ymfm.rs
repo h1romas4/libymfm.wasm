@@ -92,6 +92,13 @@ impl SoundChip for YmFm {
             SoundChipType::YM2149 => ChipType::CHIP_YM2149,
             SoundChipType::YM2612 => ChipType::CHIP_YM2612,
             SoundChipType::YM2413 => ChipType::CHIP_YM2413,
+            SoundChipType::YM2608 => ChipType::CHIP_YM2608,
+            SoundChipType::YM2610 => ChipType::CHIP_YM2610,
+            SoundChipType::YM3812 => ChipType::CHIP_YM3812,
+            SoundChipType::YM3526 => ChipType::CHIP_YM3526,
+            SoundChipType::Y8950 => ChipType::CHIP_Y8950,
+            SoundChipType::YMF262 => ChipType::CHIP_YMF262,
+            SoundChipType::YMF278B => ChipType::CHIP_YMF278B,
             _ => todo!(),
         };
         YmFm {

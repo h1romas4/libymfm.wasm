@@ -760,6 +760,16 @@ mod tests {
     }
 
     #[test]
+    fn ym2608_1() {
+        play("./docs/vgm/ym2608.vgz")
+    }
+
+    #[test]
+    fn ym2610_1() {
+        play("./docs/vgm/ym2610.vgz")
+    }
+
+    #[test]
     fn segapcm_1() {
         play("./docs/vgm/segapcm-2.vgz")
     }
