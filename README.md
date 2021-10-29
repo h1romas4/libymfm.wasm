@@ -193,7 +193,7 @@ BSD 3-Clause License
     - [ ] Python [wasmer-python](https://github.com/wasmerio/wasmer-python)
 - [ ] ymfm
     - [ ] Add direct ymfm intarfece
-    - [ ] Support yfmf's all sound chips
+    - [x] Support yfmf's all sound chips
 - [x] Fix SEGAPCM
 - [ ] Examples source
     - [x] Web Frontend: AudioWorklet
