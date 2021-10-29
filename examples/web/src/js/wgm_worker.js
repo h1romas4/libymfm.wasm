@@ -16,8 +16,6 @@ class WgmWorker {
         // wgm instance
         this.wgmplay = null;
         this.memory = null;
-        this.viewL = null;
-        this.viewR = null;
         // state
         this.chankSize;
         this.loopMaxCount;
@@ -63,9 +61,6 @@ class WgmWorker {
             this.wgmplay.free();
             this.wgmplay = null;
         }
-        // set view
-        this.viewL = new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_l_ref(), this.chunkSize);
-        this.viewR = new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_r_ref(), this.chunkSize);
         // init shared status
         this.status[def.NOW_PLAYING_RING] = def.INIT_NOW_PLAYING_RING; // playing ring
         this.status[def.END_OF_MUSIC_CHUNK] = 0; // end of chunk
@@ -120,8 +115,11 @@ class WgmWorker {
         // clone view
         let bufferL = new Float32Array(this.chunkSize);
         let bufferR = new Float32Array(this.chunkSize);
-        bufferL.set(new Float32Array(this.viewL));
-        bufferR.set(new Float32Array(this.viewR));
+        // set view
+        const viewL = new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_l_ref(), this.chunkSize);
+        const viewR = new Float32Array(this.memory.buffer, this.wgmplay.get_sampling_r_ref(), this.chunkSize);
+        bufferL.set(new Float32Array(viewL));
+        bufferR.set(new Float32Array(viewR));
         // set clone
         this.ringL[ring].set(bufferL);
         this.ringR[ring].set(bufferR);
