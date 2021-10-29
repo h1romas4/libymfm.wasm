@@ -2,11 +2,13 @@
 // copyright-holders:Hiromasa Tanaka
 import { WASI } from '@wasmer/wasi';
 import { lowerI64Imports } from "@wasmer/wasm-transformer";
-import { WasmFs } from '@wasmer/wasmfs';
+import browserBindings from '@wasmer/wasi/lib/bindings/browser';
+import { fs } from 'memfs';
+import { spy } from 'spyfs';
 
 // wasi instance
 export let wasi;
-export let wasiFs;
+export let memFs;
 
 /**
  * Initialize WebAssembly with wasmer-js
@@ -21,14 +23,21 @@ export let wasiFs;
  * @returns instance.exports
  */
 export async function initWasi() {
+    // memfs + spy
+    memFs = spy(fs, async (action) => {
+        console.log({ [action.method] : {
+            "isAsync": action.isAsync,
+            "args": action.args,
+        }});
+        await action;
+    });
     // create WASI instance
-    wasiFs = new WasmFs();
     wasi = new WASI({
         args: [""],
         env: {},
         bindings: {
-            ...WASI.defaultBindings,
-            fs: wasiFs,
+            ...browserBindings,
+            fs: memFs,
         }
     });
     // fetch wasm module

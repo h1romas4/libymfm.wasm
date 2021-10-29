@@ -10,11 +10,18 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 
 |chip|from|note|
 |----|----|----|
+|YM2149|ymfm||
 |YM2151|ymfm||
 |YM2203|ymfm||
-|YM2149|ymfm||
-|YM2612|ymfm||
 |YM2413|ymfm||
+|YM2608|ymfm||
+|YM2610/YM2610B|ymfm||
+|YM2612|ymfm||
+|YM3526|ymfm||
+|Y8950|ymfm||
+|YM3812|ymfm||
+|YMF262|ymfm||
+|YMF278B|ymfm||
 |SN76489|mame|Rust ports for demo|
 |SEGAPCM|mame|Rust ports for demo|
 |PWM|mame|Rust ports for demo|

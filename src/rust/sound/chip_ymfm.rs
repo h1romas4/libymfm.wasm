@@ -1,6 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-use super::{SoundChipType, interface::SoundChip, stream::{SoundStream, convert_sample_i2f}};
+use super::{RomIndex, SoundChipType, interface::{RomBank, SoundChip, get_rom_ref}, stream::{convert_sample_i2f, SoundStream}};
+use std::collections::HashMap;
 
 ///
 /// FFI interface
@@ -11,6 +12,14 @@ extern "C" {
     fn ymfm_write(chip_num: u16, index: u16, reg: u32, data: u8);
     fn ymfm_generate(chip_num: u16, index: u16, buffer: *const i32);
     fn ymfm_remove_chip(chip_num: u16);
+    // void ymfm_add_rom_data(uint16_t chip_num, uint16_t access_type, uint8_t *buffer, uint32_t length, uint32_t start_address)
+    fn ymfm_add_rom_data(
+        chip_num: u16,
+        access_type: u16,
+        buffer: *const u8,
+        length: u32,
+        start_address: u32,
+    );
 }
 
 #[allow(non_camel_case_types)]
@@ -35,6 +44,7 @@ pub struct YmFm {
     chip_type: ChipType,
     clock: u32,
     sampling_rate: u32,
+    rom_bank: HashMap<RomIndex, RomBank>,
 }
 
 impl YmFm {
@@ -83,12 +93,20 @@ impl SoundChip for YmFm {
             SoundChipType::YM2149 => ChipType::CHIP_YM2149,
             SoundChipType::YM2612 => ChipType::CHIP_YM2612,
             SoundChipType::YM2413 => ChipType::CHIP_YM2413,
+            SoundChipType::YM2608 => ChipType::CHIP_YM2608,
+            SoundChipType::YM2610 => ChipType::CHIP_YM2610,
+            SoundChipType::YM3812 => ChipType::CHIP_YM3812,
+            SoundChipType::YM3526 => ChipType::CHIP_YM3526,
+            SoundChipType::Y8950 => ChipType::CHIP_Y8950,
+            SoundChipType::YMF262 => ChipType::CHIP_YMF262,
+            SoundChipType::YMF278B => ChipType::CHIP_YMF278B,
             _ => todo!(),
         };
         YmFm {
             chip_type,
             clock: 0,
             sampling_rate: 0,
+            rom_bank: HashMap::new(),
         }
     }
 
@@ -106,5 +124,37 @@ impl SoundChip for YmFm {
         let mut buffer: [i32; 2] = [0, 0];
         self.generate(index, &mut buffer);
         sound_stream.push(convert_sample_i2f(buffer[0]), convert_sample_i2f(buffer[1]));
+    }
+
+    fn set_rombank(&mut self, rom_index: RomIndex, rom_bank: RomBank) {
+        self.rom_bank.insert(rom_index, rom_bank);
+    }
+
+    fn notify_add_rom(&mut self, rom_index: RomIndex, index_no: usize) {
+        if self.rom_bank.contains_key(&rom_index) {
+            let rom_bank = self.rom_bank.get(&rom_index).unwrap();
+            let (memory, start_address, length) = get_rom_ref(rom_bank, index_no);
+            match rom_index {
+                RomIndex::YM2608_DELTA_T
+                | RomIndex::YM2610_ADPCM
+                | RomIndex::YM2610_DELTA_T
+                | RomIndex::YMF278B_ROM
+                | RomIndex::YMF278B_RAM
+                | RomIndex::Y8950_ROM => unsafe {
+                    ymfm_add_rom_data(
+                        self.chip_type as u16,
+                        rom_index as u16,
+                        memory,
+                        length as u32,
+                        start_address as u32,
+                    );
+                },
+                _ => {
+                    panic!("Not supported RomIndex. {:?}", rom_index);
+                }
+            }
+        } else {
+            panic!("RomBank not found. {:?}", rom_index);
+        }
     }
 }
