@@ -520,7 +520,8 @@ impl VgmPlay {
                     }
                 } else if (0x80..=0xbf).contains(&data_type) {
                     // ROM/RAM Image dumps
-                    let rom_size = u32::from_le_bytes(
+                    // do not use real_rom_size
+                    let _real_rom_size = u32::from_le_bytes(
                         self.vgm_data[data_pos..(data_pos + 4)].try_into().unwrap(),
                     );
                     let start_address = u32::from_le_bytes(
@@ -528,27 +529,26 @@ impl VgmPlay {
                             .try_into()
                             .unwrap(),
                     );
-                    let mut data_size: usize = 0;
-                    if start_address < rom_size {
-                        data_size = u32::min(size - 8, rom_size - start_address) as usize;
+                    let data_size = (size - 8) as usize;
+                    if data_size > 0 {
+                        let start_address = start_address as usize;
+                        let rom_index: RomIndex = match data_type {
+                            0x80 => { RomIndex::SEGAPCM_ROM },
+                            0x81 => { RomIndex::YM2608_DELTA_T },
+                            0x82 => { RomIndex::YM2610_ADPCM },
+                            0x83 => { RomIndex::YM2610_DELTA_T },
+                            0x84 => { RomIndex::YMF278B_ROM },
+                            0x87 => { RomIndex::YMF278B_RAM },
+                            0x88 => { RomIndex::Y8950_ROM },
+                            _ => { RomIndex::NOT_SUPPOTED }
+                        };
+                        self.sound_slot.add_rom(
+                            rom_index,
+                            &self.vgm_data[(data_pos + 8)..(data_pos + 8) + data_size],
+                            start_address,
+                            start_address + data_size,
+                        );
                     }
-                    let start_address = start_address as usize;
-                    let rom_index: RomIndex = match data_type {
-                        0x80 => { RomIndex::SEGAPCM_ROM },
-                        0x81 => { RomIndex::YM2608_DELTA_T },
-                        0x82 => { RomIndex::YM2610_ADPCM },
-                        0x83 => { RomIndex::YM2610_DELTA_T },
-                        0x84 => { RomIndex::YMF278B_ROM },
-                        0x87 => { RomIndex::YMF278B_RAM },
-                        0x88 => { RomIndex::Y8950_ROM },
-                        _ => { RomIndex::NOT_SUPPOTED }
-                    };
-                    self.sound_slot.add_rom(
-                        rom_index,
-                        &self.vgm_data[(data_pos + 8)..(data_pos + 8) + data_size],
-                        start_address,
-                        start_address + data_size - 1,
-                    );
                 }
             }
             0x70..=0x7f => {
@@ -761,7 +761,7 @@ mod tests {
 
     #[test]
     fn ym2608_1() {
-        play("./docs/vgm/ym2608.vgz")
+        play("./docs/vgm/ym2608-2.vgz")
     }
 
     #[test]
