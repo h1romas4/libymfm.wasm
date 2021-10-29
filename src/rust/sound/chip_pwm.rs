@@ -11,7 +11,7 @@
  *  https://github.com/mamedev/mame/blob/master/src/mame/machine/mega32x.cpp
  *  rev. ee1e4f9683a4953cb9d88f9256017fcbc38e3144
  */
-use super::{SoundChipType, interface::SoundChip, stream::{SoundStream}};
+use super::{RomIndex, SoundChipType, interface::{RomBank, SoundChip}, stream::{SoundStream}};
 
 const PWM_FIFO_SIZE: usize = 3;
 const EMU_SAMPLING_RATE: u32 = 22050; /* 22050 / 15611 After Burner Complete */
@@ -256,4 +256,8 @@ impl SoundChip for PWM {
 
         sound_stream.push(self.emu_out_l, self.emu_out_r);
     }
+
+    fn set_rombank(&mut self, _: RomIndex, _: RomBank) {}
+
+    fn notify_add_rom(&mut self, _: RomIndex, _: usize) {}
 }

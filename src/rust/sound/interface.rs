@@ -42,26 +42,22 @@ pub trait SoundChip {
     fn reset(&mut self);
     fn write(&mut self, index: usize, port: u32, data: u32);
     fn tick(&mut self, index: usize, sound_stream: &mut dyn SoundStream);
+    fn set_rombank(&mut self, rom_index: RomIndex, rom_bank: RomBank);
+    fn notify_add_rom(&mut self, rom_index: RomIndex, index_no: usize);
 }
 
 ///
-/// Rom Device Interface
+/// Read RomBank by address utility
 ///
-pub trait RomDevice {
-    fn set_rombank(&mut self, rom_index: RomIndex, rom_bank: RomBank);
-    fn notify_add_rom(&mut self, rom_index: RomIndex, index_no: usize);
-    ///
-    /// Read RomBank by address utility
-    ///
-    fn read_rombank(rombank: &RomBank, address: usize) -> u8 {
-        rombank.as_ref().unwrap().borrow().read(address)
-    }
-    ///
-    /// Get Rom referance utility
-    ///
-    fn get_rom_ref(rombank: &RomBank, index_no: usize) -> (*const u8, usize, usize) {
-        rombank.as_ref().unwrap().borrow().ger_rom_ref(index_no)
-    }
+pub fn read_rombank(rombank: &RomBank, address: usize) -> u8 {
+    rombank.as_ref().unwrap().borrow().read(address)
+}
+
+///
+/// Get Rom referance utility
+///
+pub fn get_rom_ref(rombank: &RomBank, index_no: usize) -> (*const u8, usize, usize) {
+    rombank.as_ref().unwrap().borrow().ger_rom_ref(index_no)
 }
 
 pub type RomBank = Option<Rc<RefCell<RomSet>>>;

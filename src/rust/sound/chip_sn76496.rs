@@ -151,11 +151,7 @@
           regs 1,3,5,6,7 if 0x80 is not set. This needs to be verified on real hardware.
 
 ***************************************************************************/
-use super::{
-    interface::SoundChip,
-    stream::{convert_sample_i2f, SoundStream},
-    SoundChipType,
-};
+use super::{RomIndex, SoundChipType, interface::{RomBank, SoundChip}, stream::{convert_sample_i2f, SoundStream}};
 
 const MAX_OUTPUT: i32 = 0x7fff;
 
@@ -519,4 +515,8 @@ impl SoundChip for SN76496 {
         self.sound_stream_update(&mut l, &mut r, 1, 0);
         sound_stream.push(l[0], r[0]);
     }
+
+    fn set_rombank(&mut self, _: RomIndex, _: RomBank) {}
+
+    fn notify_add_rom(&mut self, _: RomIndex, _: usize) {}
 }

@@ -48,7 +48,7 @@ impl RomSet {
     ///
     /// Add a ROM to the rom set.
     ///
-    pub fn add_rom(&mut self, memory: &[u8], start_address: usize, end_address: usize) {
+    pub fn add_rom(&mut self, memory: &[u8], start_address: usize, end_address: usize) -> usize {
         // println!("rom: {:<08x} - {:<08x}, {:<08x}, {:<02x}", start_address, end_address, memory.len(), memory[0]);
         // to_vec(clone) is external SPI memory simulation.
         self.rom.push(Rom {
@@ -56,6 +56,8 @@ impl RomSet {
             end_address,
             memory: memory.to_vec(),
         });
+        // Return index
+        self.rom.len() - 1
     }
 
     ///

@@ -5,22 +5,20 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::rc::Rc;
 
+use super::SoundChipType;
 use crate::sound::chip_pwm::PWM;
 use crate::sound::chip_segapcm::SEGAPCM;
 use crate::sound::chip_sn76496::SN76496;
 use crate::sound::chip_ymfm::YmFm;
-use crate::sound::interface::RomDevice;
 use crate::sound::interface::SoundChip;
 use crate::sound::stream::NearestDownSampleStream;
 use crate::sound::stream::NativeStream;
 use crate::sound::stream::LinearUpSamplingStream;
 use crate::sound::stream::OverSampleStream;
-
 use super::rom::RomIndex;
 use super::rom::RomSet;
 use super::stream::SoundStream;
 use super::stream::Tick;
-use super::SoundChipType;
 
 ///
 /// Sound Slot
@@ -144,14 +142,31 @@ impl SoundSlot {
     ///
     /// Add ROM for sound chip.
     ///
-    pub fn add_rom(&self, index: RomIndex, memory: &[u8], start_address: usize, end_address: usize) {
-        if self.sound_romset.contains_key(&index) {
-            self.sound_romset.get(&index).unwrap().borrow_mut().add_rom(
+    pub fn add_rom(&mut self, rom_index: RomIndex, memory: &[u8], start_address: usize, end_address: usize) {
+        if self.sound_romset.contains_key(&rom_index) {
+            let index_no = self.sound_romset.get(&rom_index).unwrap().borrow_mut().add_rom(
                 memory,
                 start_address,
                 end_address,
             );
             // notify sound chip
+            let sound_device_name = match rom_index {
+                RomIndex::YM2608_DELTA_T => { Some(SoundChipType::YM2608) },
+                RomIndex::YM2610_ADPCM => { Some(SoundChipType::YM2610) },
+                RomIndex::YM2610_DELTA_T => { Some(SoundChipType::YM2610) },
+                RomIndex::YMF278B_ROM => { Some(SoundChipType::YMF278B) },
+                RomIndex::YMF278B_RAM => { Some(SoundChipType::YMF278B) },
+                RomIndex::Y8950_ROM => { Some(SoundChipType::Y8950) },
+                RomIndex::SEGAPCM_ROM => { Some(SoundChipType::SEGAPCM) },
+                RomIndex::NOT_SUPPOTED => { None },
+            };
+            if let Some(sound_device_name) = sound_device_name {
+                if let Some(sound_device) = self.sound_device.get_mut(&sound_device_name) {
+                    for sound_device in sound_device {
+                        sound_device.sound_chip.notify_add_rom(rom_index, index_no);
+                    }
+                };
+            }
         }
     }
 
@@ -159,7 +174,7 @@ impl SoundSlot {
     /// Write command to sound chip.
     ///
     pub fn write(&mut self, sound_device_name: SoundChipType, index: usize, port: u32, data: u32) {
-        match self.find(sound_device_name, index) {
+        match self.find_sound_device(sound_device_name, index) {
             None => { /* nothing to do */ }
             Some(sound_device) => sound_device.sound_chip.write(index, port, data),
         }
@@ -241,7 +256,7 @@ impl SoundSlot {
     ///
     /// Add Rombank
     ///
-    fn add_rombank<T: RomDevice>(&mut self, rom_index: Vec<RomIndex>, sound_chip: &mut T) {
+    fn add_rombank<T: SoundChip>(&mut self, rom_index: Vec<RomIndex>, sound_chip: &mut T) {
         for &rom_index in rom_index.iter() {
             // create new romset
             let romset = Rc::new(RefCell::new(RomSet::new()));
@@ -256,8 +271,8 @@ impl SoundSlot {
     /// Get the sound chip from the sound slot.
     ///
     #[inline]
-    fn find(&mut self, sound_device_name: SoundChipType, index: usize) -> Option<&mut SoundDevice> {
-        let sound_chip = match self.sound_device.get_mut(&sound_device_name) {
+    fn find_sound_device(&mut self, sound_device_name: SoundChipType, index: usize) -> Option<&mut SoundDevice> {
+        let sound_device = match self.sound_device.get_mut(&sound_device_name) {
             None => None,
             Some(vec) => {
                 if vec.len() < index {
@@ -266,7 +281,7 @@ impl SoundSlot {
                 Some(vec)
             }
         };
-        match sound_chip {
+        match sound_device {
             None => None,
             Some(sound_chip) => Some(&mut sound_chip[index]),
         }

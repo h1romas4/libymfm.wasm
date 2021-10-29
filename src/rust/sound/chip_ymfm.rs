@@ -1,10 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-use super::{
-    interface::{RomBank, RomDevice, SoundChip},
-    stream::{convert_sample_i2f, SoundStream},
-    RomIndex, SoundChipType,
-};
+use super::{RomIndex, SoundChipType, interface::{RomBank, SoundChip, get_rom_ref}, stream::{convert_sample_i2f, SoundStream}};
 use std::collections::HashMap;
 
 ///
@@ -121,9 +117,7 @@ impl SoundChip for YmFm {
         self.generate(index, &mut buffer);
         sound_stream.push(convert_sample_i2f(buffer[0]), convert_sample_i2f(buffer[1]));
     }
-}
 
-impl RomDevice for YmFm {
     fn set_rombank(&mut self, rom_index: RomIndex, rom_bank: RomBank) {
         self.rom_bank.insert(rom_index, rom_bank);
     }
@@ -131,7 +125,7 @@ impl RomDevice for YmFm {
     fn notify_add_rom(&mut self, rom_index: RomIndex, index_no: usize) {
         if self.rom_bank.contains_key(&rom_index) {
             let rom_bank = self.rom_bank.get(&rom_index).unwrap();
-            let (memory, start_address, length) = Self::get_rom_ref(rom_bank, index_no);
+            let (memory, start_address, length) = get_rom_ref(rom_bank, index_no);
             match rom_index {
                 RomIndex::YM2608_DELTA_T
                 | RomIndex::YM2610_ADPCM
