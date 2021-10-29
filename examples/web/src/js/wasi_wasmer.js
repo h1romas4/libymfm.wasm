@@ -2,11 +2,12 @@
 // copyright-holders:Hiromasa Tanaka
 import { WASI } from '@wasmer/wasi';
 import { lowerI64Imports } from "@wasmer/wasm-transformer";
-import { WasmFs } from '@wasmer/wasmfs';
+import browserBindings from '@wasmer/wasi/lib/bindings/browser';
+import { fs } from 'memfs';
 
 // wasi instance
 export let wasi;
-export let wasiFs;
+export let wasmFs;
 
 /**
  * Initialize WebAssembly with wasmer-js
@@ -22,13 +23,12 @@ export let wasiFs;
  */
 export async function initWasi() {
     // create WASI instance
-    wasiFs = new WasmFs();
     wasi = new WASI({
         args: [""],
         env: {},
         bindings: {
-            ...WASI.defaultBindings,
-            fs: wasiFs,
+            ...browserBindings,
+            fs: fs,
         }
     });
     // fetch wasm module
