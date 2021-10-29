@@ -7,7 +7,7 @@ import { fs } from 'memfs';
 
 // wasi instance
 export let wasi;
-export let wasmFs;
+export let memFs;
 
 /**
  * Initialize WebAssembly with wasmer-js
@@ -22,13 +22,15 @@ export let wasmFs;
  * @returns instance.exports
  */
 export async function initWasi() {
+    // memfs
+    memFs = fs;
     // create WASI instance
     wasi = new WASI({
         args: [""],
         env: {},
         bindings: {
             ...browserBindings,
-            fs: fs,
+            fs: memFs,
         }
     });
     // fetch wasm module
