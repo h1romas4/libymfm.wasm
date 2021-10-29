@@ -4,6 +4,7 @@ import { WASI } from '@wasmer/wasi';
 import { lowerI64Imports } from "@wasmer/wasm-transformer";
 import browserBindings from '@wasmer/wasi/lib/bindings/browser';
 import { fs } from 'memfs';
+import { spy } from 'spyfs';
 
 // wasi instance
 export let wasi;
@@ -22,8 +23,14 @@ export let memFs;
  * @returns instance.exports
  */
 export async function initWasi() {
-    // memfs
-    memFs = fs;
+    // memfs + spy
+    memFs = spy(fs, async (action) => {
+        console.log({ [action.method] : {
+            "isAsync": action.isAsync,
+            "args": action.args,
+        }});
+        await action;
+    });
     // create WASI instance
     wasi = new WASI({
         args: [""],
