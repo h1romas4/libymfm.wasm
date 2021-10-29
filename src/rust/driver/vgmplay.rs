@@ -172,6 +172,55 @@ impl VgmPlay {
                 clock_ay8910 & 0x3fffffff,
             );
         }
+        if self.vgm_header.clock_ym2608 != 0 {
+            self.sound_slot.add_sound_device(
+                SoundChipType::YM2608,
+                self.number_of_chip(self.vgm_header.clock_ym2608),
+                self.vgm_header.clock_ym2608 & 0x3fffffff,
+            );
+        }
+        if self.vgm_header.clock_ym2610_b != 0 {
+            self.sound_slot.add_sound_device(
+                SoundChipType::YM2610, // TODO:
+                self.number_of_chip(self.vgm_header.clock_ym2610_b),
+                self.vgm_header.clock_ym2610_b & 0x3fffffff,
+            );
+        }
+        if self.vgm_header.clock_ym3812 != 0 {
+            self.sound_slot.add_sound_device(
+                SoundChipType::YM3812,
+                self.number_of_chip(self.vgm_header.clock_ym3812),
+                self.vgm_header.clock_ym3812 & 0x3fffffff,
+            );
+        }
+        if self.vgm_header.clock_ym3526 != 0 {
+            self.sound_slot.add_sound_device(
+                SoundChipType::YM3526,
+                self.number_of_chip(self.vgm_header.clock_ym3526),
+                self.vgm_header.clock_ym3526 & 0x3fffffff,
+            );
+        }
+        if self.vgm_header.clock_y8950 != 0 {
+            self.sound_slot.add_sound_device(
+                SoundChipType::Y8950,
+                self.number_of_chip(self.vgm_header.clock_y8950),
+                self.vgm_header.clock_y8950 & 0x3fffffff,
+            );
+        }
+        if self.vgm_header.clock_ymf262 != 0 {
+            self.sound_slot.add_sound_device(
+                SoundChipType::YMF262,
+                self.number_of_chip(self.vgm_header.clock_ymf262),
+                self.vgm_header.clock_ymf262 & 0x3fffffff,
+            );
+        }
+        if self.vgm_header.clock_ymf278_b != 0 {
+            self.sound_slot.add_sound_device(
+                SoundChipType::YMF278B,
+                self.number_of_chip(self.vgm_header.clock_ymf278_b),
+                self.vgm_header.clock_ymf278_b & 0x3fffffff,
+            );
+        }
         if self.vgm_header.clock_sn76489 != 0 {
             self.sound_slot.add_sound_device(
                 SoundChipType::SEGAPSG,
@@ -341,49 +390,100 @@ impl VgmPlay {
                 );
             }
             0x56 | 0xa6 => {
-                // TODO: YM2608 port 0 write
-                self.get_vgm_u8();
-                self.get_vgm_u8();
+                // YM2608 port 0 write
+                reg = self.get_vgm_u8();
+                dat = self.get_vgm_u8();
+                self.sound_slot.write(
+                    SoundChipType::YM2608,
+                    (command >> 7) as usize,
+                    reg as u32,
+                    dat.into(),
+                );
             }
             0x57 | 0xa7 => {
-                // TODO: YM2608 port 1 write
-                self.get_vgm_u8();
-                self.get_vgm_u8();
+                // YM2608 port 1 write
+                reg = self.get_vgm_u8();
+                dat = self.get_vgm_u8();
+                self.sound_slot.write(
+                    SoundChipType::YM2608,
+                    (command >> 7) as usize,
+                    reg as u32 | 0x100,
+                    dat.into(),
+                );
             }
             0x58 | 0xa8 => {
-                // TODO: YM2610 port 0 write
-                self.get_vgm_u8();
-                self.get_vgm_u8();
+                // YM2610 port 0 write
+                reg = self.get_vgm_u8();
+                dat = self.get_vgm_u8();
+                self.sound_slot.write(
+                    SoundChipType::YM2610,
+                    (command >> 7) as usize,
+                    reg as u32,
+                    dat.into(),
+                );
             }
             0x59 | 0xa9 => {
-                // TODO: YM2610 port 1 write
-                self.get_vgm_u8();
-                self.get_vgm_u8();
+                // YM2610 port 1 write
+                reg = self.get_vgm_u8();
+                dat = self.get_vgm_u8();
+                self.sound_slot.write(
+                    SoundChipType::YM2610,
+                    (command >> 7) as usize,
+                    reg as u32 | 0x100,
+                    dat.into(),
+                );
             }
             0x5a | 0xaa => {
-                // TODO: YM3812 write
-                self.get_vgm_u8();
-                self.get_vgm_u8();
+                reg = self.get_vgm_u8();
+                dat = self.get_vgm_u8();
+                self.sound_slot.write(
+                    SoundChipType::YM3812,
+                    (command >> 7) as usize,
+                    reg as u32 | 0x100,
+                    dat.into(),
+                );
             }
             0x5b | 0xab => {
-                // TODO: YM3528 write
-                self.get_vgm_u8();
-                self.get_vgm_u8();
+                reg = self.get_vgm_u8();
+                dat = self.get_vgm_u8();
+                self.sound_slot.write(
+                    SoundChipType::YM3526,
+                    (command >> 7) as usize,
+                    reg as u32,
+                    dat.into(),
+                );
             }
             0x5c | 0xac => {
-                // TODO: Y8950 write
-                self.get_vgm_u8();
-                self.get_vgm_u8();
+                reg = self.get_vgm_u8();
+                dat = self.get_vgm_u8();
+                self.sound_slot.write(
+                    SoundChipType::Y8950,
+                    (command >> 7) as usize,
+                    reg as u32,
+                    dat.into(),
+                );
             }
             0x5e | 0xae => {
-                // TODO: YMF262 port 0 write
-                self.get_vgm_u8();
-                self.get_vgm_u8();
+                // YMF262 port 0 write
+                reg = self.get_vgm_u8();
+                dat = self.get_vgm_u8();
+                self.sound_slot.write(
+                    SoundChipType::YMF262,
+                    (command >> 7) as usize,
+                    reg as u32,
+                    dat.into(),
+                );
             }
             0x5f | 0xaf => {
-                // TODO: YMF262 port 1 write
-                self.get_vgm_u8();
-                self.get_vgm_u8();
+                // YMF262 port 1 write
+                reg = self.get_vgm_u8();
+                dat = self.get_vgm_u8();
+                self.sound_slot.write(
+                    SoundChipType::YMF262,
+                    (command >> 7) as usize,
+                    reg as u32 | 0x100,
+                    dat.into(),
+                );
             }
             0x61 => {
                 wait = self.get_vgm_u16();

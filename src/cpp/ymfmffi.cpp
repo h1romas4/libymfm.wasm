@@ -226,6 +226,26 @@ uint32_t add_chips(uint32_t clock, chip_type type, char const *chipname)
     uint32_t clockval = clock & 0x3fffffff;
     vgm_chip<ChipType> *chip = new vgm_chip<ChipType>(clockval, type, chipname);
     active_chips.push_back(new vgm_chip<ChipType>(clockval, type, chipname));
+
+    if (type == CHIP_YM2608)
+    {
+        FILE *rom = fopen("ym2608_adpcm_rom.bin", "rb");
+        if (rom == nullptr)
+            fprintf(stderr, "Warning: YM2608 enabled but ym2608_adpcm_rom.bin not found\n");
+        else
+        {
+            fseek(rom, 0, SEEK_END);
+            uint32_t size = ftell(rom);
+            fseek(rom, 0, SEEK_SET);
+            std::vector<uint8_t> temp(size);
+            fread(&temp[0], 1, size, rom);
+            fclose(rom);
+            for (auto chip : active_chips)
+                if (chip->type() == type)
+                    chip->write_data(ymfm::ACCESS_ADPCM_A, 0, size, &temp[0]);
+        }
+    }
+
     return chip->sample_rate();
 }
 
