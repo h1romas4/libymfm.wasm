@@ -47,7 +47,7 @@ Options
 
 ```
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.2.0
+libymfm-cli 0.2.1
 h1romas4 <h1romas4@gmail.com>
 libymfm CLI
 
