@@ -529,26 +529,27 @@ impl VgmPlay {
                             .try_into()
                             .unwrap(),
                     );
-                    let data_size = (size - 8) as usize;
-                    if data_size > 0 {
-                        let start_address = start_address as usize;
-                        let rom_index: RomIndex = match data_type {
-                            0x80 => { RomIndex::SEGAPCM_ROM },
-                            0x81 => { RomIndex::YM2608_DELTA_T },
-                            0x82 => { RomIndex::YM2610_ADPCM },
-                            0x83 => { RomIndex::YM2610_DELTA_T },
-                            0x84 => { RomIndex::YMF278B_ROM },
-                            0x87 => { RomIndex::YMF278B_RAM },
-                            0x88 => { RomIndex::Y8950_ROM },
-                            _ => { RomIndex::NOT_SUPPOTED }
-                        };
-                        self.sound_slot.add_rom(
-                            rom_index,
-                            &self.vgm_data[(data_pos + 8)..(data_pos + 8) + data_size],
-                            start_address,
-                            start_address + data_size - 1,
-                        );
+                    let mut data_size = (size - 8) as usize;
+                    if data_size == 0 {
+                        data_size = 1;
                     }
+                    let start_address = start_address as usize;
+                    let rom_index: RomIndex = match data_type {
+                        0x80 => { RomIndex::SEGAPCM_ROM },
+                        0x81 => { RomIndex::YM2608_DELTA_T },
+                        0x82 => { RomIndex::YM2610_ADPCM },
+                        0x83 => { RomIndex::YM2610_DELTA_T },
+                        0x84 => { RomIndex::YMF278B_ROM },
+                        0x87 => { RomIndex::YMF278B_RAM },
+                        0x88 => { RomIndex::Y8950_ROM },
+                        _ => { RomIndex::NOT_SUPPOTED }
+                    };
+                    self.sound_slot.add_rom(
+                        rom_index,
+                        &self.vgm_data[(data_pos + 8)..(data_pos + 8) + data_size],
+                        start_address,
+                        start_address + data_size - 1,
+                    );
                 }
             }
             0x70..=0x7f => {
@@ -772,6 +773,11 @@ mod tests {
     #[test]
     fn ym2610_2() {
         play("./docs/vgm/ym2610-2.vgz")
+    }
+
+    #[test]
+    fn ym2610_3() {
+        play("./docs/vgm/ym2610-3.vgz")
     }
 
     #[test]
