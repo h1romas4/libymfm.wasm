@@ -1,6 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use flate2::read::GzDecoder;
+use std::collections::HashMap;
 use std::convert::TryInto;
 use std::io::prelude::*;
 
@@ -23,15 +24,8 @@ pub struct VgmPlay {
     vgm_data: Vec<u8>,
     vgm_header: VgmHeader,
     vgm_gd3: Gd3,
-    pcm_origin_pos: usize,
-    pcm_pos: usize,
-    pcm_offset: usize,
-    pcm_stream_sample_count: u32,
-    pcm_stream_sampling_pos: u32,
-    pcm_stream_length: usize,
-    pcm_stream_pos_init: usize,
-    pcm_stream_pos: usize,
-    pcm_stream_offset: usize,
+    data_block: HashMap<u8, DataBlock>,
+    stream: HashMap<u8, Stream>,
     remain_tick_count: usize,
 }
 
@@ -52,15 +46,8 @@ impl VgmPlay {
             vgm_data: Vec::new(),
             vgm_header: VgmHeader::default(),
             vgm_gd3: Gd3::default(),
-            pcm_origin_pos: 0,
-            pcm_pos: 0,
-            pcm_offset: 0,
-            pcm_stream_sample_count: 0,
-            pcm_stream_sampling_pos: 0,
-            pcm_stream_length: 0,
-            pcm_stream_pos_init: 0,
-            pcm_stream_pos: 0,
-            pcm_stream_offset: 0,
+            data_block: HashMap::new(),
+            stream: HashMap::new(),
             remain_tick_count: 0,
         }
     }
@@ -301,26 +288,51 @@ impl VgmPlay {
     }
 
     fn update_pcm_stream(&mut self) {
-        // YM2612 straming pcm update
-        if self.pcm_stream_pos_init == self.pcm_stream_pos && self.pcm_stream_length > 0 {
-            self.pcm_stream_sampling_pos = 0;
-        }
-        if self.pcm_stream_length > 0
-            && (self.pcm_stream_sampling_pos % self.pcm_stream_sample_count) as usize == 0
-        {
-            // TODO: OKIM6258 write
-            self.sound_slot.write(
-                SoundChipType::YM2612,
-                0,
-                0x2a,
-                self.vgm_data[self.pcm_origin_pos + self.pcm_stream_pos + self.pcm_stream_offset]
-                    .into(),
-            );
-            self.pcm_stream_length -= 1;
-            self.pcm_stream_pos += 1;
-        }
-        if self.pcm_stream_length > 0 {
-            self.pcm_stream_sampling_pos += 1;
+        // straming pcm update
+        for (_, stream) in self.stream.iter_mut() {
+            let data = self.data_block.get(&stream.data_bank_id).unwrap(); // TODO:
+            if stream.pcm_stream_pos_init == stream.pcm_stream_pos && stream.pcm_stream_length > 0 {
+                stream.pcm_stream_sampling_pos = 0;
+            }
+            if stream.pcm_stream_length > 0
+                && (stream.pcm_stream_sampling_pos % stream.pcm_stream_sample_count) as usize == 0
+            {
+                let chip_index = if stream.chip_type & 0b01000000 != 0 {
+                    1
+                } else {
+                    0
+                };
+                match stream.data_bank_id {
+                    0x00 => {
+                        self.sound_slot.write(
+                            SoundChipType::YM2612,
+                            chip_index,
+                            stream.write_reg as u32,
+                            self.vgm_data[data.data_block_pos
+                                + stream.pcm_stream_pos
+                                + stream.pcm_stream_offset]
+                                .into(),
+                        );
+                    }
+                    0x04 => {
+                        self.sound_slot.write(
+                            SoundChipType::OKIM6258,
+                            chip_index,
+                            stream.write_reg as u32,
+                            self.vgm_data[data.data_block_pos
+                                + stream.pcm_stream_pos
+                                + stream.pcm_stream_offset]
+                                .into(),
+                        );
+                    }
+                    _ => panic!("stream.data_bank_id"),
+                }
+                stream.pcm_stream_length -= 1;
+                stream.pcm_stream_pos += 1;
+            }
+            if stream.pcm_stream_length > 0 {
+                stream.pcm_stream_sampling_pos += 1;
+            }
         }
     }
 
@@ -538,28 +550,36 @@ impl VgmPlay {
                 // 0x66 compatibility command to make older players stop parsing the stream
                 self.get_vgm_u8();
                 let data_type = self.get_vgm_u8();
-                let size = self.get_vgm_u32();
-                let data_pos = self.vgm_pos;
-                self.vgm_pos += size as usize;
+                let data_length = self.get_vgm_u32() as usize;
+                let data_block_pos = self.vgm_pos;
+                self.vgm_pos += data_length as usize;
                 // handle data block
                 if (0x00..=0x3f).contains(&data_type) {
                     // data of recorded streams (uncompressed)
-                    match data_type {
-                        /* YM2612 */ 0x00 | /* OKIM6258 */ 0x04 => self.pcm_origin_pos = data_pos,
-                        _ => { /* not supported */}
-                    }
+                    self.data_block.insert(
+                        data_type,
+                        DataBlock {
+                            data_block_pos,
+                            data_length,
+                        },
+                    );
+                    // YM2612 is special
+                    self.stream
+                        .insert(0, Stream::from(/* YM2612 */ 0x02, 0, /* reg */ 0x2a));
                 } else if (0x80..=0xbf).contains(&data_type) {
                     // ROM/RAM Image dumps
                     // do not use real_rom_size
                     let _real_rom_size = u32::from_le_bytes(
-                        self.vgm_data[data_pos..(data_pos + 4)].try_into().unwrap(),
-                    );
-                    let start_address = u32::from_le_bytes(
-                        self.vgm_data[(data_pos + 4)..(data_pos + 8)]
+                        self.vgm_data[data_block_pos..(data_block_pos + 4)]
                             .try_into()
                             .unwrap(),
                     );
-                    let mut data_size = (size - 8) as usize;
+                    let start_address = u32::from_le_bytes(
+                        self.vgm_data[(data_block_pos + 4)..(data_block_pos + 8)]
+                            .try_into()
+                            .unwrap(),
+                    );
+                    let mut data_size = data_length - 8;
                     if data_size == 0 {
                         data_size = 1;
                     }
@@ -576,7 +596,7 @@ impl VgmPlay {
                     };
                     self.sound_slot.add_rom(
                         rom_index,
-                        &self.vgm_data[(data_pos + 8)..(data_pos + 8) + data_size],
+                        &self.vgm_data[(data_block_pos + 8)..(data_block_pos + 8) + data_size],
                         start_address,
                         start_address + data_size - 1,
                     );
@@ -588,50 +608,72 @@ impl VgmPlay {
             0x80..=0x8f => {
                 // YM2612 PCM
                 wait = (command & 0x0f).into();
+                // 1st stream block
+                let stream = self.stream.get_mut(&0).unwrap();
+                let block = self.data_block.get(&0).unwrap();
                 self.sound_slot.write(
                     SoundChipType::YM2612,
                     0,
                     0x2a,
-                    self.vgm_data[self.pcm_origin_pos + self.pcm_pos + self.pcm_offset].into(),
+                    self.vgm_data[block.data_block_pos + stream.pcm_pos + stream.pcm_offset].into(),
                 );
-                self.pcm_offset += 1;
+                stream.pcm_offset += 1;
             }
             0x90 => {
-                // TODO: respect stream no
                 // Setup Stream Control
                 // 0x90 ss tt pp cc
                 // 0x90 00 02 00 2a
-                self.get_vgm_u32();
+                let stream_id = self.get_vgm_u8();
+                let chip_type = self.get_vgm_u8();
+                let write_port = self.get_vgm_u8();
+                let write_reg = self.get_vgm_u8();
+                self.stream
+                    .insert(stream_id, Stream::from(chip_type, write_port, write_reg));
             }
             0x91 => {
                 // Set Stream Data
                 // 0x91 ss dd ll bb
                 // 0x91 00 00 01 2a
-                self.get_vgm_u32();
+                let stream_id = self.get_vgm_u8();
+                let data_bank_id = self.get_vgm_u8();
+                let step_base = self.get_vgm_u8();
+                let step_size = self.get_vgm_u8();
+                let stream = self.stream.get_mut(&stream_id).unwrap();
+                stream.data_bank_id = data_bank_id;
+                stream.step_base = step_base;
+                stream.step_size = step_size;
             }
             0x92 => {
                 // Set Stream Frequency
                 // 0x92 ss ff ff ff ff
                 // 0x92 00 40 1f 00 00 (8KHz)
-                self.get_vgm_u8();
-                self.pcm_stream_sample_count = VGM_TICK_RATE / self.get_vgm_u32();
+                let stream_id = self.get_vgm_u8();
+                let frequency = self.get_vgm_u32();
+                let stream = self.stream.get_mut(&stream_id).unwrap();
+                stream.frequency = frequency;
+                stream.pcm_stream_sample_count = VGM_TICK_RATE / frequency;
             }
             0x93 => {
                 // Start Stream
                 // 0x93 ss aa aa aa aa mm ll ll ll ll
                 // 0x93 00 aa aa aa aa 01 ll ll ll ll
-                self.get_vgm_u8();
-                self.pcm_stream_pos_init = self.get_vgm_u32() as usize;
-                self.pcm_stream_pos = self.pcm_stream_pos_init;
-                self.get_vgm_u8();
-                self.pcm_stream_length = self.get_vgm_u32() as usize;
-                self.pcm_stream_offset = 0;
+                let stream_id = self.get_vgm_u8();
+                let pcm_stream_pos_init = self.get_vgm_u32() as usize;
+                let length_mode = self.get_vgm_u8();
+                let pcm_stream_length = self.get_vgm_u32() as usize;
+                let stream = self.stream.get_mut(&stream_id).unwrap();
+                stream.pcm_stream_pos_init = pcm_stream_pos_init;
+                stream.pcm_stream_pos = stream.pcm_stream_pos_init;
+                stream.length_mode = length_mode;
+                stream.pcm_stream_length = pcm_stream_length;
+                stream.pcm_stream_offset = 0;
             }
             0x94 => {
                 // Stop Stream
                 // 0x94 ss
-                self.get_vgm_u8();
-                self.pcm_stream_length = 0;
+                let stream_id = self.get_vgm_u8();
+                let stream = self.stream.get_mut(&stream_id).unwrap();
+                stream.pcm_stream_length = 0;
             }
             0x95 => {
                 // Start Stream (fast call)
@@ -684,8 +726,11 @@ impl VgmPlay {
                     .write(SoundChipType::SEGAPCM, 0, u32::from(offset), dat.into());
             }
             0xe0 => {
-                self.pcm_pos = self.get_vgm_u32() as usize;
-                self.pcm_offset = 0;
+                // YM2612 data block 0 = stream id 0
+                let pcm_pos = self.get_vgm_u32() as usize;
+                let stream = self.stream.get_mut(&0).unwrap();
+                stream.pcm_pos = pcm_pos as usize;
+                stream.pcm_offset = 0;
             }
             // unsupport
             0x30..=0x3f | 0x4f => {
@@ -743,6 +788,55 @@ impl VgmPlay {
     }
 }
 
+#[allow(dead_code)]
+struct Stream {
+    data_bank_id: u8,
+    chip_type: u8,
+    write_port: u8,
+    write_reg: u8,
+    step_size: u8,
+    step_base: u8,
+    frequency: u32,
+    length_mode: u8,
+    pcm_pos: usize,
+    pcm_offset: usize,
+    pcm_stream_sample_count: u32,
+    pcm_stream_sampling_pos: u32,
+    pcm_stream_length: usize,
+    pcm_stream_pos_init: usize,
+    pcm_stream_pos: usize,
+    pcm_stream_offset: usize,
+}
+
+impl Stream {
+    pub fn from(chip_type: u8, write_port: u8, write_reg: u8) -> Self {
+        Stream {
+            data_bank_id: 0,
+            chip_type,
+            write_port,
+            write_reg,
+            step_size: 0,
+            step_base: 0,
+            frequency: 0,
+            length_mode: 0,
+            pcm_pos: 0,
+            pcm_offset: 0,
+            pcm_stream_sample_count: 0,
+            pcm_stream_sampling_pos: 0,
+            pcm_stream_length: 0,
+            pcm_stream_pos_init: 0,
+            pcm_stream_pos: 0,
+            pcm_stream_offset: 0,
+        }
+    }
+}
+
+#[allow(dead_code)]
+struct DataBlock {
+    data_block_pos: usize,
+    data_length: usize,
+}
+
 ///
 /// cargo test -- --nocapture
 ///
@@ -768,10 +862,7 @@ mod tests {
 
     #[test]
     fn ym2612_1() {
-        println!("1st vgm instance");
         play("./docs/vgm/ym2612.vgm");
-        println!("2nd vgm instance(drop and create)");
-        play("./docs/vgm/ym2612-ng.vgz")
     }
 
     #[test]
@@ -799,6 +890,16 @@ mod tests {
         play("./docs/vgm/2612/40.vgz");
         play("./docs/vgm/2612/41.vgz");
         play("./docs/vgm/2612/42.vgz");
+    }
+
+    #[test]
+    fn ym2612_3() {
+        play("./docs/vgm/ym2612-ng.vgz")
+    }
+
+    #[test]
+    fn ym2612_4() {
+        play("./docs/vgm/ym2612-datablock.vgm") // data block
     }
 
     #[test]
