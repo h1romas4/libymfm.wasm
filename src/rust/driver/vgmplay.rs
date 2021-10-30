@@ -24,7 +24,7 @@ pub struct VgmPlay {
     vgm_data: Vec<u8>,
     vgm_header: VgmHeader,
     vgm_gd3: Gd3,
-    data_block: HashMap<u8, DataBlock>,
+    data_block: HashMap<usize, DataBlock>,
     stream: HashMap<u8, Stream>,
     remain_tick_count: usize,
 }
@@ -290,7 +290,7 @@ impl VgmPlay {
     fn update_pcm_stream(&mut self) {
         // straming pcm update
         for (_, stream) in self.stream.iter_mut() {
-            let data = self.data_block.get(&stream.data_bank_id).unwrap(); // TODO:
+            let data = self.data_block.get(&stream.data_block_id).unwrap(); // TODO:
             if stream.pcm_stream_pos_init == stream.pcm_stream_pos && stream.pcm_stream_length > 0 {
                 stream.pcm_stream_sampling_pos = 0;
             }
@@ -302,7 +302,7 @@ impl VgmPlay {
                 } else {
                     0
                 };
-                match stream.data_bank_id {
+                match data.data_type {
                     0x00 => {
                         self.sound_slot.write(
                             SoundChipType::YM2612,
@@ -557,15 +557,18 @@ impl VgmPlay {
                 if (0x00..=0x3f).contains(&data_type) {
                     // data of recorded streams (uncompressed)
                     self.data_block.insert(
-                        data_type,
+                        self.data_block.len(),
                         DataBlock {
+                            data_type,
                             data_block_pos,
                             data_length,
                         },
                     );
-                    // YM2612 is special
-                    self.stream
+                    // YM2612 is
+                    if data_type == 0 {
+                        self.stream
                         .insert(0, Stream::from(/* YM2612 */ 0x02, 0, /* reg */ 0x2a));
+                    }
                 } else if (0x80..=0xbf).contains(&data_type) {
                     // ROM/RAM Image dumps
                     // do not use real_rom_size
@@ -635,11 +638,11 @@ impl VgmPlay {
                 // 0x91 ss dd ll bb
                 // 0x91 00 00 01 2a
                 let stream_id = self.get_vgm_u8();
-                let data_bank_id = self.get_vgm_u8();
+                let data_block_id = self.get_vgm_u8() as usize;
                 let step_base = self.get_vgm_u8();
                 let step_size = self.get_vgm_u8();
                 let stream = self.stream.get_mut(&stream_id).unwrap();
-                stream.data_bank_id = data_bank_id;
+                stream.data_block_id = data_block_id;
                 stream.step_base = step_base;
                 stream.step_size = step_size;
             }
@@ -678,9 +681,16 @@ impl VgmPlay {
             0x95 => {
                 // Start Stream (fast call)
                 // 0x95 ss bb bb ff
-                self.get_vgm_u8();
-                self.get_vgm_u16();
-                self.get_vgm_u8();
+                let stream_id = self.get_vgm_u8();
+                let data_block_id = self.get_vgm_u16() as usize;
+                let flags = self.get_vgm_u8();
+                let stream = self.stream.get_mut(&stream_id).unwrap();
+                let data = self.data_block.get(&data_block_id).unwrap();
+                stream.data_block_id = data_block_id as usize;
+                stream.flags = flags;
+                stream.pcm_stream_pos = stream.pcm_stream_pos_init;
+                stream.pcm_stream_offset = 0;
+                stream.pcm_stream_length = data.data_length;
             }
             0xa0 => {
                 // TODO: AY8910, write
@@ -790,7 +800,7 @@ impl VgmPlay {
 
 #[allow(dead_code)]
 struct Stream {
-    data_bank_id: u8,
+    data_block_id: usize,
     chip_type: u8,
     write_port: u8,
     write_reg: u8,
@@ -798,6 +808,7 @@ struct Stream {
     step_base: u8,
     frequency: u32,
     length_mode: u8,
+    flags: u8,
     pcm_pos: usize,
     pcm_offset: usize,
     pcm_stream_sample_count: u32,
@@ -811,7 +822,7 @@ struct Stream {
 impl Stream {
     pub fn from(chip_type: u8, write_port: u8, write_reg: u8) -> Self {
         Stream {
-            data_bank_id: 0,
+            data_block_id: 0,
             chip_type,
             write_port,
             write_reg,
@@ -819,6 +830,7 @@ impl Stream {
             step_base: 0,
             frequency: 0,
             length_mode: 0,
+            flags: 0,
             pcm_pos: 0,
             pcm_offset: 0,
             pcm_stream_sample_count: 0,
@@ -833,6 +845,7 @@ impl Stream {
 
 #[allow(dead_code)]
 struct DataBlock {
+    data_type: u8,
     data_block_pos: usize,
     data_length: usize,
 }
