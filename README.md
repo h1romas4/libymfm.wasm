@@ -8,6 +8,8 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 >
 > BSD-licensed Yamaha FM sound cores (OPM, OPN, OPL, and others)
 
+## Supported sound chips
+
 |chip|from|note|
 |----|----|----|
 |YM2149|ymfm||

@@ -2,7 +2,7 @@
 // copyright-holders:Hiromasa Tanaka
 import * as def from './const.js'
 import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
-import { initWasi } from './wasi_wasmer';
+import { initWasi /*, memFs */ } from './wasi_wasmer';
 
 class WgmWorker {
     constructor(worker) {

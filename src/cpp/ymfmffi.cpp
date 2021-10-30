@@ -229,6 +229,7 @@ uint32_t add_chips(uint32_t clock, chip_type type, char const *chipname)
 
     if (type == CHIP_YM2608)
     {
+        fprintf(stdout, "load ym2608_adpcm_rom.bin using WASI\n");
         FILE *rom = fopen("ym2608_adpcm_rom.bin", "rb");
         if (rom == nullptr)
             fprintf(stderr, "Warning: YM2608 enabled but ym2608_adpcm_rom.bin not found\n");
