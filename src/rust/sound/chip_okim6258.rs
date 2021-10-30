@@ -213,11 +213,12 @@ impl OKIM6258 {
             let stepval = f32::floor(16.0_f32 * f32::powf(11.0_f32 / 10.0_f32, step as f32));
 
             /* loop over all nibbles and compute the difference */
+            #[allow(clippy::needless_range_loop)]
             for nib in 0..16 {
-                self.diff_lookup[(step * 16 + nib) as usize] = nbl2bit[0][nib]
-                    * (stepval * nbl2bit[1][nib] as f32
-                        + stepval / (2 * nbl2bit[2][nib]) as f32
-                        + stepval / (4 * nbl2bit[3][nib]) as f32
+                self.diff_lookup[(step * 16 + nib) as usize] = nbl2bit[nib][0]
+                    * (stepval * nbl2bit[nib][1] as f32
+                        + stepval / 2_f32 * nbl2bit[nib][2] as f32
+                        + stepval / 4_f32 * nbl2bit[nib][3] as f32
                         + stepval / 8_f32) as i32;
             }
         }
@@ -242,7 +243,7 @@ impl SoundChip for OKIM6258 {
             0x0 => self.ctrl_w((data & 0xff) as u8),
             0x1 => self.data_w((data & 0xff) as u8),
             0x2 => {
-                todo!("pan control")
+                /* todo!("pan control") */
             }
             0x8 => {
                 todo!("change data clock")

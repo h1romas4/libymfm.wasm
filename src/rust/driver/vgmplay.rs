@@ -260,7 +260,7 @@ impl VgmPlay {
                 self.sound_slot.write(
                     SoundChipType::OKIM6258,
                     i,
-                    0x11, /* set_type */
+                    0x12, /* set_type */
                     if flag & 2 !=0 { 1 } else { 0 });
             }
         }
@@ -819,6 +819,11 @@ mod tests {
     #[test]
     fn segapcm_1() {
         play("./docs/vgm/segapcm-2.vgz")
+    }
+
+    #[test]
+    fn okim6258_1() {
+        play("./docs/vgm/okim6258.vgz")
     }
 
     fn play(filepath: &str) {
