@@ -288,20 +288,18 @@ impl VgmPlay {
     }
 
     fn update_pcm_stream(&mut self) {
-        // straming pcm update
+        // all straming pcm update
         for (_, stream) in self.stream.iter_mut() {
-            let data = self.data_block.get(&stream.data_block_id).unwrap(); // TODO:
+            // get associated stream data block
+            let data = self.data_block.get(&stream.data_block_id).unwrap();
             if stream.pcm_stream_pos_init == stream.pcm_stream_pos && stream.pcm_stream_length > 0 {
                 stream.pcm_stream_sampling_pos = 0;
             }
+            // adjust the output sampling rate with the stream sampling rate
             if stream.pcm_stream_length > 0
                 && (stream.pcm_stream_sampling_pos % stream.pcm_stream_sample_count) as usize == 0
             {
-                let chip_index = if stream.chip_type & 0b01000000 != 0 {
-                    1
-                } else {
-                    0
-                };
+                let chip_index = if stream.chip_type & 0b01000000 != 0 { 1 } else { 0 };
                 match data.data_type {
                     0x00 => {
                         self.sound_slot.write(
@@ -309,8 +307,7 @@ impl VgmPlay {
                             chip_index,
                             stream.write_reg as u32,
                             self.vgm_data[data.data_block_pos
-                                + stream.pcm_stream_pos
-                                + stream.pcm_stream_offset]
+                                + stream.pcm_stream_pos]
                                 .into(),
                         );
                     }
@@ -320,8 +317,7 @@ impl VgmPlay {
                             chip_index,
                             stream.write_reg as u32,
                             self.vgm_data[data.data_block_pos
-                                + stream.pcm_stream_pos
-                                + stream.pcm_stream_offset]
+                                + stream.pcm_stream_pos]
                                 .into(),
                         );
                     }
@@ -331,6 +327,7 @@ impl VgmPlay {
                 stream.pcm_stream_pos += 1;
             }
             if stream.pcm_stream_length > 0 {
+                // update output sampling position
                 stream.pcm_stream_sampling_pos += 1;
             }
         }
@@ -564,10 +561,10 @@ impl VgmPlay {
                             data_length,
                         },
                     );
-                    // YM2612 is
+                    // YM2612 is special on VGM
                     if data_type == 0 {
                         self.stream
-                        .insert(0, Stream::from(/* YM2612 */ 0x02, 0, /* reg */ 0x2a));
+                            .insert(0, Stream::from(/* YM2612 */ 0x02, 0, /* reg */ 0x2a));
                     }
                 } else if (0x80..=0xbf).contains(&data_type) {
                     // ROM/RAM Image dumps
@@ -609,11 +606,12 @@ impl VgmPlay {
                 wait = ((command & 0x0f) + 1).into();
             }
             0x80..=0x8f => {
-                // YM2612 PCM
+                // YM2612 port 0 address 2A write from the data bank, then wait n samples;
+                // n can range from 0 to 15. Note that the wait is n, NOT n+1.
+                // See also command 0xE0.
                 wait = (command & 0x0f).into();
-                // 1st stream block
-                let stream = self.stream.get_mut(&0).unwrap();
-                let block = self.data_block.get(&0).unwrap();
+                let stream = self.stream.get_mut(/* 1st stream block */&0).unwrap();
+                let block = self.data_block.get(/* 1st stream block */&0).unwrap();
                 self.sound_slot.write(
                     SoundChipType::YM2612,
                     0,
@@ -630,6 +628,7 @@ impl VgmPlay {
                 let chip_type = self.get_vgm_u8();
                 let write_port = self.get_vgm_u8();
                 let write_reg = self.get_vgm_u8();
+                // create new stream
                 self.stream
                     .insert(stream_id, Stream::from(chip_type, write_port, write_reg));
             }
@@ -641,6 +640,7 @@ impl VgmPlay {
                 let data_block_id = self.get_vgm_u8() as usize;
                 let step_base = self.get_vgm_u8();
                 let step_size = self.get_vgm_u8();
+                // assosiate data block to stream
                 let stream = self.stream.get_mut(&stream_id).unwrap();
                 stream.data_block_id = data_block_id;
                 stream.step_base = step_base;
@@ -664,17 +664,18 @@ impl VgmPlay {
                 let pcm_stream_pos_init = self.get_vgm_u32() as usize;
                 let length_mode = self.get_vgm_u8();
                 let pcm_stream_length = self.get_vgm_u32() as usize;
+                // initalize stream and start playback (set pcm_stream_length)
                 let stream = self.stream.get_mut(&stream_id).unwrap();
                 stream.pcm_stream_pos_init = pcm_stream_pos_init;
                 stream.pcm_stream_pos = stream.pcm_stream_pos_init;
                 stream.length_mode = length_mode;
                 stream.pcm_stream_length = pcm_stream_length;
-                stream.pcm_stream_offset = 0;
             }
             0x94 => {
                 // Stop Stream
                 // 0x94 ss
                 let stream_id = self.get_vgm_u8();
+                // stop stream (set pcm_stream_length to 0)
                 let stream = self.stream.get_mut(&stream_id).unwrap();
                 stream.pcm_stream_length = 0;
             }
@@ -684,12 +685,13 @@ impl VgmPlay {
                 let stream_id = self.get_vgm_u8();
                 let data_block_id = self.get_vgm_u16() as usize;
                 let flags = self.get_vgm_u8();
+                // initalize stream and start playback (set pcm_stream_length to data block size)
                 let stream = self.stream.get_mut(&stream_id).unwrap();
                 let data = self.data_block.get(&data_block_id).unwrap();
+                // assosiate stream and data block
                 stream.data_block_id = data_block_id as usize;
                 stream.flags = flags;
                 stream.pcm_stream_pos = stream.pcm_stream_pos_init;
-                stream.pcm_stream_offset = 0;
                 stream.pcm_stream_length = data.data_length;
             }
             0xa0 => {
@@ -816,7 +818,6 @@ struct Stream {
     pcm_stream_length: usize,
     pcm_stream_pos_init: usize,
     pcm_stream_pos: usize,
-    pcm_stream_offset: usize,
 }
 
 impl Stream {
@@ -838,7 +839,6 @@ impl Stream {
             pcm_stream_length: 0,
             pcm_stream_pos_init: 0,
             pcm_stream_pos: 0,
-            pcm_stream_offset: 0,
         }
     }
 }
