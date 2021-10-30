@@ -4,11 +4,11 @@ use flate2::read::GzDecoder;
 use std::convert::TryInto;
 use std::io::prelude::*;
 
+use crate::driver::gd3meta::Gd3;
 use crate::driver::vgmmeta::parse_vgm_meta;
 use crate::driver::vgmmeta::Jsonlize;
 use crate::driver::vgmmeta::VgmHeader;
-use crate::driver::gd3meta::Gd3;
-use crate::sound::{SoundChipType, SoundSlot, RomIndex};
+use crate::sound::{RomIndex, SoundChipType, SoundSlot};
 
 pub const VGM_TICK_RATE: u32 = 44100;
 
@@ -249,19 +249,22 @@ impl VgmPlay {
             for i in 0..=1 {
                 self.sound_slot.write(
                     SoundChipType::OKIM6258,
-                     i,
-                     0x10, /* set_divider */
-                     (flag & 3) as u32);
+                    i,
+                    0x10, /* set_divider */
+                    (flag & 3) as u32,
+                );
                 self.sound_slot.write(
                     SoundChipType::OKIM6258,
                     i,
                     0x11, /* set_outbits */
-                    if flag & 3 !=0 { 12 } else { 10 });
+                    if flag & 3 != 0 { 12 } else { 10 },
+                );
                 self.sound_slot.write(
                     SoundChipType::OKIM6258,
                     i,
                     0x12, /* set_type */
-                    if flag & 2 !=0 { 1 } else { 0 });
+                    if flag & 2 != 0 { 1 } else { 0 },
+                );
             }
         }
 
@@ -305,11 +308,13 @@ impl VgmPlay {
         if self.pcm_stream_length > 0
             && (self.pcm_stream_sampling_pos % self.pcm_stream_sample_count) as usize == 0
         {
+            // TODO: OKIM6258 write
             self.sound_slot.write(
                 SoundChipType::YM2612,
                 0,
                 0x2a,
-                self.vgm_data[self.pcm_origin_pos + self.pcm_stream_pos + self.pcm_stream_offset].into(),
+                self.vgm_data[self.pcm_origin_pos + self.pcm_stream_pos + self.pcm_stream_offset]
+                    .into(),
             );
             self.pcm_stream_length -= 1;
             self.pcm_stream_pos += 1;
@@ -539,9 +544,9 @@ impl VgmPlay {
                 // handle data block
                 if (0x00..=0x3f).contains(&data_type) {
                     // data of recorded streams (uncompressed)
-                    if data_type == 0x00 {
-                        // for ym2612
-                        self.pcm_origin_pos = data_pos;
+                    match data_type {
+                        /* YM2612 */ 0x00 | /* OKIM6258 */ 0x04 => self.pcm_origin_pos = data_pos,
+                        _ => { /* not supported */}
                     }
                 } else if (0x80..=0xbf).contains(&data_type) {
                     // ROM/RAM Image dumps
@@ -560,14 +565,14 @@ impl VgmPlay {
                     }
                     let start_address = start_address as usize;
                     let rom_index: RomIndex = match data_type {
-                        0x80 => { RomIndex::SEGAPCM_ROM },
-                        0x81 => { RomIndex::YM2608_DELTA_T },
-                        0x82 => { RomIndex::YM2610_ADPCM },
-                        0x83 => { RomIndex::YM2610_DELTA_T },
-                        0x84 => { RomIndex::YMF278B_ROM },
-                        0x87 => { RomIndex::YMF278B_RAM },
-                        0x88 => { RomIndex::Y8950_ROM },
-                        _ => { RomIndex::NOT_SUPPOTED }
+                        0x80 => RomIndex::SEGAPCM_ROM,
+                        0x81 => RomIndex::YM2608_DELTA_T,
+                        0x82 => RomIndex::YM2610_ADPCM,
+                        0x83 => RomIndex::YM2610_DELTA_T,
+                        0x84 => RomIndex::YMF278B_ROM,
+                        0x87 => RomIndex::YMF278B_RAM,
+                        0x88 => RomIndex::Y8950_ROM,
+                        _ => RomIndex::NOT_SUPPOTED,
                     };
                     self.sound_slot.add_rom(
                         rom_index,
@@ -657,11 +662,19 @@ impl VgmPlay {
                 let offset = self.get_vgm_u8();
                 let dat = self.get_vgm_u8();
                 if offset & 0x80 != 0 {
-                    self.sound_slot
-                        .write(SoundChipType::OKIM6258, 1, (offset & 0x7f) as u32, dat.into());
+                    self.sound_slot.write(
+                        SoundChipType::OKIM6258,
+                        1,
+                        (offset & 0x7f) as u32,
+                        dat.into(),
+                    );
                 } else {
-                    self.sound_slot
-                        .write(SoundChipType::OKIM6258, 0, (offset & 0x7f) as u32, dat.into());
+                    self.sound_slot.write(
+                        SoundChipType::OKIM6258,
+                        0,
+                        (offset & 0x7f) as u32,
+                        dat.into(),
+                    );
                 }
             }
             0xc0 => {
