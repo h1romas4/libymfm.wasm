@@ -4,6 +4,7 @@
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
 pub enum RomIndex {
+
     SEGAPCM_ROM = 0x80,
     YM2608_DELTA_T = 0x81,
     YM2610_ADPCM = 0x82,

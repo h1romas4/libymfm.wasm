@@ -6,10 +6,11 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 
 use super::SoundChipType;
+use crate::sound::chip_ymfm::YmFm;
+use crate::sound::chip_sn76496::SN76496;
 use crate::sound::chip_pwm::PWM;
 use crate::sound::chip_segapcm::SEGAPCM;
-use crate::sound::chip_sn76496::SN76496;
-use crate::sound::chip_ymfm::YmFm;
+use crate::sound::chip_okim6258::OKIM6258;
 use crate::sound::interface::SoundChip;
 use crate::sound::stream::NearestDownSampleStream;
 use crate::sound::stream::NativeStream;
@@ -100,7 +101,8 @@ impl SoundSlot {
                     let mut segapcm = Box::new(SEGAPCM::new(SoundChipType::SEGAPCM));
                     self.add_rombank(vec![RomIndex::SEGAPCM_ROM], &mut *segapcm);
                     segapcm
-                }
+                },
+                SoundChipType::OKIM6258 => Box::new(OKIM6258::new(SoundChipType::OKIM6258)),
             };
 
             let sound_chip_sampling_rate = sound_chip.init(clock);

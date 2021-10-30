@@ -239,6 +239,31 @@ impl VgmPlay {
                 self.vgm_header.sega_pcm_clock,
             );
         }
+        if self.vgm_header.clock_okim6258 != 0 {
+            self.sound_slot.add_sound_device(
+                SoundChipType::OKIM6258,
+                2,
+                self.vgm_header.clock_okim6258,
+            );
+            let flag = self.vgm_header.okmi6258_flag;
+            for i in 0..=1 {
+                self.sound_slot.write(
+                    SoundChipType::OKIM6258,
+                     i,
+                     0x10, /* set_divider */
+                     (flag & 3) as u32);
+                self.sound_slot.write(
+                    SoundChipType::OKIM6258,
+                    i,
+                    0x11, /* set_outbits */
+                    if flag & 3 !=0 { 12 } else { 10 });
+                self.sound_slot.write(
+                    SoundChipType::OKIM6258,
+                    i,
+                    0x11, /* set_type */
+                    if flag & 2 !=0 { 1 } else { 0 });
+            }
+        }
 
         Ok(())
     }
@@ -627,6 +652,18 @@ impl VgmPlay {
                 self.sound_slot
                     .write(SoundChipType::PWM, 0, channel as u32, dat.into());
             }
+            0xb7 => {
+                // 0xb7: aa dd: OKIM6258, write value dd to register aa
+                let offset = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
+                if offset & 0x80 != 0 {
+                    self.sound_slot
+                        .write(SoundChipType::OKIM6258, 1, (offset & 0x7f) as u32, dat.into());
+                } else {
+                    self.sound_slot
+                        .write(SoundChipType::OKIM6258, 0, (offset & 0x7f) as u32, dat.into());
+                }
+            }
             0xc0 => {
                 let offset = self.get_vgm_u16();
                 let dat = self.get_vgm_u8();
@@ -642,7 +679,7 @@ impl VgmPlay {
                 // 0x4f: dd: Game Gear PSG stereo, write dd to port 0x06
                 self.get_vgm_u8();
             }
-            0x40..=0x4e | 0x5d | 0xb0..=0xbf => {
+            0x40..=0x4e | 0x5d | 0xb0..=0xb6 | 0xb8..=0xbf => {
                 // 0x5d: aa dd: YMZ280B, write value dd to register aa
                 // 0xb0: aa dd: RF5C68, write value dd to register aa
                 // 0xb1: aa dd: RF5C164, write value dd to register aa
@@ -651,7 +688,6 @@ impl VgmPlay {
                 // 0xb4: aa dd: NES APU, write value dd to register aa
                 // 0xb5: aa dd: MultiPCM, write value dd to register aa
                 // 0xb6: aa dd: uPD7759, write value dd to register aa
-                // 0xb7: aa dd: OKIM6258, write value dd to register aa
                 // 0xb8: aa dd: OKIM6295, write value dd to register aa
                 // 0xb9: aa dd: HuC6280, write value dd to register aa
                 // 0xba: aa dd: K053260, write value dd to register aa

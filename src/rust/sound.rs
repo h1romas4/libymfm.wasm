@@ -9,6 +9,7 @@ mod chip_ymfm;
 mod chip_sn76496;
 mod chip_pwm;
 mod chip_segapcm;
+mod chip_okim6258;
 
 pub use crate::sound::interface::SoundChipType as SoundChipType;
 pub use crate::sound::slot::SoundSlot as SoundSlot;

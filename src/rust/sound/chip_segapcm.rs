@@ -142,7 +142,7 @@ impl SoundChip for SEGAPCM {
         sound_stream.push(l[0], r[0]);
     }
 
-    fn set_rombank(&mut self, _ /* SEGAPCM has only one RomBan */: RomIndex, rombank: RomBank) {
+    fn set_rombank(&mut self, _ /* SEGAPCM has only one RomBank */: RomIndex, rombank: RomBank) {
         self.rombank = rombank;
     }
 
