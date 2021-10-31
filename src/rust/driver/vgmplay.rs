@@ -293,12 +293,12 @@ impl VgmPlay {
             // get associated stream data block
             let data = self.data_block.get(&stream.data_block_id).unwrap();
             if stream.pcm_stream_pos_init == stream.pcm_stream_pos && stream.pcm_stream_length > 0 {
-                stream.pcm_stream_sampling_pos = 0;
+                // 1st sample output
+                stream.pcm_stream_sampling_pos = 1.0_f32;
             }
             // adjust the output sampling rate with the stream sampling rate
             if stream.pcm_stream_length > 0
-                && (stream.pcm_stream_sampling_pos % stream.pcm_stream_sample_count) as usize == 0
-            {
+                && stream.pcm_stream_sampling_pos >= 1.0_f32 {
                 let chip_index = if stream.chip_type & 0b01000000 != 0 { 1 } else { 0 };
                 match data.data_type {
                     0x00 => {
@@ -323,12 +323,14 @@ impl VgmPlay {
                     }
                     _ => panic!("stream.data_bank_id"),
                 }
+                stream.pcm_stream_sampling_pos = 0_f32;
+                // TODO: yet unsuppoted loop
                 stream.pcm_stream_length -= 1;
                 stream.pcm_stream_pos += 1;
             }
             if stream.pcm_stream_length > 0 {
                 // update output sampling position
-                stream.pcm_stream_sampling_pos += 1;
+                stream.pcm_stream_sampling_pos += stream.pcm_stream_sample_step;
             }
         }
     }
@@ -654,7 +656,7 @@ impl VgmPlay {
                 let frequency = self.get_vgm_u32();
                 let stream = self.stream.get_mut(&stream_id).unwrap();
                 stream.frequency = frequency;
-                stream.pcm_stream_sample_count = VGM_TICK_RATE / frequency;
+                stream.pcm_stream_sample_step = frequency as f32 / VGM_TICK_RATE as f32;
             }
             0x93 => {
                 // Start Stream
@@ -813,8 +815,8 @@ struct Stream {
     flags: u8,
     pcm_pos: usize,
     pcm_offset: usize,
-    pcm_stream_sample_count: u32,
-    pcm_stream_sampling_pos: u32,
+    pcm_stream_sample_step: f32,
+    pcm_stream_sampling_pos: f32,
     pcm_stream_length: usize,
     pcm_stream_pos_init: usize,
     pcm_stream_pos: usize,
@@ -834,8 +836,8 @@ impl Stream {
             flags: 0,
             pcm_pos: 0,
             pcm_offset: 0,
-            pcm_stream_sample_count: 0,
-            pcm_stream_sampling_pos: 0,
+            pcm_stream_sample_step: 0_f32,
+            pcm_stream_sampling_pos: 0_f32,
             pcm_stream_length: 0,
             pcm_stream_pos_init: 0,
             pcm_stream_pos: 0,

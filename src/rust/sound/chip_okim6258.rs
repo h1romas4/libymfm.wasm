@@ -121,11 +121,15 @@ impl OKIM6258 {
     }
 
     pub fn data_w(&mut self, data: u8) {
+        // println!("data_w: {}", data);
+        // printf("data_w: %d\n", data);
         self.data_in = data;
         self.nibble_shift = 0;
     }
 
     pub fn ctrl_w(&mut self, data: u8) {
+        // println!("ctrl_w: {}", data);
+        // printf("ctrl_w: %x\n", data);
         if (data & COMMAND_STOP) != 0 {
             self.status &= !(STATUS_PLAYING | STATUS_RECORDING);
             return;
