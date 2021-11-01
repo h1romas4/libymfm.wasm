@@ -323,7 +323,7 @@ impl VgmPlay {
                     }
                     _ => panic!("stream.data_bank_id"),
                 }
-                stream.pcm_stream_sampling_pos = 0_f32;
+                stream.pcm_stream_sampling_pos -= 1_f32;
                 // TODO: yet unsuppoted loop
                 stream.pcm_stream_length -= 1;
                 stream.pcm_stream_pos += 1;
