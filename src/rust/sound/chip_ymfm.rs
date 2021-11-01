@@ -116,7 +116,7 @@ impl SoundChip for YmFm {
 
     fn reset(&mut self) {}
 
-    fn write(&mut self, index: usize, offset: u32, data: u32) {
+    fn write(&mut self, index: usize, offset: u32, data: u32, _: &mut dyn SoundStream) {
         self.write_chip(index, offset, data as u8);
     }
 

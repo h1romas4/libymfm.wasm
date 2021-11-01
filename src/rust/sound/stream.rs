@@ -3,10 +3,19 @@
 ///
 /// Sound stream interface
 ///
+pub enum OutputChannel {
+    Stereo,
+    Left,
+    Right,
+    Mute,
+}
+
 pub trait SoundStream {
     fn is_tick(&mut self) -> Tick;
     fn push(&mut self, sampling_l: f32, sampling_r: f32);
     fn drain(&mut self) -> (f32, f32);
+    fn change_sapmling_rate(&mut self, sampling_rate: u32);
+    fn set_output_channel(&mut self, output_channel: OutputChannel);
 }
 
 ///
@@ -38,6 +47,14 @@ impl SoundStream for NativeStream {
 
     fn drain(&mut self) -> (f32, f32) {
         (self.now_input_sampling_l, self.now_input_sampling_r)
+    }
+
+    fn change_sapmling_rate(&mut self, _sampling_rate: u32) {
+        panic!("I can't do that.")
+    }
+
+    fn set_output_channel(&mut self, _output_channel: OutputChannel) {
+        todo!()
     }
 }
 
@@ -96,6 +113,14 @@ impl SoundStream for NearestDownSampleStream {
     fn drain(&mut self) -> (f32, f32) {
         (self.output_sampling_l, self.output_sampling_r)
     }
+
+    fn change_sapmling_rate(&mut self, _sampling_rate: u32) {
+        todo!()
+    }
+
+    fn set_output_channel(&mut self, _output_channel: OutputChannel) {
+        todo!()
+    }
 }
 
 ///
@@ -106,25 +131,33 @@ pub struct LinearUpSamplingStream {
     now_input_sampling_r: Option<f32>,
     prev_input_sampling_l: Option<f32>,
     prev_input_sampling_r: Option<f32>,
+    input_sampling_rate: u32,
+    output_sampling_rate: u32,
     output_sampling_pos: f64,
     output_sampling_step: f64,
     output_sampling_l: f32,
     output_sampling_r: f32,
+    output_channel: OutputChannel,
 }
 
 impl LinearUpSamplingStream {
     pub fn new(input_sampling_rate: u32, output_sampling_rate: u32) -> Self {
         assert!(input_sampling_rate <= output_sampling_rate);
-        let output_sampling_step = input_sampling_rate as f64 / output_sampling_rate as f64;
         LinearUpSamplingStream {
             now_input_sampling_l: None,
             now_input_sampling_r: None,
             prev_input_sampling_l: None,
             prev_input_sampling_r: None,
+            input_sampling_rate,
+            output_sampling_rate,
             output_sampling_pos: 1_f64,
-            output_sampling_step,
+            output_sampling_step: Self::calc_output_sampling_step(
+                input_sampling_rate,
+                output_sampling_rate,
+            ),
             output_sampling_l: 0_f32,
             output_sampling_r: 0_f32,
+            output_channel: OutputChannel::Stereo,
         }
     }
 
@@ -137,6 +170,10 @@ impl LinearUpSamplingStream {
         (prev_sample as f64
             + (output_pos - self.output_sampling_step as f64)
                 * (now_sample as f64 - prev_sample as f64)) as f32
+    }
+
+    fn calc_output_sampling_step(input_sampling_rate: u32, output_sampling_rate: u32) -> f64 {
+        input_sampling_rate as f64 / output_sampling_rate as f64
     }
 }
 
@@ -187,7 +224,25 @@ impl SoundStream for LinearUpSamplingStream {
     ///
     fn drain(&mut self) -> (f32, f32) {
         self.output_sampling_pos += self.output_sampling_step;
-        (self.output_sampling_l, self.output_sampling_r)
+        match self.output_channel {
+            OutputChannel::Stereo => (self.output_sampling_l, self.output_sampling_r),
+            OutputChannel::Left => (self.output_sampling_l, 0_f32),
+            OutputChannel::Right => (0_f32, self.output_sampling_r),
+            OutputChannel::Mute => (0_f32, 0_f32),
+        }
+    }
+
+    fn change_sapmling_rate(&mut self, sampling_rate: u32) {
+        self.input_sampling_rate = sampling_rate;
+        self.output_sampling_pos = 1_f64;
+        self.output_sampling_step = Self::calc_output_sampling_step(
+            self.input_sampling_rate,
+            self.output_sampling_rate,
+        );
+    }
+
+    fn set_output_channel(&mut self, output_channel: OutputChannel) {
+        self.output_channel = output_channel;
     }
 }
 
@@ -235,6 +290,14 @@ impl SoundStream for OverSampleStream {
 
     fn drain(&mut self) -> (f32, f32) {
         (self.output_sampling_l, self.output_sampling_r)
+    }
+
+    fn change_sapmling_rate(&mut self, _sampling_rate: u32) {
+        todo!()
+    }
+
+    fn set_output_channel(&mut self, _output_channel: OutputChannel) {
+        todo!()
     }
 }
 

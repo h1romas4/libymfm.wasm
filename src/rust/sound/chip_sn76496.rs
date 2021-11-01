@@ -505,7 +505,7 @@ impl SoundChip for SN76496 {
         todo!("WIP");
     }
 
-    fn write(&mut self, _: usize, _: u32, data: u32) {
+    fn write(&mut self, _: usize, _: u32, data: u32, _: &mut dyn SoundStream) {
         self.write(data as u8);
     }
 

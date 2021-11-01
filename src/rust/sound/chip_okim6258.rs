@@ -1,10 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-use super::{
-    interface::{RomBank, SoundChip},
-    stream::{convert_sample_i2f, SoundStream},
-    RomIndex,
-};
+use super::{RomIndex, interface::{RomBank, SoundChip}, stream::{OutputChannel, SoundStream, convert_sample_i2f}};
 /**
  * Rust OKI MSM6258 emulation
  *  Hiromasa Tanaka <h1romas4@gmail.com>
@@ -42,6 +38,7 @@ const DIVIDERS: [u32; 4] = [1024, 768, 512, 512];
 const INDEX_SHIFT: [i32; 8] = [-1, -1, -1, -1, 2, 4, 6, 8];
 
 pub struct OKIM6258 {
+    clock: u32,
     status: u8,
     start_divider: u32,
     divider: u32,     /* master clock divider */
@@ -57,6 +54,7 @@ pub struct OKIM6258 {
 impl OKIM6258 {
     pub fn default() -> Self {
         OKIM6258 {
+            clock: 0,
             status: 0,
             start_divider: 0,
             divider: 512,
@@ -72,6 +70,7 @@ impl OKIM6258 {
     }
 
     pub fn device_start(&mut self, clock: u32) -> u32 {
+        self.clock = clock;
         self.compute_tables();
 
         self.divider = DIVIDERS[self.start_divider as usize];
@@ -82,7 +81,7 @@ impl OKIM6258 {
         // return sampling rate
         // 7812, 8000000, 1024
         // 15625, 8000000, 512
-        clock / self.divider
+        self.clock / self.divider
     }
 
     pub fn device_reset(&mut self) {
@@ -156,8 +155,10 @@ impl OKIM6258 {
         }
     }
 
-    pub fn set_divider(&mut self, val: u32) {
+    pub fn set_divider(&mut self, val: u32) -> u32 {
         self.divider = DIVIDERS[val as usize];
+        // return sampling rate
+        self.clock / self.divider
     }
 
     pub fn set_outbits(&mut self, outbit: u8) {
@@ -247,21 +248,23 @@ impl SoundChip for OKIM6258 {
         self.device_reset();
     }
 
-    fn write(&mut self, _: usize, offset: u32, data: u32) {
+    fn write(&mut self, _: usize, offset: u32, data: u32, sound_stream: &mut dyn SoundStream) {
         match offset {
             0x0 => self.ctrl_w((data & 0xff) as u8),
             0x1 => self.data_w((data & 0xff) as u8),
             0x2 => {
-                /* todo!("pan control") */
+                match data {
+                    0 => sound_stream.set_output_channel(OutputChannel::Stereo),
+                    1 => sound_stream.set_output_channel(OutputChannel::Left),
+                    2 => sound_stream.set_output_channel(OutputChannel::Right),
+                    3 => sound_stream.set_output_channel(OutputChannel::Stereo), /* TODO: Mute ? */
+                    _ => { panic!("ignore set_output_channel ({})", data) }
+                }
             }
-            0x8 => {
-                todo!("change data clock")
-            }
-            0xc => {
-                todo!("restore initial divider")
-            }
-            // hack addtional offset for lib
-            0x10 => self.set_divider(data),
+            0x8 => todo!("change data clock"),
+            0xc => todo!("restore initial divider"),
+            // (hack) addtional port map offset for lib
+            0x10 => sound_stream.change_sapmling_rate(self.set_divider(data)),
             0x11 => self.set_outbits((data & 0xff) as u8),
             0x12 => self.set_type((data & 0xff) as u8),
             _ => {

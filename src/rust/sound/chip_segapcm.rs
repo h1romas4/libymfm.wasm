@@ -131,7 +131,7 @@ impl SoundChip for SEGAPCM {
         self.reset();
     }
 
-    fn write(&mut self, _: usize, offset: u32, data: u32) {
+    fn write(&mut self, _: usize, offset: u32, data: u32, _: &mut dyn SoundStream) {
         self.write(offset, data as u8);
     }
 

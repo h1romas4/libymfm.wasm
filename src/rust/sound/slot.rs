@@ -178,7 +178,7 @@ impl SoundSlot {
     pub fn write(&mut self, sound_device_name: SoundChipType, index: usize, port: u32, data: u32) {
         match self.find_sound_device(sound_device_name, index) {
             None => { /* nothing to do */ }
-            Some(sound_device) => sound_device.sound_chip.write(index, port, data),
+            Some(sound_device) => sound_device.write(index, port, data),
         }
     }
 
@@ -316,5 +316,12 @@ impl SoundDevice {
             }
         }
         self.sound_stream.drain()
+    }
+
+    ///
+    /// Write command to sound chip.
+    ///
+    fn write(&mut self, sound_chip_index: usize, port: u32, data: u32) {
+        self.sound_chip.write(sound_chip_index, port, data, &mut *self.sound_stream);
     }
 }

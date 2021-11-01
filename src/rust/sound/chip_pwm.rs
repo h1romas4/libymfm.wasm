@@ -234,7 +234,7 @@ impl SoundChip for PWM {
         todo!("WIP");
     }
 
-    fn write(&mut self, _: usize, port: u32, data: u32) {
+    fn write(&mut self, _: usize, port: u32, data: u32, _: &mut dyn SoundStream) {
         self.pwm_w(port as u32, data as u16);
     }
 
