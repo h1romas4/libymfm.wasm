@@ -136,13 +136,15 @@ impl OKIM6258 {
             return;
         }
 
-        if (data & COMMAND_PLAY) != 0 && (self.status & STATUS_PLAYING) == 0 {
-            self.status |= STATUS_PLAYING;
+        if (data & COMMAND_PLAY) != 0 {
+            if (self.status & STATUS_PLAYING) == 0 {
+                self.status |= STATUS_PLAYING;
 
-            /* Also reset the ADPCM parameters */
-            self.signal = -2;
-            self.step = 0;
-            self.nibble_shift = 0;
+                /* Also reset the ADPCM parameters */
+                self.signal = -2;
+                self.step = 0;
+                self.nibble_shift = 0;
+            }
         } else {
             self.status &= !STATUS_PLAYING;
         }
