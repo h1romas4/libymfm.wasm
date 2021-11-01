@@ -257,7 +257,7 @@ impl SoundChip for OKIM6258 {
                     0 => sound_stream.set_output_channel(OutputChannel::Stereo),
                     1 => sound_stream.set_output_channel(OutputChannel::Left),
                     2 => sound_stream.set_output_channel(OutputChannel::Right),
-                    3 => sound_stream.set_output_channel(OutputChannel::Stereo), /* TODO: Mute ? */
+                    3 => sound_stream.set_output_channel(OutputChannel::Mute),
                     _ => { panic!("ignore set_output_channel ({})", data) }
                 }
             }
