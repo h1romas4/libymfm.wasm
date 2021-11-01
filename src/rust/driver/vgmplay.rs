@@ -244,7 +244,7 @@ impl VgmPlay {
                     SoundChipType::OKIM6258,
                     i,
                     0x11, /* set_outbits */
-                    if flag & 3 != 0 { 12 } else { 10 },
+                    if flag & 4 != 0 { 12 } else { 10 },
                 );
                 self.sound_slot.write(
                     SoundChipType::OKIM6258,
