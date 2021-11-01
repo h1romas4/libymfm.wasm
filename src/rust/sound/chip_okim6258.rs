@@ -80,6 +80,8 @@ impl OKIM6258 {
         self.step = 0;
 
         // return sampling rate
+        // 7812, 8000000, 1024
+        // 15625, 8000000, 512
         clock / self.divider
     }
 
@@ -187,6 +189,9 @@ impl OKIM6258 {
             self.step = 0;
         }
 
+        // println!("{}, {}, {}, {}, {}, {}, {}", self.data_in, self.signal, self.step, max, min, nibble, self.output_bits);
+        // printf("%d, %d, %d, %d, %d, %d, %d\n", m_data_in, m_signal, m_step, max, min, nibble, m_output_bits);
+
         (self.signal << 4) as i16
     }
 
@@ -214,16 +219,16 @@ impl OKIM6258 {
         /* loop over all possible steps */
         for step in 0..=48 {
             /* compute the step value */
-            let stepval = f32::floor(16.0_f32 * f32::powf(11.0_f32 / 10.0_f32, step as f32));
+            let stepval = f32::floor(16.0_f32 * f32::powf(11.0_f32 / 10.0_f32, step as f32)) as i32;
 
             /* loop over all nibbles and compute the difference */
             #[allow(clippy::needless_range_loop)]
             for nib in 0..16 {
                 self.diff_lookup[(step * 16 + nib) as usize] = nbl2bit[nib][0]
-                    * (stepval * nbl2bit[nib][1] as f32
-                        + stepval / 2_f32 * nbl2bit[nib][2] as f32
-                        + stepval / 4_f32 * nbl2bit[nib][3] as f32
-                        + stepval / 8_f32) as i32;
+                    * (stepval * nbl2bit[nib][1]
+                        + stepval / 2 * nbl2bit[nib][2]
+                        + stepval / 4 * nbl2bit[nib][3]
+                        + stepval / 8) as i32;
             }
         }
     }
