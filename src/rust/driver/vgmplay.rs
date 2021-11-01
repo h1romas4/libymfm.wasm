@@ -695,6 +695,7 @@ impl VgmPlay {
                 stream.flags = flags;
                 stream.pcm_stream_pos = stream.pcm_stream_pos_init;
                 stream.pcm_stream_length = data.data_length;
+                wait = 1; /* update */
             }
             0xa0 => {
                 // TODO: AY8910, write
