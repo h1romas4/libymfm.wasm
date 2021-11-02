@@ -1,6 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-use super::{RomIndex, interface::{RomBank, SoundChip}, stream::{OutputChannel, SoundStream, convert_sample_i2f}};
 /**
  * Rust OKI MSM6258 emulation
  *  Hiromasa Tanaka <h1romas4@gmail.com>
@@ -25,7 +24,8 @@ use super::{RomIndex, interface::{RomBank, SoundChip}, stream::{OutputChannel, S
  *   Recording?
  *
  **********************************************************************************************/
-use crate::sound::SoundChipType;
+ use super::{RomIndex, interface::{RomBank, SoundChip}, stream::{OutputChannel, SoundStream, convert_sample_i2f}};
+ use crate::sound::SoundChipType;
 
 const COMMAND_STOP: u8 = 1 << 0;
 const COMMAND_PLAY: u8 = 1 << 1;
@@ -50,6 +50,8 @@ pub struct OKIM6258 {
     step: i32,
     diff_lookup: [i32; 49 * 16], /* lookup table for the precomputed difference */
     data_state: Vec<u8>,
+    data_empty_count: usize,
+    last_sample: i16,
 }
 
 impl OKIM6258 {
@@ -67,6 +69,8 @@ impl OKIM6258 {
             step: 0,
             diff_lookup: [0; 49 * 16],
             data_state: Vec::new(),
+            data_empty_count: 0,
+            last_sample: 0,
         }
     }
 
@@ -104,13 +108,26 @@ impl OKIM6258 {
             for sampindex in 0..length {
                 if !self.data_state.is_empty() {
                     self.data_in = self.data_state.drain(0..1).next().unwrap();
+                    self.data_empty_count = 0;
+                } else {
+                    self.data_empty_count += 1;
                 }
 
-                /* Compute the new amplitude and update the current step */
-                let nibble: u8 = (self.data_in >> nibble_shift) & 0xf;
+                let sample: i16;
+                /* The same data can only be used once */
+                if self.data_empty_count < 2 {
+                    /* Compute the new amplitude and update the current step */
+                    let nibble: u8 = (self.data_in >> nibble_shift) & 0xf;
 
-                /* Output to the buffer */
-                let sample = self.clock_adpcm(nibble);
+                    /* Output to the buffer */
+                    sample = self.clock_adpcm(nibble);
+
+                    self.last_sample = sample;
+                } else {
+                    /* Return the previous sampling */
+                    sample = self.last_sample;
+                    self.last_sample = 0;
+                }
 
                 nibble_shift ^= 4;
 
@@ -149,6 +166,10 @@ impl OKIM6258 {
                 self.signal = -2;
                 self.step = 0;
                 self.nibble_shift = 0;
+
+                /* In the case of control messages, the data expires */
+                self.data_state.clear();
+                self.data_empty_count = 0;
             }
         } else {
             self.status &= !STATUS_PLAYING;
@@ -197,8 +218,8 @@ impl OKIM6258 {
             self.step = 0;
         }
 
-        // println!("{}, {}, {}, {}, {}, {}, {}", self.data_in, self.signal, self.step, max, min, nibble, self.output_bits);
-        // printf("%d, %d, %d, %d, %d, %d, %d\n", m_data_in, m_signal, m_step, max, min, nibble, m_output_bits);
+        println!("{:>3x}, {:3}, {:3}, {}", self.data_in, nibble, self.step, self.signal);
+        // printf("%3x, %3d, %3d, %3d, %d\n", m_data_in, nibble, m_step, m_signal);
 
         (self.signal << 4) as i16
     }
