@@ -65,7 +65,6 @@ impl OKIM6258 {
             signal: 0,
             step: 0,
             diff_lookup: [0; 49 * 16],
-            // addtional
         }
     }
 
@@ -122,15 +121,15 @@ impl OKIM6258 {
     }
 
     pub fn data_w(&mut self, data: u8) {
-        // println!("data_w: {}", data);
         // printf("data_w: %d\n", data);
+        // println!("data_w: {}", data);
         self.data_in = data;
         self.nibble_shift = 0;
     }
 
     pub fn ctrl_w(&mut self, data: u8) {
-        // println!("ctrl_w: {}", data);
         // printf("ctrl_w: %x\n", data);
+        // println!("ctrl_w: {}", data);
         if (data & COMMAND_STOP) != 0 {
             self.status &= !(STATUS_PLAYING | STATUS_RECORDING);
             return;
