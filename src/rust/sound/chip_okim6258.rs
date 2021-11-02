@@ -122,14 +122,14 @@ impl OKIM6258 {
                     /* Output to the buffer */
                     sample = self.clock_adpcm(nibble);
 
+                    nibble_shift ^= 4;
+
                     self.last_sample = sample;
                 } else {
                     /* Return the previous sampling */
                     sample = self.last_sample;
                     self.last_sample = 0;
                 }
-
-                nibble_shift ^= 4;
 
                 buffer_l[sampindex + buffer_pos] = convert_sample_i2f(sample as i32) / 2_f32;
                 buffer_r[sampindex + buffer_pos] = convert_sample_i2f(sample as i32) / 2_f32;
