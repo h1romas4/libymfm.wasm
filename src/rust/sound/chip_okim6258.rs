@@ -218,7 +218,7 @@ impl OKIM6258 {
             self.step = 0;
         }
 
-        println!("{:>3x}, {:3}, {:3}, {}", self.data_in, nibble, self.step, self.signal);
+        // println!("{:>3x}, {:3}, {:3}, {}", self.data_in, nibble, self.step, self.signal);
         // printf("%3x, %3d, %3d, %3d, %d\n", m_data_in, nibble, m_step, m_signal);
 
         (self.signal << 4) as i16
