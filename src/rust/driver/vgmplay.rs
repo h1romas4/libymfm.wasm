@@ -882,33 +882,6 @@ mod tests {
     }
 
     #[test]
-    fn ym2612_2() {
-        play("./docs/vgm/2612/20.vgz");
-        play("./docs/vgm/2612/21.vgz");
-        play("./docs/vgm/2612/22.vgz");
-        play("./docs/vgm/2612/23.vgz");
-        play("./docs/vgm/2612/24.vgz");
-        play("./docs/vgm/2612/25.vgz");
-        play("./docs/vgm/2612/26.vgz");
-        play("./docs/vgm/2612/27.vgz");
-        play("./docs/vgm/2612/28.vgz");
-        play("./docs/vgm/2612/29.vgz");
-        play("./docs/vgm/2612/30.vgz");
-        play("./docs/vgm/2612/31.vgz");
-        play("./docs/vgm/2612/32.vgz");
-        play("./docs/vgm/2612/33.vgz");
-        play("./docs/vgm/2612/34.vgz");
-        play("./docs/vgm/2612/35.vgz");
-        play("./docs/vgm/2612/36.vgz");
-        play("./docs/vgm/2612/37.vgz");
-        play("./docs/vgm/2612/38.vgz");
-        play("./docs/vgm/2612/39.vgz");
-        play("./docs/vgm/2612/40.vgz");
-        play("./docs/vgm/2612/41.vgz");
-        play("./docs/vgm/2612/42.vgz");
-    }
-
-    #[test]
     fn ym2612_3() {
         play("./docs/vgm/ym2612-ng.vgz")
     }
@@ -954,6 +927,11 @@ mod tests {
     #[test]
     fn okim6258_1() {
         play("./docs/vgm/okim6258.vgz")
+    }
+
+    #[test]
+    fn okim6258_2() {
+        play("./docs/vgm/okim6258-2.vgz")
     }
 
     fn play(filepath: &str) {
