@@ -49,6 +49,7 @@ pub struct OKIM6258 {
     signal: i32,
     step: i32,
     diff_lookup: [i32; 49 * 16], /* lookup table for the precomputed difference */
+    data_state: Vec<u8>,
 }
 
 impl OKIM6258 {
@@ -65,6 +66,7 @@ impl OKIM6258 {
             signal: 0,
             step: 0,
             diff_lookup: [0; 49 * 16],
+            data_state: Vec::new(),
         }
     }
 
@@ -100,11 +102,15 @@ impl OKIM6258 {
             let mut nibble_shift = self.nibble_shift;
 
             for sampindex in 0..length {
+                if !self.data_state.is_empty() {
+                    self.data_in = self.data_state.drain(0..1).next().unwrap();
+                }
+
                 /* Compute the new amplitude and update the current step */
                 let nibble: u8 = (self.data_in >> nibble_shift) & 0xf;
 
                 /* Output to the buffer */
-                let sample: i16 = self.clock_adpcm(nibble);
+                let sample = self.clock_adpcm(nibble);
 
                 nibble_shift ^= 4;
 
@@ -123,7 +129,7 @@ impl OKIM6258 {
     pub fn data_w(&mut self, data: u8) {
         // printf("data_w: %d\n", data);
         // println!("data_w: {}", data);
-        self.data_in = data;
+        self.data_state.push(data);
         self.nibble_shift = 0;
     }
 
