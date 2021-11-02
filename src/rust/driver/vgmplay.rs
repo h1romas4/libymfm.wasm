@@ -679,7 +679,13 @@ impl VgmPlay {
                 let stream_id = self.get_vgm_u8();
                 // stop stream (set pcm_stream_length to 0)
                 let stream = self.stream.get_mut(&stream_id).unwrap();
-                stream.pcm_stream_length = 0;
+                // flash last sample
+                if stream.pcm_stream_sampling_pos >= 1_f32 {
+                    stream.pcm_stream_length = 1;
+                    wait = 1;
+                } else {
+                    stream.pcm_stream_length = 0;
+                }
             }
             0x95 => {
                 // Start Stream (fast call)
