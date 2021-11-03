@@ -50,8 +50,6 @@ pub struct OKIM6258 {
     step: i32,
     diff_lookup: [i32; 49 * 16], /* lookup table for the precomputed difference */
     data_state: Vec<u8>,
-    data_empty_count: usize,
-    last_sample: i16,
 }
 
 impl OKIM6258 {
@@ -69,8 +67,6 @@ impl OKIM6258 {
             step: 0,
             diff_lookup: [0; 49 * 16],
             data_state: Vec::new(),
-            data_empty_count: 0,
-            last_sample: 0,
         }
     }
 
@@ -108,28 +104,15 @@ impl OKIM6258 {
             for sampindex in 0..length {
                 if !self.data_state.is_empty() {
                     self.data_in = self.data_state.drain(0..1).next().unwrap();
-                    self.data_empty_count = 0;
-                } else {
-                    self.data_empty_count += 1;
                 }
 
-                let sample: i16;
-                /* The same data can only be used once */
-                if self.data_empty_count < 2 {
-                    /* Compute the new amplitude and update the current step */
-                    let nibble: u8 = (self.data_in >> nibble_shift) & 0xf;
+                /* Compute the new amplitude and update the current step */
+                let nibble: u8 = (self.data_in >> nibble_shift) & 0xf;
 
-                    /* Output to the buffer */
-                    sample = self.clock_adpcm(nibble);
+                /* Output to the buffer */
+                let sample = self.clock_adpcm(nibble);
 
-                    nibble_shift ^= 4;
-
-                    self.last_sample = sample;
-                } else {
-                    /* Return the previous sampling */
-                    sample = self.last_sample;
-                    self.last_sample = 0;
-                }
+                nibble_shift ^= 4;
 
                 buffer_l[sampindex + buffer_pos] = convert_sample_i2f(sample as i32) / 2_f32;
                 buffer_r[sampindex + buffer_pos] = convert_sample_i2f(sample as i32) / 2_f32;
@@ -169,7 +152,6 @@ impl OKIM6258 {
 
                 /* In the case of control messages, the data expires */
                 self.data_state.clear();
-                self.data_empty_count = 0;
             }
         } else {
             self.status &= !STATUS_PLAYING;

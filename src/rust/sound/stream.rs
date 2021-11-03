@@ -138,10 +138,18 @@ pub struct LinearUpSamplingStream {
     output_sampling_l: f32,
     output_sampling_r: f32,
     output_channel: OutputChannel,
+    resolution: Resolution,
+}
+
+#[allow(dead_code)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+pub enum Resolution {
+    RangeAll,
+    RangePerTick,
 }
 
 impl LinearUpSamplingStream {
-    pub fn new(input_sampling_rate: u32, output_sampling_rate: u32) -> Self {
+    pub fn new(input_sampling_rate: u32, output_sampling_rate: u32, resolution: Resolution) -> Self {
         assert!(input_sampling_rate <= output_sampling_rate);
         LinearUpSamplingStream {
             now_input_sampling_l: None,
@@ -154,10 +162,12 @@ impl LinearUpSamplingStream {
             output_sampling_step: Self::calc_output_sampling_step(
                 input_sampling_rate,
                 output_sampling_rate,
+                resolution,
             ),
             output_sampling_l: 0_f32,
             output_sampling_r: 0_f32,
             output_channel: OutputChannel::Stereo,
+            resolution,
         }
     }
 
@@ -172,8 +182,13 @@ impl LinearUpSamplingStream {
                 * (now_sample as f64 - prev_sample as f64)) as f32
     }
 
-    fn calc_output_sampling_step(input_sampling_rate: u32, output_sampling_rate: u32) -> f64 {
-        input_sampling_rate as f64 / output_sampling_rate as f64
+    fn calc_output_sampling_step(input_sampling_rate: u32, output_sampling_rate: u32, resolution: Resolution) -> f64 {
+        match resolution {
+            // all ranges during playback
+            Resolution::RangeAll => input_sampling_rate as f64 / output_sampling_rate as f64,
+            // devaluation in the range of output sampling rate
+            Resolution::RangePerTick => 1_f64 / f64::floor(output_sampling_rate as f64 / input_sampling_rate as f64),
+        }
     }
 }
 
@@ -238,6 +253,7 @@ impl SoundStream for LinearUpSamplingStream {
         self.output_sampling_step = Self::calc_output_sampling_step(
             self.input_sampling_rate,
             self.output_sampling_rate,
+            self.resolution,
         );
     }
 
@@ -333,13 +349,14 @@ mod tests {
     use approx_eq::assert_approx_eq;
 
     use crate::sound::stream::LinearUpSamplingStream;
+    use crate::sound::stream::Resolution;
     use crate::sound::stream::Tick;
 
     use super::SoundStream;
 
     #[test]
     fn make_stream_1() {
-        let mut stream = LinearUpSamplingStream::new(1, 4);
+        let mut stream = LinearUpSamplingStream::new(1, 4, Resolution::RangeAll);
 
         println!("= step 0 (0.0, 0.0) -> (1.0, 1.0)");
         assert!(stream.is_tick() == Tick::One);
@@ -407,5 +424,29 @@ mod tests {
         // assert_approx_eq!(l as f64, tl as f64);
         // #[allow(clippy::float_cmp)]
         // assert_approx_eq!(r as f64, tr as f64);
+    }
+
+    #[test]
+    fn test_resolution() {
+        let mut stream = LinearUpSamplingStream::new(15625, 44100, Resolution::RangePerTick);
+        println!("{}", stream.output_sampling_step); /* 0.5 */
+
+        // LinearUpSamplingStream lags by one sample.
+        assert!(stream.is_tick() == Tick::One);
+        stream.push(0_f32, 0_f32);
+        assert_sampling(stream.drain(), (0_f32, 0_f32));
+        assert!(stream.is_tick() == Tick::No);
+        assert_sampling(stream.drain(), (0_f32, 0_f32));
+
+        // Since the step is 0.5, the ticks repeat alternately.
+        assert!(stream.is_tick() == Tick::One);
+        stream.push(1_f32, 1_f32);
+        assert_sampling(stream.drain(), (0_f32, 0_f32));
+        assert!(stream.is_tick() == Tick::No);
+        assert_sampling(stream.drain(), (0.5_f32, 0.5_f32));
+
+        assert!(stream.is_tick() == Tick::One);
+        stream.push(1_f32, 1_f32);
+        assert_sampling(stream.drain(), (1_f32, 1_f32));
     }
 }

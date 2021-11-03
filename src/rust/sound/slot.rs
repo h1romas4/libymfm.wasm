@@ -6,6 +6,7 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 
 use super::SoundChipType;
+use super::stream::Resolution;
 use crate::sound::chip_ymfm::YmFm;
 use crate::sound::chip_sn76496::SN76496;
 use crate::sound::chip_pwm::PWM;
@@ -128,6 +129,7 @@ impl SoundSlot {
                 Box::new(LinearUpSamplingStream::new(
                     sound_chip_sampling_rate,
                     self.output_sampling_rate,
+                    Resolution::RangeAll,
                 ))
             };
 
