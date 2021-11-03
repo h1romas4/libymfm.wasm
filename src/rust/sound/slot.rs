@@ -209,8 +209,8 @@ impl SoundSlot {
     ///
     /// Remaining tickable in sampling buffers.
     ///
-    pub fn ready(&self) -> bool {
-        self.output_sample_chunk_size as isize - self.output_sampling_buffer_l.len() as isize > 0
+    pub fn is_stream_filled(&self) -> bool {
+        self.output_sample_chunk_size as isize - self.output_sampling_buffer_l.len() as isize <= 0
     }
 
     ///

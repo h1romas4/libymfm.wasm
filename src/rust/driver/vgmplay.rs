@@ -262,12 +262,12 @@ impl VgmPlay {
     /// Play Sound.
     ///
     pub fn play(&mut self, repeat: bool) -> usize {
-        while self.sound_slot.ready() && !self.vgm_end {
+        while !self.sound_slot.is_stream_filled() && !self.vgm_end {
             for _ in 0..self.remain_tick_count {
                 self.update_pcm_stream();
                 self.sound_slot.update(1);
                 self.remain_tick_count -= 1;
-                if !self.sound_slot.ready() {
+                if self.sound_slot.is_stream_filled() {
                     break;
                 }
             }
