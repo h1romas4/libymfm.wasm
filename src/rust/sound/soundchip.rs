@@ -1,9 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use super::rom::RomSet;
+use super::rom::RomBank;
 use super::rom::RomIndex;
 use super::stream::SoundStream;
 
@@ -46,19 +43,3 @@ pub trait SoundChip {
     fn set_rombank(&mut self, rom_index: RomIndex, rom_bank: RomBank);
     fn notify_add_rom(&mut self, rom_index: RomIndex, index_no: usize);
 }
-
-///
-/// Read RomBank by address utility
-///
-pub fn read_rombank(rombank: &RomBank, address: usize) -> u8 {
-    rombank.as_ref().unwrap().borrow().read(address)
-}
-
-///
-/// Get Rom referance utility
-///
-pub fn get_rom_ref(rombank: &RomBank, index_no: usize) -> (*const u8, usize, usize) {
-    rombank.as_ref().unwrap().borrow().ger_rom_ref(index_no)
-}
-
-pub type RomBank = Option<Rc<RefCell<RomSet>>>;

@@ -12,7 +12,7 @@ use crate::sound::chip_sn76496::SN76496;
 use crate::sound::chip_pwm::PWM;
 use crate::sound::chip_segapcm::SEGAPCM;
 use crate::sound::chip_okim6258::OKIM6258;
-use crate::sound::interface::SoundChip;
+use crate::sound::soundchip::SoundChip;
 use crate::sound::stream::NearestDownSampleStream;
 use crate::sound::stream::NativeStream;
 use crate::sound::stream::LinearUpSamplingStream;

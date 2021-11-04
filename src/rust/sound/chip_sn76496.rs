@@ -151,7 +151,7 @@
           regs 1,3,5,6,7 if 0x80 is not set. This needs to be verified on real hardware.
 
 ***************************************************************************/
-use super::{RomIndex, SoundChipType, interface::{RomBank, SoundChip}, stream::{convert_sample_i2f, SoundStream}};
+use super::{RomIndex, SoundChipType, soundchip::{SoundChip}, rom::RomBank, stream::{convert_sample_i2f, SoundStream}};
 
 const MAX_OUTPUT: i32 = 0x7fff;
 

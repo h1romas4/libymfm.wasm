@@ -12,7 +12,7 @@
  *  rev. 70743c6fb2602a5c2666c679b618706eabfca2ad
  */
 use crate::sound::SoundChipType;
-use super::{RomIndex, interface::{RomBank, SoundChip, read_rombank}, stream::{convert_sample_i2f, SoundStream}};
+use super::{RomIndex, soundchip::{SoundChip}, rom::{RomBank, read_rombank}, stream::{convert_sample_i2f, SoundStream}};
 
 #[allow(clippy::upper_case_acronyms)]
 pub struct SEGAPCM {

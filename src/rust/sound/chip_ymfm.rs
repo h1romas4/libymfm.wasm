@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-use super::{RomIndex, SoundChipType, interface::{RomBank, SoundChip, get_rom_ref}, stream::{convert_sample_i2f, SoundStream}};
+use super::{RomIndex, SoundChipType, soundchip::{SoundChip}, rom::{RomBank, get_rom_ref}, stream::{convert_sample_i2f, SoundStream}};
 use std::collections::HashMap;
 
 ///
