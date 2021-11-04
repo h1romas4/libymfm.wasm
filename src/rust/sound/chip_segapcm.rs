@@ -1,12 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-use super::{
-    data_stream::{DataBlock, DataStream},
-    rom::{read_rombank, RomBank},
-    sound_chip::SoundChip,
-    stream::{convert_sample_i2f, SoundStream},
-    RomIndex,
-};
 /**
  * Rust SEGAPCM emulation
  *  Hiromasa Tanaka <h1romas4@gmail.com>
@@ -19,6 +12,13 @@ use super::{
  *  rev. 70743c6fb2602a5c2666c679b618706eabfca2ad
  */
 use crate::sound::SoundChipType;
+use super::{
+    data_stream::{DataBlock, DataStream},
+    rom::{read_rombank, RomBank},
+    sound_chip::SoundChip,
+    stream::{convert_sample_i2f, SoundStream},
+    RomIndex,
+};
 
 #[allow(clippy::upper_case_acronyms)]
 pub struct SEGAPCM {
