@@ -1,26 +1,21 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use std::cell::RefCell;
-use std::collections::HashMap;
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::rc::Rc;
 
+use super::chip_okim6258::OKIM6258;
+use super::chip_pwm::PWM;
+use super::chip_segapcm::SEGAPCM;
+use super::chip_sn76496::SN76496;
+use super::chip_ymfm::YmFm;
+use super::rom::{RomIndex, RomSet};
+use super::soundchip::SoundChip;
+use super::stream::{
+    LinearUpSamplingStream, NativeStream, NearestDownSampleStream, OverSampleStream, Resolution,
+    SoundStream, Tick,
+};
 use super::SoundChipType;
-use super::stream::Resolution;
-use crate::sound::chip_ymfm::YmFm;
-use crate::sound::chip_sn76496::SN76496;
-use crate::sound::chip_pwm::PWM;
-use crate::sound::chip_segapcm::SEGAPCM;
-use crate::sound::chip_okim6258::OKIM6258;
-use crate::sound::soundchip::SoundChip;
-use crate::sound::stream::NearestDownSampleStream;
-use crate::sound::stream::NativeStream;
-use crate::sound::stream::LinearUpSamplingStream;
-use crate::sound::stream::OverSampleStream;
-use super::rom::RomIndex;
-use super::rom::RomSet;
-use super::stream::SoundStream;
-use super::stream::Tick;
 
 ///
 /// Sound Slot
@@ -85,10 +80,14 @@ impl SoundSlot {
                     let mut ymfm = Box::new(YmFm::new(sound_chip_type));
                     let rom_index: Option<Vec<RomIndex>> = match sound_chip_type {
                         SoundChipType::YM2608 => Some(vec![RomIndex::YM2608_DELTA_T]),
-                        SoundChipType::YM2610 => Some(vec![RomIndex::YM2610_ADPCM, RomIndex::YM2610_DELTA_T]),
+                        SoundChipType::YM2610 => {
+                            Some(vec![RomIndex::YM2610_ADPCM, RomIndex::YM2610_DELTA_T])
+                        }
                         SoundChipType::Y8950 => Some(vec![RomIndex::Y8950_ROM]),
-                        SoundChipType::YMF278B => Some(vec![RomIndex::YMF278B_ROM, RomIndex::YMF278B_RAM]),
-                        _ => None
+                        SoundChipType::YMF278B => {
+                            Some(vec![RomIndex::YMF278B_ROM, RomIndex::YMF278B_RAM])
+                        }
+                        _ => None,
                     };
                     if let Some(rom_index) = rom_index {
                         self.add_rombank(rom_index, &mut *ymfm);
@@ -102,36 +101,35 @@ impl SoundSlot {
                     let mut segapcm = Box::new(SEGAPCM::new(SoundChipType::SEGAPCM));
                     self.add_rombank(vec![RomIndex::SEGAPCM_ROM], &mut *segapcm);
                     segapcm
-                },
+                }
                 SoundChipType::OKIM6258 => Box::new(OKIM6258::new(SoundChipType::OKIM6258)),
             };
 
             let sound_chip_sampling_rate = sound_chip.init(clock);
             #[allow(clippy::comparison_chain)]
-            let sound_stream: Box<dyn SoundStream> = if sound_chip_sampling_rate == self.output_sampling_rate {
-                Box::new(NativeStream::new())
-            } else if sound_chip_sampling_rate > self.output_sampling_rate {
-                match sound_chip_type {
-                    SoundChipType::SEGAPSG | SoundChipType::SN76489 | SoundChipType::PWM => {
-                        Box::new(OverSampleStream::new(
+            let sound_stream: Box<dyn SoundStream> =
+                if sound_chip_sampling_rate == self.output_sampling_rate {
+                    Box::new(NativeStream::new())
+                } else if sound_chip_sampling_rate > self.output_sampling_rate {
+                    match sound_chip_type {
+                        SoundChipType::SEGAPSG | SoundChipType::SN76489 | SoundChipType::PWM => {
+                            Box::new(OverSampleStream::new(
+                                sound_chip_sampling_rate,
+                                self.output_sampling_rate,
+                            ))
+                        }
+                        _ => Box::new(NearestDownSampleStream::new(
                             sound_chip_sampling_rate,
                             self.output_sampling_rate,
-                        ))
+                        )),
                     }
-                    _ => {
-                        Box::new(NearestDownSampleStream::new(
-                            sound_chip_sampling_rate,
-                            self.output_sampling_rate,
-                        ))
-                    }
-                }
-            } else {
-                Box::new(LinearUpSamplingStream::new(
-                    sound_chip_sampling_rate,
-                    self.output_sampling_rate,
-                    Resolution::RangeAll,
-                ))
-            };
+                } else {
+                    Box::new(LinearUpSamplingStream::new(
+                        sound_chip_sampling_rate,
+                        self.output_sampling_rate,
+                        Resolution::RangeAll,
+                    ))
+                };
 
             self.sound_device
                 .entry(sound_chip_type)
@@ -146,23 +144,30 @@ impl SoundSlot {
     ///
     /// Add ROM for sound chip.
     ///
-    pub fn add_rom(&mut self, rom_index: RomIndex, memory: &[u8], start_address: usize, end_address: usize) {
+    pub fn add_rom(
+        &mut self,
+        rom_index: RomIndex,
+        memory: &[u8],
+        start_address: usize,
+        end_address: usize,
+    ) {
         if self.sound_romset.contains_key(&rom_index) {
-            let index_no = self.sound_romset.get(&rom_index).unwrap().borrow_mut().add_rom(
-                memory,
-                start_address,
-                end_address,
-            );
+            let index_no = self
+                .sound_romset
+                .get(&rom_index)
+                .unwrap()
+                .borrow_mut()
+                .add_rom(memory, start_address, end_address);
             // notify sound chip
             let sound_device_name = match rom_index {
-                RomIndex::YM2608_DELTA_T => { Some(SoundChipType::YM2608) },
-                RomIndex::YM2610_ADPCM => { Some(SoundChipType::YM2610) },
-                RomIndex::YM2610_DELTA_T => { Some(SoundChipType::YM2610) },
-                RomIndex::YMF278B_ROM => { Some(SoundChipType::YMF278B) },
-                RomIndex::YMF278B_RAM => { Some(SoundChipType::YMF278B) },
-                RomIndex::Y8950_ROM => { Some(SoundChipType::Y8950) },
-                RomIndex::SEGAPCM_ROM => { Some(SoundChipType::SEGAPCM) },
-                RomIndex::NOT_SUPPOTED => { None },
+                RomIndex::YM2608_DELTA_T => Some(SoundChipType::YM2608),
+                RomIndex::YM2610_ADPCM => Some(SoundChipType::YM2610),
+                RomIndex::YM2610_DELTA_T => Some(SoundChipType::YM2610),
+                RomIndex::YMF278B_ROM => Some(SoundChipType::YMF278B),
+                RomIndex::YMF278B_RAM => Some(SoundChipType::YMF278B),
+                RomIndex::Y8950_ROM => Some(SoundChipType::Y8950),
+                RomIndex::SEGAPCM_ROM => Some(SoundChipType::SEGAPCM),
+                RomIndex::NOT_SUPPOTED => None,
             };
             if let Some(sound_device_name) = sound_device_name {
                 if let Some(sound_device) = self.sound_device.get_mut(&sound_device_name) {
@@ -275,7 +280,11 @@ impl SoundSlot {
     /// Get the sound chip from the sound slot.
     ///
     #[inline]
-    fn find_sound_device(&mut self, sound_device_name: SoundChipType, index: usize) -> Option<&mut SoundDevice> {
+    fn find_sound_device(
+        &mut self,
+        sound_device_name: SoundChipType,
+        index: usize,
+    ) -> Option<&mut SoundDevice> {
         let sound_device = match self.sound_device.get_mut(&sound_device_name) {
             None => None,
             Some(vec) => {
@@ -324,6 +333,7 @@ impl SoundDevice {
     /// Write command to sound chip.
     ///
     fn write(&mut self, sound_chip_index: usize, port: u32, data: u32) {
-        self.sound_chip.write(sound_chip_index, port, data, &mut *self.sound_stream);
+        self.sound_chip
+            .write(sound_chip_index, port, data, &mut *self.sound_stream);
     }
 }
