@@ -25,7 +25,7 @@
  *
  **********************************************************************************************/
 use super::{
-    data_stream::{DataBlock, DataStream},
+    data_stream::DataStream,
     rom::RomBank,
     sound_chip::SoundChip,
     stream::{convert_sample_i2f, OutputChannel, SoundStream},
@@ -294,7 +294,6 @@ impl SoundChip for OKIM6258 {
         _: usize,
         sound_stream: &mut dyn SoundStream,
         _data_stream: &Option<&mut DataStream>,
-        _data_block: &Option<&DataBlock>,
     ) {
         let mut l: [f32; 1] = [0_f32];
         let mut r: [f32; 1] = [0_f32];

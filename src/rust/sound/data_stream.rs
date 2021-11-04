@@ -1,7 +1,6 @@
-use std::collections::HashMap;
-
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+use std::collections::HashMap;
 use super::SoundChipType;
 
 pub struct DataBlock {
@@ -28,19 +27,17 @@ impl DataStreamSet {
         &mut self,
         sound_device_name: SoundChipType,
         sound_device_index: usize,
-    ) -> (Option<&mut DataStream>, Option<&DataBlock>) {
+    ) -> Option<&mut DataStream> {
         let mut find_data_stream: Option<&mut DataStream> = None;
-        let mut find_data_block: Option<&DataBlock> = None;
         if self.data_stream.contains_key(&sound_device_name) {
             for data_stream in self.data_stream.get_mut(&sound_device_name).unwrap() {
                 if data_stream.sound_device_index == sound_device_index {
-                    find_data_block = self.data_block.get(&data_stream.data_block_id);
                     find_data_stream = Some(data_stream);
                 }
             }
         }
 
-        (find_data_stream, find_data_block)
+        find_data_stream
     }
 }
 

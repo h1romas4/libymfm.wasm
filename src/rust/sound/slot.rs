@@ -9,7 +9,7 @@ use super::chip_pwm::PWM;
 use super::chip_segapcm::SEGAPCM;
 use super::chip_sn76496::SN76496;
 use super::chip_ymfm::YmFm;
-use super::data_stream::{DataBlock, DataStream, DataStreamSet};
+use super::data_stream::{DataStream, DataStreamSet};
 use super::rom::{RomIndex, RomSet};
 use super::sound_chip::SoundChip;
 use super::stream::{
@@ -168,10 +168,10 @@ impl SoundSlot {
                 let buffer_pos = self.output_sampling_buffer_l.len() - 1;
                 for (sound_device_name, sound_devices) in self.sound_device.iter_mut() {
                     for (index, sound_device) in sound_devices.iter_mut().enumerate() {
-                        let (sound_stream, data_block) = self
+                        let data_stream = self
                             .data_stream_set
                             .find_data_stream_set(*sound_device_name, index);
-                        let (l, r) = sound_device.generate(index, sound_stream, data_block);
+                        let (l, r) = sound_device.generate(index, data_stream);
                         self.output_sampling_buffer_l[buffer_pos] += l;
                         self.output_sampling_buffer_r[buffer_pos] += r;
                     }
@@ -368,7 +368,6 @@ impl SoundDevice {
         &mut self,
         sound_chip_index: usize,
         data_stream: Option<&mut DataStream>,
-        data_block: Option<&DataBlock>,
     ) -> (f32, f32) {
         let mut is_tick;
         while {
@@ -379,7 +378,6 @@ impl SoundDevice {
                 sound_chip_index,
                 &mut *self.sound_stream,
                 &data_stream,
-                &data_block,
             );
             if is_tick == Tick::One {
                 break;
