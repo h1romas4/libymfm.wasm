@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use super::{
-    data_stream::DataStream,
+    data_stream::{DataBlock, DataStream},
     rom::{get_rom_ref, RomBank},
     sound_chip::SoundChip,
     stream::{convert_sample_i2f, SoundStream},
@@ -131,6 +131,7 @@ impl SoundChip for YmFm {
         index: usize,
         sound_stream: &mut dyn SoundStream,
         _data_stream: &Option<&mut DataStream>,
+        _data_block: &Option<&DataBlock>,
     ) {
         let mut buffer: [i32; 2] = [0, 0];
         self.generate(index, &mut buffer);
