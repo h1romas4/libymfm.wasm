@@ -24,7 +24,7 @@
  *   Recording?
  *
  **********************************************************************************************/
- use super::{RomIndex, soundchip::{SoundChip}, rom::RomBank, stream::{OutputChannel, SoundStream, convert_sample_i2f}};
+ use super::{RomIndex, sound_chip::{SoundChip}, rom::RomBank, stream::{OutputChannel, SoundStream, convert_sample_i2f}};
  use crate::sound::SoundChipType;
 
 const COMMAND_STOP: u8 = 1 << 0;

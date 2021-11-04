@@ -10,7 +10,7 @@ use super::chip_segapcm::SEGAPCM;
 use super::chip_sn76496::SN76496;
 use super::chip_ymfm::YmFm;
 use super::rom::{RomIndex, RomSet};
-use super::soundchip::SoundChip;
+use super::sound_chip::SoundChip;
 use super::stream::{
     LinearUpSamplingStream, NativeStream, NearestDownSampleStream, OverSampleStream, Resolution,
     SoundStream, Tick,
