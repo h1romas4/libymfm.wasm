@@ -24,8 +24,14 @@
  *   Recording?
  *
  **********************************************************************************************/
- use super::{RomIndex, sound_chip::{SoundChip}, rom::RomBank, stream::{OutputChannel, SoundStream, convert_sample_i2f}};
- use crate::sound::SoundChipType;
+use super::{
+    data_stream::{DataBlock, DataStream},
+    rom::RomBank,
+    sound_chip::SoundChip,
+    stream::{convert_sample_i2f, OutputChannel, SoundStream},
+    RomIndex,
+};
+use crate::sound::SoundChipType;
 
 const COMMAND_STOP: u8 = 1 << 0;
 const COMMAND_PLAY: u8 = 1 << 1;
@@ -262,15 +268,15 @@ impl SoundChip for OKIM6258 {
         match offset {
             0x0 => self.ctrl_w((data & 0xff) as u8),
             0x1 => self.data_w((data & 0xff) as u8),
-            0x2 => {
-                match data {
-                    0 => sound_stream.set_output_channel(OutputChannel::Stereo),
-                    1 => sound_stream.set_output_channel(OutputChannel::Left),
-                    2 => sound_stream.set_output_channel(OutputChannel::Right),
-                    3 => sound_stream.set_output_channel(OutputChannel::Mute),
-                    _ => { panic!("ignore set_output_channel ({})", data) }
+            0x2 => match data {
+                0 => sound_stream.set_output_channel(OutputChannel::Stereo),
+                1 => sound_stream.set_output_channel(OutputChannel::Left),
+                2 => sound_stream.set_output_channel(OutputChannel::Right),
+                3 => sound_stream.set_output_channel(OutputChannel::Mute),
+                _ => {
+                    panic!("ignore set_output_channel ({})", data)
                 }
-            }
+            },
             0x8 => todo!("change data clock"),
             0xc => todo!("restore initial divider"),
             // (hack) addtional port map offset for lib
@@ -283,14 +289,20 @@ impl SoundChip for OKIM6258 {
         }
     }
 
-    fn tick(&mut self, _: usize, sound_stream: &mut dyn SoundStream) {
+    fn tick(
+        &mut self,
+        _: usize,
+        sound_stream: &mut dyn SoundStream,
+        _data_stream: &Option<&mut DataStream>,
+        _data_block: &Option<&DataBlock>,
+    ) {
         let mut l: [f32; 1] = [0_f32];
         let mut r: [f32; 1] = [0_f32];
         self.sound_stream_update(&mut l, &mut r, 1, 0);
         sound_stream.push(l[0], r[0]);
     }
 
-    fn set_rombank(&mut self, _: RomIndex, _: RomBank) {
+    fn set_rom_bank(&mut self, _: RomIndex, _: RomBank) {
         /* nothing to do */
     }
 

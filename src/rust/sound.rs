@@ -4,6 +4,7 @@ mod slot;
 mod sound_chip;
 mod stream;
 mod rom;
+mod data_stream;
 
 mod chip_ymfm;
 mod chip_sn76496;

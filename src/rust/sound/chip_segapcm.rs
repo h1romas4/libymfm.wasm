@@ -1,5 +1,12 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+use super::{
+    data_stream::{DataBlock, DataStream},
+    rom::{read_rombank, RomBank},
+    sound_chip::SoundChip,
+    stream::{convert_sample_i2f, SoundStream},
+    RomIndex,
+};
 /**
  * Rust SEGAPCM emulation
  *  Hiromasa Tanaka <h1romas4@gmail.com>
@@ -12,7 +19,6 @@
  *  rev. 70743c6fb2602a5c2666c679b618706eabfca2ad
  */
 use crate::sound::SoundChipType;
-use super::{RomIndex, sound_chip::{SoundChip}, rom::{RomBank, read_rombank}, stream::{convert_sample_i2f, SoundStream}};
 
 #[allow(clippy::upper_case_acronyms)]
 pub struct SEGAPCM {
@@ -97,8 +103,7 @@ impl SEGAPCM {
                         }
                     }
                     /* fetch the sample */
-                    let v =
-                        read_rombank(&self.rombank, offset as usize + (addr >> 8) as usize);
+                    let v = read_rombank(&self.rombank, offset as usize + (addr >> 8) as usize);
                     let v: i32 = i32::from(v) - 0x80;
                     /* apply panning and advance */
                     buffer_l[buffer_pos + i] += convert_sample_i2f(v * (regs[2] & 0x7f) as i32);
@@ -135,14 +140,20 @@ impl SoundChip for SEGAPCM {
         self.write(offset, data as u8);
     }
 
-    fn tick(&mut self, _: usize, sound_stream: &mut dyn SoundStream) {
+    fn tick(
+        &mut self,
+        _: usize,
+        sound_stream: &mut dyn SoundStream,
+        _data_stream: &Option<&mut DataStream>,
+        _data_block: &Option<&DataBlock>,
+    ) {
         let mut l: [f32; 1] = [0_f32];
         let mut r: [f32; 1] = [0_f32];
         self.update(&mut l, &mut r, 1, 0);
         sound_stream.push(l[0], r[0]);
     }
 
-    fn set_rombank(&mut self, _ /* SEGAPCM has only one RomBank */: RomIndex, rombank: RomBank) {
+    fn set_rom_bank(&mut self, _ /* SEGAPCM has only one RomBank */: RomIndex, rombank: RomBank) {
         self.rombank = rombank;
     }
 
