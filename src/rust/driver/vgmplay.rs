@@ -24,6 +24,7 @@ pub struct VgmPlay {
     vgm_data: Vec<u8>,
     vgm_header: VgmHeader,
     vgm_gd3: Gd3,
+    data_block_id: usize,
     data_block: HashMap<usize, DataBlock>,
     stream: HashMap<u8, Stream>,
     remain_tick_count: usize,
@@ -46,6 +47,7 @@ impl VgmPlay {
             vgm_data: Vec::new(),
             vgm_header: VgmHeader::default(),
             vgm_gd3: Gd3::default(),
+            data_block_id: 0,
             data_block: HashMap::new(),
             stream: HashMap::new(),
             remain_tick_count: 0,
@@ -297,18 +299,19 @@ impl VgmPlay {
                 stream.pcm_stream_sampling_pos = 1.0_f32;
             }
             // adjust the output sampling rate with the stream sampling rate
-            if stream.pcm_stream_length > 0
-                && stream.pcm_stream_sampling_pos >= 1.0_f32 {
-                let chip_index = if stream.chip_type & 0b01000000 != 0 { 1 } else { 0 };
+            if stream.pcm_stream_length > 0 && stream.pcm_stream_sampling_pos >= 1.0_f32 {
+                let chip_index = if stream.chip_type & 0b01000000 != 0 {
+                    1
+                } else {
+                    0
+                };
                 match data.data_type {
                     0x00 => {
                         self.sound_slot.write(
                             SoundChipType::YM2612,
                             chip_index,
                             stream.write_reg as u32,
-                            self.vgm_data[data.data_block_pos
-                                + stream.pcm_stream_pos]
-                                .into(),
+                            self.vgm_data[data.data_block_pos + stream.pcm_stream_pos].into(),
                         );
                     }
                     0x04 => {
@@ -316,9 +319,7 @@ impl VgmPlay {
                             SoundChipType::OKIM6258,
                             chip_index,
                             stream.write_reg as u32,
-                            self.vgm_data[data.data_block_pos
-                                + stream.pcm_stream_pos]
-                                .into(),
+                            self.vgm_data[data.data_block_pos + stream.pcm_stream_pos].into(),
                         );
                     }
                     _ => panic!("stream.data_bank_id"),
@@ -563,6 +564,12 @@ impl VgmPlay {
                             data_length,
                         },
                     );
+                    // add data block
+                    self.sound_slot.set_data_block(
+                        self.data_block_id,
+                        &self.vgm_data[data_block_pos..=data_block_pos + data_length],
+                    );
+                    self.data_block_id += 1;
                     // YM2612 is special on VGM
                     if data_type == 0 {
                         self.stream
@@ -612,8 +619,8 @@ impl VgmPlay {
                 // n can range from 0 to 15. Note that the wait is n, NOT n+1.
                 // See also command 0xE0.
                 wait = (command & 0x0f).into();
-                let stream = self.stream.get_mut(/* 1st stream block */&0).unwrap();
-                let block = self.data_block.get(/* 1st stream block */&0).unwrap();
+                let stream = self.stream.get_mut(/* 1st stream block */ &0).unwrap();
+                let block = self.data_block.get(/* 1st stream block */ &0).unwrap();
                 self.sound_slot.write(
                     SoundChipType::YM2612,
                     0,
