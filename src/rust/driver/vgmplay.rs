@@ -2,7 +2,6 @@
 // copyright-holders:Hiromasa Tanaka
 use flate2::read::GzDecoder;
 use std::collections::HashMap;
-use std::convert::TryInto;
 use std::io::prelude::*;
 
 use crate::driver::gd3meta::Gd3;

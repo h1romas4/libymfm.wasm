@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use nom::bytes::complete::{tag, take};
