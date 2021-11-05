@@ -1,6 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use std::cell::RefCell;
+use std::cmp::Ordering;
 use std::collections::{HashMap, VecDeque};
 use std::rc::Rc;
 
@@ -109,33 +110,34 @@ impl SoundSlot {
                 SoundChipType::OKIM6258 => Box::new(OKIM6258::new(SoundChipType::OKIM6258)),
             };
 
-            // initialize sound chip and select resampling method
+            // initialize sound chip
             let sound_chip_sampling_rate = sound_chip.init(clock);
-            #[allow(clippy::comparison_chain)]
+            // select resampling method
             let sound_stream: Box<dyn SoundStream> =
-                if sound_chip_sampling_rate == self.output_sampling_rate {
-                    Box::new(NativeStream::new())
-                } else if sound_chip_sampling_rate > self.output_sampling_rate {
-                    match sound_chip_type {
-                        SoundChipType::SEGAPSG | SoundChipType::SN76489 | SoundChipType::PWM => {
-                            Box::new(OverSampleStream::new(
+                match sound_chip_sampling_rate.cmp(&self.output_sampling_rate) {
+                    Ordering::Equal => Box::new(NativeStream::new()),
+                    Ordering::Greater => {
+                        match sound_chip_type {
+                            SoundChipType::SEGAPSG | SoundChipType::SN76489 | SoundChipType::PWM => {
+                                Box::new(OverSampleStream::new(
+                                    sound_chip_sampling_rate,
+                                    self.output_sampling_rate,
+                                ))
+                            }
+                            _ => Box::new(NearestDownSampleStream::new(
                                 sound_chip_sampling_rate,
                                 self.output_sampling_rate,
-                            ))
+                            )),
                         }
-                        _ => Box::new(NearestDownSampleStream::new(
+                    }
+                    _ => {
+                        Box::new(LinearUpSamplingStream::new(
                             sound_chip_sampling_rate,
                             self.output_sampling_rate,
-                        )),
+                            Resolution::RangeAll,
+                        ))
                     }
-                } else {
-                    Box::new(LinearUpSamplingStream::new(
-                        sound_chip_sampling_rate,
-                        self.output_sampling_rate,
-                        Resolution::RangeAll,
-                    ))
                 };
-
             // add sound device
             self.sound_device
                 .entry(sound_chip_type)
@@ -150,10 +152,16 @@ impl SoundSlot {
     ///
     /// Write command to sound chip.
     ///
-    pub fn write(&mut self, sound_device_name: SoundChipType, index: usize, port: u32, data: u32) {
-        match self.find_sound_device(sound_device_name, index) {
+    pub fn write(
+        &mut self,
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
+        port: u32,
+        data: u32,
+    ) {
+        match self.find_sound_device(sound_chip_type, sound_chip_index) {
             None => { /* nothing to do */ }
-            Some(sound_device) => sound_device.write(index, port, data),
+            Some(sound_device) => sound_device.write(sound_chip_index, port, data),
         }
     }
 
@@ -291,15 +299,21 @@ impl SoundSlot {
     ///
     /// Add data bank for stream data.
     ///
-    pub fn add_data_block(&mut self, memory: &[u8]) -> usize {
-        0 /* data_block_id */
+    pub fn set_data_block(&mut self, data_block_id: usize, memory: &[u8]) {
+        self.data_stream_set.set_data_block(data_block_id, memory);
     }
 
     ///
     /// Add data stream
     ///
-    pub fn add_data_stream(&mut self, sound_device_name: SoundChipType, index: usize) -> usize {
-        0 /* data_stream_id */
+    pub fn add_data_stream(
+        &mut self,
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
+        data_stream_id: usize,
+    ) {
+        self.data_stream_set
+            .add_data_stream(sound_chip_type, sound_chip_index);
     }
 
     //
@@ -332,13 +346,13 @@ impl SoundSlot {
     #[inline]
     fn find_sound_device(
         &mut self,
-        sound_device_name: SoundChipType,
-        index: usize,
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
     ) -> Option<&mut SoundDevice> {
-        let sound_device = match self.sound_device.get_mut(&sound_device_name) {
+        let sound_device = match self.sound_device.get_mut(&sound_chip_type) {
             None => None,
             Some(vec) => {
-                if vec.len() < index {
+                if vec.len() < sound_chip_index {
                     return None;
                 }
                 Some(vec)
@@ -346,7 +360,7 @@ impl SoundSlot {
         };
         match sound_device {
             None => None,
-            Some(sound_chip) => Some(&mut sound_chip[index]),
+            Some(sound_chip) => Some(&mut sound_chip[sound_chip_index]),
         }
     }
 }
