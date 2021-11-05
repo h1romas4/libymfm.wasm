@@ -1,8 +1,7 @@
-use std::collections::HashMap;
-
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use super::SoundChipType;
+use std::collections::HashMap;
 
 pub struct DataBlock {
     memory: Vec<u8>,
@@ -19,6 +18,25 @@ impl DataStreamSet {
             data_stream: HashMap::new(),
             data_block: HashMap::new(),
         }
+    }
+
+    ///
+    /// Set data block
+    ///
+    pub fn set_data_block(&mut self, data_block_id: usize, data_block: &[u8]) {
+        self.data_block.insert(
+            data_block_id,
+            DataBlock {
+                memory: data_block.to_vec(), /* clone */
+            },
+        );
+    }
+
+    ///
+    /// Add data stream
+    ///
+    pub fn add_data_stream(&mut self, sound_device_name: SoundChipType, sound_device_index: usize) {
+
     }
 
     ///
