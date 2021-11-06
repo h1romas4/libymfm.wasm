@@ -1,6 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 mod slot;
+mod device;
 mod sound_chip;
 mod stream;
 mod rom;

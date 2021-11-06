@@ -1,7 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use super::{
-    data_stream::{DataBlock, DataStream},
     rom::{get_rom_ref, RomBank},
     sound_chip::SoundChip,
     stream::{convert_sample_i2f, SoundStream},
@@ -126,13 +125,7 @@ impl SoundChip for YmFm {
         self.write_chip(index, offset, data as u8);
     }
 
-    fn tick(
-        &mut self,
-        index: usize,
-        sound_stream: &mut dyn SoundStream,
-        _data_stream: &Option<&mut DataStream>,
-        _data_block: &Option<&DataBlock>,
-    ) {
+    fn tick(&mut self, index: usize, sound_stream: &mut dyn SoundStream) {
         let mut buffer: [i32; 2] = [0, 0];
         self.generate(index, &mut buffer);
         sound_stream.push(convert_sample_i2f(buffer[0]), convert_sample_i2f(buffer[1]));

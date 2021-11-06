@@ -12,7 +12,6 @@
  *  rev. ee1e4f9683a4953cb9d88f9256017fcbc38e3144
  */
 use super::{
-    data_stream::{DataBlock, DataStream},
     rom::RomBank,
     sound_chip::SoundChip,
     stream::SoundStream,
@@ -260,13 +259,7 @@ impl SoundChip for PWM {
         self.pwm_w(port as u32, data as u16);
     }
 
-    fn tick(
-        &mut self,
-        _: usize,
-        sound_stream: &mut dyn SoundStream,
-        _data_stream: &Option<&mut DataStream>,
-        _data_block: &Option<&DataBlock>,
-    ) {
+    fn tick(&mut self, _: usize, sound_stream: &mut dyn SoundStream) {
         let mut timer_step = 0_f32;
         if let Some(emu_timer_up_hz) = self.emu_timer_up_hz {
             timer_step = emu_timer_up_hz as f32 / EMU_SAMPLING_RATE as f32;

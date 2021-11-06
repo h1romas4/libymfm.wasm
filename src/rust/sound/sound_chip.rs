@@ -1,7 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-use super::data_stream::DataBlock;
-use super::data_stream::DataStream;
 use super::rom::RomBank;
 use super::rom::RomIndex;
 use super::stream::SoundStream;
@@ -41,13 +39,7 @@ pub trait SoundChip {
     fn init(&mut self, clock: u32) -> u32;
     fn reset(&mut self);
     fn write(&mut self, index: usize, port: u32, data: u32, sound_stream: &mut dyn SoundStream);
-    fn tick(
-        &mut self,
-        index: usize,
-        sound_stream: &mut dyn SoundStream,
-        data_stream: &Option<&mut DataStream>,
-        data_block: &Option<&DataBlock>,
-    );
+    fn tick(&mut self, index: usize, sound_stream: &mut dyn SoundStream);
     fn set_rom_bank(&mut self, rom_index: RomIndex, rom_bank: RomBank);
     fn notify_add_rom(&mut self, rom_index: RomIndex, index_no: usize);
 }

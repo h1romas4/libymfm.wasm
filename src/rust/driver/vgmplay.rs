@@ -564,7 +564,7 @@ impl VgmPlay {
                         },
                     );
                     // add data block
-                    self.sound_slot.set_data_block(
+                    self.sound_slot.add_data_block(
                         self.data_block_id,
                         &self.vgm_data[data_block_pos..=data_block_pos + data_length],
                     );

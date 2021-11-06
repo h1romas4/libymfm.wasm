@@ -10,12 +10,13 @@ use super::chip_pwm::PWM;
 use super::chip_segapcm::SEGAPCM;
 use super::chip_sn76496::SN76496;
 use super::chip_ymfm::YmFm;
-use super::data_stream::{DataBlock, DataStream, DataStreamSet};
+use super::data_stream::DataBlock;
+use super::device::SoundDevice;
 use super::rom::{RomIndex, RomSet};
 use super::sound_chip::SoundChip;
 use super::stream::{
     LinearUpSamplingStream, NativeStream, NearestDownSampleStream, OverSampleStream, Resolution,
-    SoundStream, Tick,
+    SoundStream,
 };
 use super::SoundChipType;
 
@@ -33,7 +34,7 @@ pub struct SoundSlot {
     output_sampling_buffer_r: VecDeque<f32>,
     sound_device: HashMap<SoundChipType, Vec<SoundDevice>>,
     sound_rom_set: HashMap<RomIndex, Rc<RefCell<RomSet>>>,
-    data_stream_set: DataStreamSet,
+    data_block: HashMap<usize, DataBlock>,
 }
 
 impl SoundSlot {
@@ -54,7 +55,7 @@ impl SoundSlot {
             output_sampling_buffer_r: VecDeque::with_capacity(output_sample_chunk_size * 2),
             sound_device: HashMap::new(),
             sound_rom_set: HashMap::new(),
-            data_stream_set: DataStreamSet::new(),
+            data_block: HashMap::new(),
         }
     }
 
@@ -116,36 +117,29 @@ impl SoundSlot {
             let sound_stream: Box<dyn SoundStream> =
                 match sound_chip_sampling_rate.cmp(&self.output_sampling_rate) {
                     Ordering::Equal => Box::new(NativeStream::new()),
-                    Ordering::Greater => {
-                        match sound_chip_type {
-                            SoundChipType::SEGAPSG | SoundChipType::SN76489 | SoundChipType::PWM => {
-                                Box::new(OverSampleStream::new(
-                                    sound_chip_sampling_rate,
-                                    self.output_sampling_rate,
-                                ))
-                            }
-                            _ => Box::new(NearestDownSampleStream::new(
+                    Ordering::Greater => match sound_chip_type {
+                        SoundChipType::SEGAPSG | SoundChipType::SN76489 | SoundChipType::PWM => {
+                            Box::new(OverSampleStream::new(
                                 sound_chip_sampling_rate,
                                 self.output_sampling_rate,
-                            )),
+                            ))
                         }
-                    }
-                    _ => {
-                        Box::new(LinearUpSamplingStream::new(
+                        _ => Box::new(NearestDownSampleStream::new(
                             sound_chip_sampling_rate,
                             self.output_sampling_rate,
-                            Resolution::RangeAll,
-                        ))
-                    }
+                        )),
+                    },
+                    _ => Box::new(LinearUpSamplingStream::new(
+                        sound_chip_sampling_rate,
+                        self.output_sampling_rate,
+                        Resolution::RangeAll,
+                    )),
                 };
             // add sound device
             self.sound_device
                 .entry(sound_chip_type)
                 .or_insert_with(Vec::new)
-                .push(SoundDevice {
-                    sound_chip,
-                    sound_stream,
-                });
+                .push(SoundDevice::new(sound_chip, sound_stream));
         }
     }
 
@@ -174,12 +168,9 @@ impl SoundSlot {
                 self.output_sampling_buffer_l.push_back(0_f32);
                 self.output_sampling_buffer_r.push_back(0_f32);
                 let buffer_pos = self.output_sampling_buffer_l.len() - 1;
-                for (sound_device_name, sound_devices) in self.sound_device.iter_mut() {
+                for (_, sound_devices) in self.sound_device.iter_mut() {
                     for (index, sound_device) in sound_devices.iter_mut().enumerate() {
-                        let (sound_stream, data_block) = self
-                            .data_stream_set
-                            .find_data_stream_set(*sound_device_name, index);
-                        let (l, r) = sound_device.generate(index, sound_stream, data_block);
+                        let (l, r) = sound_device.generate(index, &self.data_block);
                         self.output_sampling_buffer_l[buffer_pos] += l;
                         self.output_sampling_buffer_r[buffer_pos] += r;
                     }
@@ -272,7 +263,7 @@ impl SoundSlot {
             if let Some(sound_device_name) = sound_device_name {
                 if let Some(sound_device) = self.sound_device.get_mut(&sound_device_name) {
                     for sound_device in sound_device {
-                        sound_device.sound_chip.notify_add_rom(rom_index, index_no);
+                        sound_device.notify_add_rom(rom_index, index_no);
                     }
                 };
             }
@@ -280,27 +271,11 @@ impl SoundSlot {
     }
 
     ///
-    /// Start data stream
-    ///
-    pub fn start_data_stream(
-        &mut self,
-        data_stream_id: usize,
-        data_block_id: Option<usize>,
-        pcm_stream_pos: Option<usize>,
-        pcm_stream_length: Option<usize>,
-    ) {
-    }
-
-    ///
-    /// Stop data stream
-    ///
-    pub fn stop_data_stream(&mut self, data_stream_id: usize) {}
-
-    ///
     /// Add data bank for stream data.
     ///
-    pub fn set_data_block(&mut self, data_block_id: usize, memory: &[u8]) {
-        self.data_stream_set.set_data_block(data_block_id, memory);
+    pub fn add_data_block(&mut self, data_block_id: usize, data_block: &[u8]) {
+        self.data_block
+            .insert(data_block_id, DataBlock::new(data_block));
     }
 
     ///
@@ -311,20 +286,54 @@ impl SoundSlot {
         sound_chip_type: SoundChipType,
         sound_chip_index: usize,
         data_stream_id: usize,
+        write_port: u32,
+        write_reg: u32,
     ) {
-        self.data_stream_set
-            .add_data_stream(sound_chip_type, sound_chip_index);
+    }
+
+    ///
+    /// Set data stream frequency
+    ///
+    pub fn set_data_stream_frequency(
+        &mut self,
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
+        data_stream_id: usize,
+        frequency: u32,
+    ) {
     }
 
     //
     // Attach data block to data stream
     //
-    pub fn attach_data_block_to_stream(&mut self, data_stream_id: usize, data_bank_id: usize) {}
+    pub fn attach_data_block_to_stream(
+        &mut self,
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
+        data_stream_id: usize,
+        data_bank_id: usize,
+    ) {
+    }
 
     ///
-    /// Set data stream frequency
+    /// Start data stream
     ///
-    pub fn set_data_stream_frequency(&mut self, data_stream_id: usize, frequency: u32) {}
+    pub fn start_data_stream(
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
+        data_stream_id: usize,
+    ) {
+    }
+
+    ///
+    /// Stop data stream
+    ///
+    pub fn stop_data_stream(
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
+        data_stream_id: usize,
+    ) {
+    }
 
     ///
     /// Add rom bank
@@ -362,51 +371,5 @@ impl SoundSlot {
             None => None,
             Some(sound_chip) => Some(&mut sound_chip[sound_chip_index]),
         }
-    }
-}
-
-///
-/// Sound Device
-///
-pub struct SoundDevice {
-    sound_chip: Box<dyn SoundChip>,
-    sound_stream: Box<dyn SoundStream>,
-}
-
-impl SoundDevice {
-    ///
-    /// Generates a waveform for one sample according to
-    /// the output sampling rate of the sound stream.
-    ///
-    fn generate(
-        &mut self,
-        sound_chip_index: usize,
-        data_stream: Option<&mut DataStream>,
-        data_block: Option<&DataBlock>,
-    ) -> (f32, f32) {
-        let mut is_tick;
-        while {
-            is_tick = self.sound_stream.is_tick();
-            is_tick != Tick::No
-        } {
-            self.sound_chip.tick(
-                sound_chip_index,
-                &mut *self.sound_stream,
-                &data_stream,
-                &data_block,
-            );
-            if is_tick == Tick::One {
-                break;
-            }
-        }
-        self.sound_stream.drain()
-    }
-
-    ///
-    /// Write command to sound chip.
-    ///
-    fn write(&mut self, sound_chip_index: usize, port: u32, data: u32) {
-        self.sound_chip
-            .write(sound_chip_index, port, data, &mut *self.sound_stream);
     }
 }
