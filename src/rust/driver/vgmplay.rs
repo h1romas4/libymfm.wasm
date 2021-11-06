@@ -8,6 +8,7 @@ use crate::driver::gd3meta::Gd3;
 use crate::driver::vgmmeta::parse_vgm_meta;
 use crate::driver::vgmmeta::Jsonlize;
 use crate::driver::vgmmeta::VgmHeader;
+use crate::sound;
 use crate::sound::{RomIndex, SoundChipType, SoundSlot};
 
 pub const VGM_TICK_RATE: u32 = 44100;
@@ -24,12 +25,10 @@ pub struct VgmPlay {
     vgm_header: VgmHeader,
     vgm_gd3: Gd3,
     data_block_id: usize,
-    data_block: HashMap<usize, DataBlock>,
-    stream: HashMap<u8, Stream>,
-    remain_tick_count: usize,
-    // YM2612 is special among the VGM formats
+    sound_stream: HashMap<usize, (SoundChipType, usize)>,
     ym2612_pcm_pos: usize,
     ym2612_pcm_offset: usize,
+    remain_tick_count: usize,
 }
 
 #[allow(dead_code)]
@@ -50,11 +49,10 @@ impl VgmPlay {
             vgm_header: VgmHeader::default(),
             vgm_gd3: Gd3::default(),
             data_block_id: 0,
-            data_block: HashMap::new(),
-            stream: HashMap::new(),
-            remain_tick_count: 0,
+            sound_stream: HashMap::new(),
             ym2612_pcm_pos: 0,
             ym2612_pcm_offset: 0,
+            remain_tick_count: 0,
         }
     }
 
@@ -270,7 +268,6 @@ impl VgmPlay {
     pub fn play(&mut self, repeat: bool) -> usize {
         while !self.sound_slot.is_stream_filled() && !self.vgm_end {
             for _ in 0..self.remain_tick_count {
-                self.update_pcm_stream();
                 self.sound_slot.update(1);
                 self.remain_tick_count -= 1;
                 if self.sound_slot.is_stream_filled() {
@@ -290,53 +287,6 @@ impl VgmPlay {
             std::usize::MAX
         } else {
             self.vgm_loop_count
-        }
-    }
-
-    fn update_pcm_stream(&mut self) {
-        // all straming pcm update
-        for (_, stream) in self.stream.iter_mut() {
-            // get associated stream data block
-            let data = self.data_block.get(&stream.data_block_id).unwrap();
-            if stream.pcm_stream_pos_init == stream.pcm_stream_pos && stream.pcm_stream_length > 0 {
-                // 1st sample output
-                stream.pcm_stream_sampling_pos = 1.0_f32;
-            }
-            // adjust the output sampling rate with the stream sampling rate
-            if stream.pcm_stream_length > 0 && stream.pcm_stream_sampling_pos >= 1.0_f32 {
-                let chip_index = if stream.chip_type & 0b01000000 != 0 {
-                    1
-                } else {
-                    0
-                };
-                match data.data_type {
-                    0x00 => {
-                        self.sound_slot.write(
-                            SoundChipType::YM2612,
-                            chip_index,
-                            stream.write_reg as u32,
-                            self.vgm_data[data.data_block_pos + stream.pcm_stream_pos].into(),
-                        );
-                    }
-                    0x04 => {
-                        self.sound_slot.write(
-                            SoundChipType::OKIM6258,
-                            chip_index,
-                            stream.write_reg as u32,
-                            self.vgm_data[data.data_block_pos + stream.pcm_stream_pos].into(),
-                        );
-                    }
-                    _ => panic!("stream.data_bank_id"),
-                }
-                stream.pcm_stream_sampling_pos -= 1_f32;
-                // TODO: yet unsuppoted loop
-                stream.pcm_stream_length -= 1;
-                stream.pcm_stream_pos += 1;
-            }
-            if stream.pcm_stream_length > 0 {
-                // update output sampling position
-                stream.pcm_stream_sampling_pos += stream.pcm_stream_sample_step;
-            }
         }
     }
 
@@ -559,20 +509,12 @@ impl VgmPlay {
                 self.vgm_pos += data_length as usize;
                 // handle data block
                 if (0x00..=0x3f).contains(&data_type) {
-                    // data of recorded streams (uncompressed)
-                    self.data_block.insert(
-                        self.data_block.len(),
-                        DataBlock {
-                            data_type,
-                            data_block_pos,
-                            data_length,
-                        },
-                    );
                     // add data block (support uncompressed)
                     self.sound_slot.add_data_block(
                         self.data_block_id,
                         &self.vgm_data[data_block_pos..=data_block_pos + data_length],
                     );
+                    // data_block_id is a sequence id in vgm
                     self.data_block_id += 1;
                 } else if (0x80..=0xbf).contains(&data_type) {
                     // ROM/RAM Image dumps
@@ -617,14 +559,12 @@ impl VgmPlay {
                 // YM2612 port 0 address 2A write from the data bank, then wait n samples;
                 // n can range from 0 to 15. Note that the wait is n, NOT n+1.
                 // See also command 0xE0.
-                let ym2612_block = self.sound_slot.get_data_block(0);
+                let ym2612_block = self
+                    .sound_slot
+                    .get_data_block(/* YM2612 data block 0 fixed */ 0);
                 let data = ym2612_block[self.ym2612_pcm_pos + self.ym2612_pcm_offset];
-                self.sound_slot.write(
-                    SoundChipType::YM2612,
-                    0,
-                    0x2a,
-                    data.into(),
-                );
+                self.sound_slot
+                    .write(SoundChipType::YM2612, 0, 0x2a, data.into());
                 self.ym2612_pcm_offset += 1;
                 wait = (command & 0x0f).into();
             }
@@ -632,82 +572,119 @@ impl VgmPlay {
                 // Setup Stream Control
                 // 0x90 ss tt pp cc
                 // 0x90 00 02 00 2a
-                let stream_id = self.get_vgm_u8();
+                let data_stream_id = self.get_vgm_u8() as usize;
                 let chip_type = self.get_vgm_u8();
-                let write_port = self.get_vgm_u8();
-                let write_reg = self.get_vgm_u8();
+                let write_port = self.get_vgm_u8() as u32;
+                let write_reg = self.get_vgm_u8() as u32;
                 // create new stream
-                self.stream
-                    .insert(stream_id, Stream::from(chip_type, write_port, write_reg));
+                let sound_chip_type = match chip_type & 0x7f {
+                    2 => Some(SoundChipType::YM2612),
+                    22 => Some(SoundChipType::OKIM6258),
+                    _ => panic!("not supported chip stream"), /* TODO: */
+                };
+                let sound_chip_index = (chip_type >> 7) as usize;
+                if let Some(sound_chip_type) = sound_chip_type {
+                    self.sound_slot.add_data_stream(
+                        sound_chip_type,
+                        sound_chip_index,
+                        data_stream_id,
+                        write_port,
+                        write_reg,
+                    );
+                    self.sound_stream
+                        .insert(data_stream_id, (sound_chip_type, sound_chip_index));
+                }
             }
             0x91 => {
                 // Set Stream Data
                 // 0x91 ss dd ll bb
                 // 0x91 00 00 01 2a
-                let stream_id = self.get_vgm_u8();
+                let data_stream_id = self.get_vgm_u8() as usize;
                 let data_block_id = self.get_vgm_u8() as usize;
                 let step_base = self.get_vgm_u8();
                 let step_size = self.get_vgm_u8();
                 // assosiate data block to stream
-                let stream = self.stream.get_mut(&stream_id).unwrap();
-                stream.data_block_id = data_block_id;
-                stream.step_base = step_base;
-                stream.step_size = step_size;
+                if let Some((sound_chip_type, sound_chip_index)) =
+                    self.sound_stream.get(&data_stream_id)
+                {
+                    self.sound_slot.attach_data_block_to_stream(
+                        *sound_chip_type,
+                        *sound_chip_index,
+                        data_stream_id,
+                        data_block_id,
+                    );
+                }
             }
             0x92 => {
                 // Set Stream Frequency
                 // 0x92 ss ff ff ff ff
                 // 0x92 00 40 1f 00 00 (8KHz)
-                let stream_id = self.get_vgm_u8();
+                let data_stream_id = self.get_vgm_u8() as usize;
                 let frequency = self.get_vgm_u32();
-                let stream = self.stream.get_mut(&stream_id).unwrap();
-                stream.frequency = frequency;
-                stream.pcm_stream_sample_step = frequency as f32 / VGM_TICK_RATE as f32;
+                if let Some((sound_chip_type, sound_chip_index)) =
+                    self.sound_stream.get(&data_stream_id)
+                {
+                    self.sound_slot.set_data_stream_frequency(
+                        *sound_chip_type,
+                        *sound_chip_index,
+                        data_stream_id,
+                        frequency,
+                    );
+                }
             }
             0x93 => {
                 // Start Stream
                 // 0x93 ss aa aa aa aa mm ll ll ll ll
                 // 0x93 00 aa aa aa aa 01 ll ll ll ll
-                let stream_id = self.get_vgm_u8();
-                let pcm_stream_pos_init = self.get_vgm_u32() as usize;
-                let length_mode = self.get_vgm_u8();
+                let data_stream_id = self.get_vgm_u8() as usize;
+                let data_stream_start_offset = self.get_vgm_u32() as usize;
+                let /* TODO */ _length_mode = self.get_vgm_u8();
                 let pcm_stream_length = self.get_vgm_u32() as usize;
                 // initalize stream and start playback (set pcm_stream_length)
-                let stream = self.stream.get_mut(&stream_id).unwrap();
-                stream.pcm_stream_pos_init = pcm_stream_pos_init;
-                stream.pcm_stream_pos = stream.pcm_stream_pos_init;
-                stream.length_mode = length_mode;
-                stream.pcm_stream_length = pcm_stream_length;
+                if let Some((sound_chip_type, sound_chip_index)) =
+                    self.sound_stream.get(&data_stream_id)
+                {
+                    self.sound_slot.start_data_stream(
+                        *sound_chip_type,
+                        *sound_chip_index,
+                        data_stream_id,
+                        data_stream_start_offset,
+                        pcm_stream_length,
+                    );
+                }
             }
             0x94 => {
                 // Stop Stream
                 // 0x94 ss
-                let stream_id = self.get_vgm_u8();
+                let data_stream_id = self.get_vgm_u8() as usize;
                 // stop stream (set pcm_stream_length to 0)
-                let stream = self.stream.get_mut(&stream_id).unwrap();
-                // flash last sample
-                if stream.pcm_stream_sampling_pos >= 1_f32 {
-                    stream.pcm_stream_length = 1;
-                    wait = 1;
-                } else {
-                    stream.pcm_stream_length = 0;
+                if let Some((sound_chip_type, sound_chip_index)) =
+                    self.sound_stream.get(&data_stream_id)
+                {
+                    self.sound_slot.stop_data_stream(
+                        *sound_chip_type,
+                        *sound_chip_index,
+                        data_stream_id,
+                    );
                 }
             }
             0x95 => {
                 // Start Stream (fast call)
                 // 0x95 ss bb bb ff
-                let stream_id = self.get_vgm_u8();
+                let data_stream_id = self.get_vgm_u8() as usize;
                 let data_block_id = self.get_vgm_u16() as usize;
-                let flags = self.get_vgm_u8();
+                let /* TODO */ _flags = self.get_vgm_u8();
                 // initalize stream and start playback (set pcm_stream_length to data block size)
-                let stream = self.stream.get_mut(&stream_id).unwrap();
-                let data = self.data_block.get(&data_block_id).unwrap();
-                // assosiate stream and data block
-                stream.data_block_id = data_block_id as usize;
-                stream.flags = flags;
-                stream.pcm_stream_pos = stream.pcm_stream_pos_init;
-                stream.pcm_stream_length = data.data_length;
-                wait = 1; /* update */
+                if let Some((sound_chip_type, sound_chip_index)) =
+                    self.sound_stream.get(&data_stream_id)
+                {
+                    self.sound_slot.start_data_stream_fast(
+                        *sound_chip_type,
+                        *sound_chip_index,
+                        data_stream_id,
+                        data_block_id,
+                    );
+                }
             }
             0xa0 => {
                 // TODO: AY8910, write
@@ -812,56 +789,6 @@ impl VgmPlay {
         }
         wait
     }
-}
-
-#[allow(dead_code)]
-struct Stream {
-    data_block_id: usize,
-    chip_type: u8,
-    write_port: u8,
-    write_reg: u8,
-    step_size: u8,
-    step_base: u8,
-    frequency: u32,
-    length_mode: u8,
-    flags: u8,
-    pcm_pos: usize,
-    pcm_offset: usize,
-    pcm_stream_sample_step: f32,
-    pcm_stream_sampling_pos: f32,
-    pcm_stream_length: usize,
-    pcm_stream_pos_init: usize,
-    pcm_stream_pos: usize,
-}
-
-impl Stream {
-    pub fn from(chip_type: u8, write_port: u8, write_reg: u8) -> Self {
-        Stream {
-            data_block_id: 0,
-            chip_type,
-            write_port,
-            write_reg,
-            step_size: 0,
-            step_base: 0,
-            frequency: 0,
-            length_mode: 0,
-            flags: 0,
-            pcm_pos: 0,
-            pcm_offset: 0,
-            pcm_stream_sample_step: 0_f32,
-            pcm_stream_sampling_pos: 0_f32,
-            pcm_stream_length: 0,
-            pcm_stream_pos_init: 0,
-            pcm_stream_pos: 0,
-        }
-    }
-}
-
-#[allow(dead_code)]
-struct DataBlock {
-    data_type: u8,
-    data_block_pos: usize,
-    data_length: usize,
 }
 
 ///

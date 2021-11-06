@@ -68,7 +68,7 @@ impl SoundSlot {
         number_of: usize,
         clock: u32,
     ) {
-        for _n in 0..number_of {
+        for _ in 0..number_of {
             // create sound device
             let mut sound_chip: Box<dyn SoundChip> = match sound_chip_type {
                 SoundChipType::YM2149
@@ -318,7 +318,7 @@ impl SoundSlot {
         sound_chip_type: SoundChipType,
         sound_chip_index: usize,
         data_stream_id: usize,
-        data_bank_id: usize,
+        data_block_id: usize,
     ) {
     }
 
@@ -326,16 +326,33 @@ impl SoundSlot {
     /// Start data stream
     ///
     pub fn start_data_stream(
+        &mut self,
         sound_chip_type: SoundChipType,
         sound_chip_index: usize,
         data_stream_id: usize,
+        data_stream_start_offset: usize,
+        pcm_stream_length: usize,
     ) {
+    }
+
+    pub fn start_data_stream_fast(
+        &mut self,
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
+        data_stream_id: usize,
+        data_block_id: usize,
+    ) {
+        // stream.data_block_id = data_block_id as usize;
+        // stream.flags = flags;
+        // stream.pcm_stream_pos = stream.pcm_stream_pos_init;
+        // stream.pcm_stream_length = data.data_length;
     }
 
     ///
     /// Stop data stream
     ///
     pub fn stop_data_stream(
+        &mut self,
         sound_chip_type: SoundChipType,
         sound_chip_index: usize,
         data_stream_id: usize,
