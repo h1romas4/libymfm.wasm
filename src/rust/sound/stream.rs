@@ -15,6 +15,7 @@ pub trait SoundStream {
     fn push(&mut self, sampling_l: f32, sampling_r: f32);
     fn drain(&mut self) -> (f32, f32);
     fn change_sapmling_rate(&mut self, sampling_rate: u32);
+    fn get_sampling_rate(&self) -> u32;
     fn set_output_channel(&mut self, output_channel: OutputChannel);
 }
 
@@ -51,6 +52,10 @@ impl SoundStream for NativeStream {
 
     fn change_sapmling_rate(&mut self, _sampling_rate: u32) {
         panic!("I can't do that.")
+    }
+
+    fn get_sampling_rate(&self) -> u32 {
+        todo!()
     }
 
     fn set_output_channel(&mut self, _output_channel: OutputChannel) {
@@ -115,6 +120,10 @@ impl SoundStream for NearestDownSampleStream {
     }
 
     fn change_sapmling_rate(&mut self, _sampling_rate: u32) {
+        todo!()
+    }
+
+    fn get_sampling_rate(&self) -> u32 {
         todo!()
     }
 
@@ -257,6 +266,10 @@ impl SoundStream for LinearUpSamplingStream {
         );
     }
 
+    fn get_sampling_rate(&self) -> u32 {
+        self.input_sampling_rate
+    }
+
     fn set_output_channel(&mut self, output_channel: OutputChannel) {
         self.output_channel = output_channel;
     }
@@ -309,6 +322,10 @@ impl SoundStream for OverSampleStream {
     }
 
     fn change_sapmling_rate(&mut self, _sampling_rate: u32) {
+        todo!()
+    }
+
+    fn get_sampling_rate(&self) -> u32 {
         todo!()
     }
 

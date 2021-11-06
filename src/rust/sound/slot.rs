@@ -10,7 +10,7 @@ use super::chip_pwm::PWM;
 use super::chip_segapcm::SEGAPCM;
 use super::chip_sn76496::SN76496;
 use super::chip_ymfm::YmFm;
-use super::data_stream::DataBlock;
+use super::data_stream::{DataBlock, DataStream};
 use super::device::SoundDevice;
 use super::rom::{RomIndex, RomSet};
 use super::sound_chip::SoundChip;
@@ -296,6 +296,9 @@ impl SoundSlot {
         write_port: u32,
         write_reg: u32,
     ) {
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
+            sound_device.add_data_stream(data_stream_id, DataStream::new(write_port, write_reg));
+        }
     }
 
     ///
@@ -308,6 +311,9 @@ impl SoundSlot {
         data_stream_id: usize,
         frequency: u32,
     ) {
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
+            sound_device.set_data_stream_frequency(data_stream_id, frequency);
+        }
     }
 
     //
@@ -320,6 +326,7 @@ impl SoundSlot {
         data_stream_id: usize,
         data_block_id: usize,
     ) {
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {}
     }
 
     ///
@@ -333,6 +340,7 @@ impl SoundSlot {
         data_stream_start_offset: usize,
         pcm_stream_length: usize,
     ) {
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {}
     }
 
     pub fn start_data_stream_fast(
@@ -342,10 +350,12 @@ impl SoundSlot {
         data_stream_id: usize,
         data_block_id: usize,
     ) {
-        // stream.data_block_id = data_block_id as usize;
-        // stream.flags = flags;
-        // stream.pcm_stream_pos = stream.pcm_stream_pos_init;
-        // stream.pcm_stream_length = data.data_length;
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
+            // stream.data_block_id = data_block_id as usize;
+            // stream.flags = flags;
+            // stream.pcm_stream_pos = stream.pcm_stream_pos_init;
+            // stream.pcm_stream_length = data.data_length;
+        }
     }
 
     ///

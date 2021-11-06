@@ -1,12 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use std::collections::HashMap;
-use super::{
-    data_stream::{DataBlock, DataStream},
-    sound_chip::SoundChip,
-    stream::{SoundStream, Tick},
-    RomIndex,
-};
+use super::{RomIndex, data_stream::{self, DataBlock, DataStream}, sound_chip::SoundChip, stream::{SoundStream, Tick}};
 
 ///
 /// Sound Device
@@ -14,7 +9,7 @@ use super::{
 pub struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
     sound_stream: Box<dyn SoundStream>,
-    data_stream: Vec<DataStream>,
+    data_stream: HashMap<usize, DataStream>,
 }
 
 impl SoundDevice {
@@ -22,7 +17,7 @@ impl SoundDevice {
         SoundDevice {
             sound_chip,
             sound_stream,
-            data_stream: Vec::new(),
+            data_stream: HashMap::new(),
         }
     }
 
@@ -64,5 +59,28 @@ impl SoundDevice {
     ///
     pub fn notify_add_rom(&mut self, rom_index: RomIndex, index_no: usize) {
         self.sound_chip.notify_add_rom(rom_index, index_no);
+    }
+
+    ///
+    /// Add data stream
+    ///
+    pub fn add_data_stream(&mut self, data_stream_id: usize, data_stream: DataStream) {
+        self.data_stream.insert(data_stream_id,  data_stream);
+    }
+
+    ///
+    /// Set data stream frequency (re-calc rate)
+    ///
+    pub fn set_data_stream_frequency(&mut self, data_stream_id: usize, frequency: u32) {
+        if let Some(data_stream) = self.data_stream.get_mut(&data_stream_id) {
+            data_stream.set_frequency(self.sound_stream.get_sampling_rate(), frequency);
+        }
+    }
+
+    ///
+    /// Get data stream borrow
+    ///
+    pub fn get_data_stream(&mut self, data_stream_id: usize) -> Option<&mut DataStream> {
+        self.data_stream.get_mut(&data_stream_id)
     }
 }
