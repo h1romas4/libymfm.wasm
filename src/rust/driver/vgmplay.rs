@@ -27,6 +27,9 @@ pub struct VgmPlay {
     data_block: HashMap<usize, DataBlock>,
     stream: HashMap<u8, Stream>,
     remain_tick_count: usize,
+    // YM2612 is special among the VGM formats
+    ym2612_pcm_pos: usize,
+    ym2612_pcm_offset: usize,
 }
 
 #[allow(dead_code)]
@@ -50,6 +53,8 @@ impl VgmPlay {
             data_block: HashMap::new(),
             stream: HashMap::new(),
             remain_tick_count: 0,
+            ym2612_pcm_pos: 0,
+            ym2612_pcm_offset: 0,
         }
     }
 
@@ -563,17 +568,12 @@ impl VgmPlay {
                             data_length,
                         },
                     );
-                    // add data block
+                    // add data block (support uncompressed)
                     self.sound_slot.add_data_block(
                         self.data_block_id,
                         &self.vgm_data[data_block_pos..=data_block_pos + data_length],
                     );
                     self.data_block_id += 1;
-                    // YM2612 is special on VGM
-                    if data_type == 0 {
-                        self.stream
-                            .insert(0, Stream::from(/* YM2612 */ 0x02, 0, /* reg */ 0x2a));
-                    }
                 } else if (0x80..=0xbf).contains(&data_type) {
                     // ROM/RAM Image dumps
                     // do not use real_rom_size
@@ -617,16 +617,16 @@ impl VgmPlay {
                 // YM2612 port 0 address 2A write from the data bank, then wait n samples;
                 // n can range from 0 to 15. Note that the wait is n, NOT n+1.
                 // See also command 0xE0.
-                wait = (command & 0x0f).into();
-                let stream = self.stream.get_mut(/* 1st stream block */ &0).unwrap();
-                let block = self.data_block.get(/* 1st stream block */ &0).unwrap();
+                let ym2612_block = self.sound_slot.get_data_block(0);
+                let data = ym2612_block[self.ym2612_pcm_pos + self.ym2612_pcm_offset];
                 self.sound_slot.write(
                     SoundChipType::YM2612,
                     0,
                     0x2a,
-                    self.vgm_data[block.data_block_pos + stream.pcm_pos + stream.pcm_offset].into(),
+                    data.into(),
                 );
-                stream.pcm_offset += 1;
+                self.ym2612_pcm_offset += 1;
+                wait = (command & 0x0f).into();
             }
             0x90 => {
                 // Setup Stream Control
@@ -753,11 +753,10 @@ impl VgmPlay {
                     .write(SoundChipType::SEGAPCM, 0, u32::from(offset), dat.into());
             }
             0xe0 => {
-                // YM2612 data block 0 = stream id 0
+                // YM2612 data block 0
                 let pcm_pos = self.get_vgm_u32() as usize;
-                let stream = self.stream.get_mut(&0).unwrap();
-                stream.pcm_pos = pcm_pos as usize;
-                stream.pcm_offset = 0;
+                self.ym2612_pcm_pos = pcm_pos as usize;
+                self.ym2612_pcm_offset = 0;
             }
             // unsupport
             0x30..=0x3f | 0x4f => {
@@ -895,7 +894,7 @@ mod tests {
 
     #[test]
     fn ym2612_3() {
-        play("./docs/vgm/ym2612-ng.vgz")
+        play("./docs/vgm/ym2612-2.vgz")
     }
 
     #[test]

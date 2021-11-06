@@ -279,6 +279,13 @@ impl SoundSlot {
     }
 
     ///
+    /// Get data block borrow
+    ///
+    pub fn get_data_block(&self, data_block_id: usize) -> &[u8] {
+        self.data_block.get(&data_block_id).unwrap(/* TODO */).get_data_block()
+    }
+
+    ///
     /// Add data stream
     ///
     pub fn add_data_stream(
