@@ -579,7 +579,7 @@ impl VgmPlay {
                 // create new stream
                 let sound_chip_type = match chip_type & 0x7f {
                     2 => Some(SoundChipType::YM2612),
-                    22 => Some(SoundChipType::OKIM6258),
+                    23 => Some(SoundChipType::OKIM6258),
                     _ => panic!("not supported chip stream"), /* TODO: */
                 };
                 let sound_chip_index = (chip_type >> 7) as usize;

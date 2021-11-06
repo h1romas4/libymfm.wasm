@@ -343,6 +343,9 @@ impl SoundSlot {
         if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {}
     }
 
+    ///
+    /// Start data stream fast call
+    ///
     pub fn start_data_stream_fast(
         &mut self,
         sound_chip_type: SoundChipType,
@@ -352,7 +355,6 @@ impl SoundSlot {
     ) {
         if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
             // stream.data_block_id = data_block_id as usize;
-            // stream.flags = flags;
             // stream.pcm_stream_pos = stream.pcm_stream_pos_init;
             // stream.pcm_stream_length = data.data_length;
         }
