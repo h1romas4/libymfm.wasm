@@ -1,7 +1,12 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+use super::{
+    data_stream::{self, DataBlock, DataStream},
+    sound_chip::SoundChip,
+    stream::{SoundStream, Tick},
+    RomIndex,
+};
 use std::collections::HashMap;
-use super::{RomIndex, data_stream::{DataBlock, DataStream}, sound_chip::SoundChip, stream::{SoundStream, Tick}};
 
 ///
 /// Sound Device
@@ -36,6 +41,23 @@ impl SoundDevice {
             is_tick = self.sound_stream.is_tick();
             is_tick != Tick::No
         } {
+            // data stream write to sound chip
+            for (_, (_, data_stream)) in self.data_stream.iter_mut().enumerate() {
+                if let Some((data_block_id, data_block_pos, _write_port, write_reg)) =
+                    data_stream.tick()
+                {
+                    if let Some(data_block) = data_block.get(&data_block_id) {
+                        // stream command write
+                        self.sound_chip.write(
+                            sound_chip_index,
+                            write_reg,
+                            *data_block.get_data_block().get(data_block_pos).unwrap() as u32,
+                            &mut *self.sound_stream,
+                        )
+                    }
+                }
+            }
+            // sound chip update
             self.sound_chip
                 .tick(sound_chip_index, &mut *self.sound_stream);
             if is_tick != Tick::One {
@@ -65,7 +87,7 @@ impl SoundDevice {
     /// Add data stream
     ///
     pub fn add_data_stream(&mut self, data_stream_id: usize, data_stream: DataStream) {
-        self.data_stream.insert(data_stream_id,  data_stream);
+        self.data_stream.insert(data_stream_id, data_stream);
     }
 
     ///
@@ -89,7 +111,12 @@ impl SoundDevice {
     ///
     /// Start data stream
     ///
-    pub fn start_data_stream(&mut self, data_stream_id: usize, data_block_start_offset: usize, data_block_length: usize) {
+    pub fn start_data_stream(
+        &mut self,
+        data_stream_id: usize,
+        data_block_start_offset: usize,
+        data_block_length: usize,
+    ) {
         if let Some(data_stream) = self.data_stream.get_mut(&data_stream_id) {
             data_stream.start_data_stream(Some(data_block_start_offset), data_block_length);
         }
@@ -98,7 +125,12 @@ impl SoundDevice {
     ///
     /// Start data stream fast
     ///
-    pub fn start_data_stream_fast(&mut self, data_stream_id: usize, data_block_id: usize, data_block_length: usize) {
+    pub fn start_data_stream_fast(
+        &mut self,
+        data_stream_id: usize,
+        data_block_id: usize,
+        data_block_length: usize,
+    ) {
         if let Some(data_stream) = self.data_stream.get_mut(&data_stream_id) {
             data_stream.set_data_block_id(data_block_id);
             data_stream.start_data_stream(None, data_block_length);

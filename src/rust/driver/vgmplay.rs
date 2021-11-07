@@ -5,10 +5,9 @@ use std::collections::HashMap;
 use std::io::prelude::*;
 
 use crate::driver::gd3meta::Gd3;
-use crate::driver::vgmmeta::parse_vgm_meta;
+use crate::driver::vgmmeta;
 use crate::driver::vgmmeta::Jsonlize;
 use crate::driver::vgmmeta::VgmHeader;
-use crate::sound;
 use crate::sound::{RomIndex, SoundChipType, SoundSlot};
 
 pub const VGM_TICK_RATE: u32 = 44100;
@@ -105,7 +104,7 @@ impl VgmPlay {
         // try vgz extract
         self.extract();
 
-        match parse_vgm_meta(&self.vgm_data) {
+        match vgmmeta::parse_vgm_meta(&self.vgm_data) {
             Ok((header, gd3)) => {
                 self.vgm_header = header;
                 self.vgm_gd3 = gd3;
@@ -601,8 +600,8 @@ impl VgmPlay {
                 // 0x91 00 00 01 2a
                 let data_stream_id = self.get_vgm_u8() as usize;
                 let data_block_id = self.get_vgm_u8() as usize;
-                let step_base = self.get_vgm_u8();
-                let step_size = self.get_vgm_u8();
+                let /* TODO: */ _step_base = self.get_vgm_u8();
+                let /* TODO: */ _step_size = self.get_vgm_u8();
                 // assosiate data block to stream
                 if let Some((sound_chip_type, sound_chip_index)) =
                     self.sound_stream.get(&data_stream_id)
