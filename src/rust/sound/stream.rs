@@ -64,6 +64,7 @@ impl SoundStream for NativeStream {
 }
 
 pub struct NearestDownSampleStream {
+    input_sampling_rate: u32,
     now_input_sampling_l: f32,
     now_input_sampling_r: f32,
     prev_input_sampling_l: f32,
@@ -78,6 +79,7 @@ impl NearestDownSampleStream {
     pub fn new(input_sampling_rate: u32, output_sampling_rate: u32) -> Self {
         assert!(input_sampling_rate >= output_sampling_rate);
         NearestDownSampleStream {
+            input_sampling_rate,
             now_input_sampling_l: 0_f32,
             now_input_sampling_r: 0_f32,
             prev_input_sampling_l: 0_f32,
@@ -124,7 +126,7 @@ impl SoundStream for NearestDownSampleStream {
     }
 
     fn get_sampling_rate(&self) -> u32 {
-        todo!()
+        self.input_sampling_rate
     }
 
     fn set_output_channel(&mut self, _output_channel: OutputChannel) {
