@@ -273,17 +273,20 @@ impl SoundChip for OKIM6258 {
                 2 => sound_stream.set_output_channel(OutputChannel::Right),
                 3 => sound_stream.set_output_channel(OutputChannel::Mute),
                 _ => {
-                    panic!("ignore set_output_channel ({})", data)
+                    /* panic!("ignore set_output_channel ({})", data) */
                 }
             },
-            0x8 => todo!("change data clock"),
-            0xc => todo!("restore initial divider"),
+            0x8 => { todo!("change data clock") },
+            0xc => {
+                todo!("restore initial divider")
+                // sound_stream.change_sapmling_rate(self.set_divider(self.start_divider))
+            },
             // (hack) addtional port map offset for lib
             0x10 => sound_stream.change_sapmling_rate(self.set_divider(data)),
             0x11 => self.set_outbits((data & 0xff) as u8),
             0x12 => self.set_type((data & 0xff) as u8),
             _ => {
-                panic!("chip_okim6258 unknown offset")
+                /* panic!("chip_okim6258 unknown offset") */
             }
         }
     }

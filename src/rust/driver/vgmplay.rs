@@ -876,6 +876,16 @@ mod tests {
         play("./docs/vgm/okim6258-3.vgz")
     }
 
+    #[test]
+    fn okim6258_4() {
+        play("./docs/vgm/okim6258-4-ng.vgz")
+    }
+
+    #[test]
+    fn okim6258_5() {
+        play("./docs/vgm/okim6258-5-ng.vgz")
+    }
+
     fn play(filepath: &str) {
         println!("Play start! {}", filepath);
         // load sn76489 vgm file
