@@ -52,13 +52,14 @@ impl DataStream {
             result = if self.data_stream_sampling_pos >= 1_f32 {
                 self.data_stream_sampling_pos = 0_f32; /* -= -1_f32 */
                 self.data_block_length -= 1;
-                self.data_block_pos += 1;
-                Some((
+                let result = Some((
                     self.data_block_id.unwrap(/* TODO: */),
                     self.data_block_start_offset + self.data_block_pos,
                     self.write_port,
                     self.write_reg,
-                ))
+                ));
+                self.data_block_pos += 1;
+                result
             } else {
                 None
             };
@@ -103,10 +104,6 @@ impl DataStream {
     /// Stop data stream
     ///
     pub fn stop_data_stream(&mut self) {
-        if self.data_stream_sampling_pos >= 1_f32 {
-            self.data_block_length = 1; /* flash last sample */
-        } else {
-            self.data_block_length = 0;
-        }
+        self.data_block_length = 0;
     }
 }
