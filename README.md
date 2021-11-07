@@ -41,16 +41,6 @@ Source code:
 
 > [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web)
 
-## Build require Rust 2021 edition
-
-`Cargo.toml`
-
-```
-[package]
-edition = "2021"
-rust-version = "1.56"
-```
-
 ## WASI commnad line interface
 
 - Install [Wasmer](https://wasmer.io/) runtime
@@ -103,6 +93,16 @@ Source code:
 > [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/libymfm-cli](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/libymfm-cli)
 
 ## Build
+
+Build require Rust 2021 edition
+
+`Cargo.toml`
+
+```
+[package]
+edition = "2021"
+rust-version = "1.56"
+```
 
 Setup [wasi-sdk-12](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-12)
 
@@ -190,14 +190,9 @@ BSD 3-Clause License
 
 ## TODO / known issues
 
-- [x] Better upsampling
-- [x] To BSD license
-    - [x] SN76489
-    - [x] PWM
-- [x] Add buffering mode
-- [ ] VGM driver
+- [x] VGM driver
     - [x] YM2141 clock worng?
-    - [ ] Is there a problem with the file parser? The beginning of the song may be wrong.
+    - [x] Is there a problem with the file parser? The beginning of the song may be wrong.
 - [ ] Non-vgm driver support
     - [ ] XGM
 - [ ] Multilingual Interface
@@ -207,11 +202,20 @@ BSD 3-Clause License
 - [ ] ymfm
     - [ ] Add direct ymfm intarfece
     - [x] Support yfmf's all sound chips
-- [x] Fix SEGAPCM
+- [ ] Refactoring
+    - [x] Better upsampling
+    - [x] Separate the sound stream from the sound driver.
+    - [x] Support for arbitrary input tick rate and output sampling rate.
+    - [x] Support data stream.
+- [X] Add support sound chip
+    - [x] Fix SEGAPCM
+    - [x] OKIM6285
+    - [ ] Next to be determined
 - [ ] Examples source
     - [x] Web Frontend: AudioWorklet
     - [x] Web Frontend: Web Worker AudioWorklet and SharedArrayBuffer (The Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers cannot be set in github pages, so they cannot be deployed)
+    - [x] Web Frontend: Add buffering mode
     - [ ] CLI: Support loop and feedout
-- [ ] Refactoring
-    - [x] Separate the sound stream from the sound driver.
-    - [x] Support for arbitrary input tick rate and output sampling rate.
+- [x] To BSD license
+    - [x] SN76489
+    - [x] PWM
