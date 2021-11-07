@@ -96,7 +96,7 @@ impl DataStream {
             self.data_block_start_offset = data_block_start_offset;
         }
         self.data_block_pos = 0;
-        self.data_block_length = data_block_length - 1;
+        self.data_block_length = data_block_length;
         self.data_stream_sampling_pos = 0_f32;
     }
 
