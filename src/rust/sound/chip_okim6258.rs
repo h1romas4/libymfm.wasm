@@ -119,8 +119,8 @@ impl OKIM6258 {
 
                 nibble_shift ^= 4;
 
-                buffer_l[sampindex + buffer_pos] = convert_sample_i2f(sample as i32) / 2_f32;
-                buffer_r[sampindex + buffer_pos] = convert_sample_i2f(sample as i32) / 2_f32;
+                buffer_l[sampindex + buffer_pos] = convert_sample_i2f(sample as i32);
+                buffer_r[sampindex + buffer_pos] = convert_sample_i2f(sample as i32);
             }
 
             /* Update the parameters */
