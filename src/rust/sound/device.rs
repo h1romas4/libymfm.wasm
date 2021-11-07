@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use super::{
-    data_stream::{self, DataBlock, DataStream},
+    data_stream::{DataBlock, DataStream},
     sound_chip::SoundChip,
     stream::{SoundStream, Tick},
     RomIndex,
