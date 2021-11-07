@@ -8,6 +8,8 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 >
 > BSD-licensed Yamaha FM sound cores (OPM, OPN, OPL, and others)
 
+## Supported sound chips
+
 |chip|from|note|
 |----|----|----|
 |YM2149|ymfm||
@@ -25,6 +27,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |SN76489|mame|Rust ports for demo|
 |SEGAPCM|mame|Rust ports for demo|
 |PWM|mame|Rust ports for demo|
+|OKIM6285|mame|Rust ports for demo|
 
 ## Web browser interface
 
@@ -37,6 +40,16 @@ Firefox or Chromium is recommended. Currently, Safari does not support SharedArr
 Source code:
 
 > [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web)
+
+## Build require Rust 2021 edition
+
+`Cargo.toml`
+
+```
+[package]
+edition = "2021"
+rust-version = "1.56"
+```
 
 ## WASI commnad line interface
 

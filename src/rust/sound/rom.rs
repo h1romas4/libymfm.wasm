@@ -1,5 +1,8 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+use std::{cell::RefCell, rc::Rc};
+
+pub type RomBank = Option<Rc<RefCell<RomSet>>>;
 
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
@@ -78,4 +81,18 @@ impl RomSet {
     pub fn ger_rom_ref(&self, index_no: usize) -> (*const u8, usize, usize) {
         self.rom[index_no].get_memory_ref()
     }
+}
+
+///
+/// Read RomBank by address utility
+///
+pub fn read_rombank(rombank: &RomBank, address: usize) -> u8 {
+    rombank.as_ref().unwrap().borrow().read(address)
+}
+
+///
+/// Get Rom referance utility
+///
+pub fn get_rom_ref(rombank: &RomBank, index_no: usize) -> (*const u8, usize, usize) {
+    rombank.as_ref().unwrap().borrow().ger_rom_ref(index_no)
 }

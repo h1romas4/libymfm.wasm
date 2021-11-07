@@ -1,14 +1,14 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use flate2::read::GzDecoder;
-use std::convert::TryInto;
+use std::collections::HashMap;
 use std::io::prelude::*;
 
-use crate::driver::vgmmeta::parse_vgm_meta;
+use crate::driver::gd3meta::Gd3;
+use crate::driver::vgmmeta;
 use crate::driver::vgmmeta::Jsonlize;
 use crate::driver::vgmmeta::VgmHeader;
-use crate::driver::gd3meta::Gd3;
-use crate::sound::{SoundChipType, SoundSlot, RomIndex};
+use crate::sound::{RomIndex, SoundChipType, SoundSlot};
 
 pub const VGM_TICK_RATE: u32 = 44100;
 
@@ -23,15 +23,10 @@ pub struct VgmPlay {
     vgm_data: Vec<u8>,
     vgm_header: VgmHeader,
     vgm_gd3: Gd3,
-    pcm_origin_pos: usize,
-    pcm_pos: usize,
-    pcm_offset: usize,
-    pcm_stream_sample_count: u32,
-    pcm_stream_sampling_pos: u32,
-    pcm_stream_length: usize,
-    pcm_stream_pos_init: usize,
-    pcm_stream_pos: usize,
-    pcm_stream_offset: usize,
+    data_block_id: usize,
+    sound_stream: HashMap<usize, (SoundChipType, usize)>,
+    ym2612_pcm_pos: usize,
+    ym2612_pcm_offset: usize,
     remain_tick_count: usize,
 }
 
@@ -52,15 +47,10 @@ impl VgmPlay {
             vgm_data: Vec::new(),
             vgm_header: VgmHeader::default(),
             vgm_gd3: Gd3::default(),
-            pcm_origin_pos: 0,
-            pcm_pos: 0,
-            pcm_offset: 0,
-            pcm_stream_sample_count: 0,
-            pcm_stream_sampling_pos: 0,
-            pcm_stream_length: 0,
-            pcm_stream_pos_init: 0,
-            pcm_stream_pos: 0,
-            pcm_stream_offset: 0,
+            data_block_id: 0,
+            sound_stream: HashMap::new(),
+            ym2612_pcm_pos: 0,
+            ym2612_pcm_offset: 0,
             remain_tick_count: 0,
         }
     }
@@ -114,7 +104,7 @@ impl VgmPlay {
         // try vgz extract
         self.extract();
 
-        match parse_vgm_meta(&self.vgm_data) {
+        match vgmmeta::parse_vgm_meta(&self.vgm_data) {
             Ok((header, gd3)) => {
                 self.vgm_header = header;
                 self.vgm_gd3 = gd3;
@@ -239,6 +229,34 @@ impl VgmPlay {
                 self.vgm_header.sega_pcm_clock,
             );
         }
+        if self.vgm_header.clock_okim6258 != 0 {
+            self.sound_slot.add_sound_device(
+                SoundChipType::OKIM6258,
+                2,
+                self.vgm_header.clock_okim6258,
+            );
+            let flag = self.vgm_header.okmi6258_flag;
+            for i in 0..=1 {
+                self.sound_slot.write(
+                    SoundChipType::OKIM6258,
+                    i,
+                    0x10, /* set_divider */
+                    (flag & 3) as u32,
+                );
+                self.sound_slot.write(
+                    SoundChipType::OKIM6258,
+                    i,
+                    0x11, /* set_outbits */
+                    if (flag & 4) != 0 { 10 } else { 12 },
+                );
+                self.sound_slot.write(
+                    SoundChipType::OKIM6258,
+                    i,
+                    0x12, /* set_type */
+                    if flag & 2 != 0 { 1 } else { 0 },
+                );
+            }
+        }
 
         Ok(())
     }
@@ -247,12 +265,11 @@ impl VgmPlay {
     /// Play Sound.
     ///
     pub fn play(&mut self, repeat: bool) -> usize {
-        while self.sound_slot.ready() && !self.vgm_end {
+        while !self.sound_slot.is_stream_filled() && !self.vgm_end {
             for _ in 0..self.remain_tick_count {
-                self.update_pcm_stream();
                 self.sound_slot.update(1);
                 self.remain_tick_count -= 1;
-                if !self.sound_slot.ready() {
+                if self.sound_slot.is_stream_filled() {
                     break;
                 }
             }
@@ -269,28 +286,6 @@ impl VgmPlay {
             std::usize::MAX
         } else {
             self.vgm_loop_count
-        }
-    }
-
-    fn update_pcm_stream(&mut self) {
-        // YM2612 straming pcm update
-        if self.pcm_stream_pos_init == self.pcm_stream_pos && self.pcm_stream_length > 0 {
-            self.pcm_stream_sampling_pos = 0;
-        }
-        if self.pcm_stream_length > 0
-            && (self.pcm_stream_sampling_pos % self.pcm_stream_sample_count) as usize == 0
-        {
-            self.sound_slot.write(
-                SoundChipType::YM2612,
-                0,
-                0x2a,
-                self.vgm_data[self.pcm_origin_pos + self.pcm_stream_pos + self.pcm_stream_offset].into(),
-            );
-            self.pcm_stream_length -= 1;
-            self.pcm_stream_pos += 1;
-        }
-        if self.pcm_stream_length > 0 {
-            self.pcm_stream_sampling_pos += 1;
         }
     }
 
@@ -508,45 +503,49 @@ impl VgmPlay {
                 // 0x66 compatibility command to make older players stop parsing the stream
                 self.get_vgm_u8();
                 let data_type = self.get_vgm_u8();
-                let size = self.get_vgm_u32();
-                let data_pos = self.vgm_pos;
-                self.vgm_pos += size as usize;
+                let data_length = self.get_vgm_u32() as usize;
+                let data_block_pos = self.vgm_pos;
+                self.vgm_pos += data_length as usize;
                 // handle data block
                 if (0x00..=0x3f).contains(&data_type) {
-                    // data of recorded streams (uncompressed)
-                    if data_type == 0x00 {
-                        // for ym2612
-                        self.pcm_origin_pos = data_pos;
-                    }
+                    // add data block (support uncompressed)
+                    self.sound_slot.add_data_block(
+                        self.data_block_id,
+                        &self.vgm_data[data_block_pos..data_block_pos + data_length],
+                    );
+                    // data_block_id is a sequence id in vgm
+                    self.data_block_id += 1;
                 } else if (0x80..=0xbf).contains(&data_type) {
                     // ROM/RAM Image dumps
                     // do not use real_rom_size
                     let _real_rom_size = u32::from_le_bytes(
-                        self.vgm_data[data_pos..(data_pos + 4)].try_into().unwrap(),
-                    );
-                    let start_address = u32::from_le_bytes(
-                        self.vgm_data[(data_pos + 4)..(data_pos + 8)]
+                        self.vgm_data[data_block_pos..(data_block_pos + 4)]
                             .try_into()
                             .unwrap(),
                     );
-                    let mut data_size = (size - 8) as usize;
+                    let start_address = u32::from_le_bytes(
+                        self.vgm_data[(data_block_pos + 4)..(data_block_pos + 8)]
+                            .try_into()
+                            .unwrap(),
+                    );
+                    let mut data_size = data_length - 8;
                     if data_size == 0 {
                         data_size = 1;
                     }
                     let start_address = start_address as usize;
                     let rom_index: RomIndex = match data_type {
-                        0x80 => { RomIndex::SEGAPCM_ROM },
-                        0x81 => { RomIndex::YM2608_DELTA_T },
-                        0x82 => { RomIndex::YM2610_ADPCM },
-                        0x83 => { RomIndex::YM2610_DELTA_T },
-                        0x84 => { RomIndex::YMF278B_ROM },
-                        0x87 => { RomIndex::YMF278B_RAM },
-                        0x88 => { RomIndex::Y8950_ROM },
-                        _ => { RomIndex::NOT_SUPPOTED }
+                        0x80 => RomIndex::SEGAPCM_ROM,
+                        0x81 => RomIndex::YM2608_DELTA_T,
+                        0x82 => RomIndex::YM2610_ADPCM,
+                        0x83 => RomIndex::YM2610_DELTA_T,
+                        0x84 => RomIndex::YMF278B_ROM,
+                        0x87 => RomIndex::YMF278B_RAM,
+                        0x88 => RomIndex::Y8950_ROM,
+                        _ => RomIndex::NOT_SUPPOTED,
                     };
                     self.sound_slot.add_rom(
                         rom_index,
-                        &self.vgm_data[(data_pos + 8)..(data_pos + 8) + data_size],
+                        &self.vgm_data[(data_block_pos + 8)..(data_block_pos + 8) + data_size],
                         start_address,
                         start_address + data_size - 1,
                     );
@@ -556,59 +555,135 @@ impl VgmPlay {
                 wait = ((command & 0x0f) + 1).into();
             }
             0x80..=0x8f => {
-                // YM2612 PCM
+                // YM2612 port 0 address 2A write from the data bank, then wait n samples;
+                // n can range from 0 to 15. Note that the wait is n, NOT n+1.
+                // See also command 0xE0.
+                let ym2612_block = self
+                    .sound_slot
+                    .get_data_block(/* YM2612 data block 0 fixed */ 0);
+                let data = ym2612_block[self.ym2612_pcm_pos + self.ym2612_pcm_offset];
+                self.sound_slot
+                    .write(SoundChipType::YM2612, 0, 0x2a, data.into());
+                self.ym2612_pcm_offset += 1;
                 wait = (command & 0x0f).into();
-                self.sound_slot.write(
-                    SoundChipType::YM2612,
-                    0,
-                    0x2a,
-                    self.vgm_data[self.pcm_origin_pos + self.pcm_pos + self.pcm_offset].into(),
-                );
-                self.pcm_offset += 1;
             }
             0x90 => {
-                // TODO: respect stream no
                 // Setup Stream Control
                 // 0x90 ss tt pp cc
                 // 0x90 00 02 00 2a
-                self.get_vgm_u32();
+                let data_stream_id = self.get_vgm_u8() as usize;
+                let chip_type = self.get_vgm_u8();
+                let write_port = self.get_vgm_u8() as u32;
+                let write_reg = self.get_vgm_u8() as u32;
+                // create new stream
+                let sound_chip_type = match chip_type & 0x7f {
+                    2 => Some(SoundChipType::YM2612),
+                    23 => Some(SoundChipType::OKIM6258),
+                    _ => None, /* TODO: not supported stream */
+                };
+                let sound_chip_index = (chip_type >> 7) as usize;
+                if let Some(sound_chip_type) = sound_chip_type {
+                    self.sound_slot.add_data_stream(
+                        sound_chip_type,
+                        sound_chip_index,
+                        data_stream_id,
+                        write_port,
+                        write_reg,
+                    );
+                    self.sound_stream
+                        .insert(data_stream_id, (sound_chip_type, sound_chip_index));
+                }
             }
             0x91 => {
                 // Set Stream Data
                 // 0x91 ss dd ll bb
                 // 0x91 00 00 01 2a
-                self.get_vgm_u32();
+                let data_stream_id = self.get_vgm_u8() as usize;
+                let data_block_id = self.get_vgm_u8() as usize;
+                let /* TODO: */ _step_base = self.get_vgm_u8();
+                let /* TODO: */ _step_size = self.get_vgm_u8();
+                // assosiate data block to stream
+                if let Some((sound_chip_type, sound_chip_index)) =
+                    self.sound_stream.get(&data_stream_id)
+                {
+                    self.sound_slot.attach_data_block_to_stream(
+                        *sound_chip_type,
+                        *sound_chip_index,
+                        data_stream_id,
+                        data_block_id,
+                    );
+                }
             }
             0x92 => {
                 // Set Stream Frequency
                 // 0x92 ss ff ff ff ff
                 // 0x92 00 40 1f 00 00 (8KHz)
-                self.get_vgm_u8();
-                self.pcm_stream_sample_count = VGM_TICK_RATE / self.get_vgm_u32();
+                let data_stream_id = self.get_vgm_u8() as usize;
+                let frequency = self.get_vgm_u32();
+                if let Some((sound_chip_type, sound_chip_index)) =
+                    self.sound_stream.get(&data_stream_id)
+                {
+                    self.sound_slot.set_data_stream_frequency(
+                        *sound_chip_type,
+                        *sound_chip_index,
+                        data_stream_id,
+                        frequency,
+                    );
+                }
             }
             0x93 => {
                 // Start Stream
                 // 0x93 ss aa aa aa aa mm ll ll ll ll
                 // 0x93 00 aa aa aa aa 01 ll ll ll ll
-                self.get_vgm_u8();
-                self.pcm_stream_pos_init = self.get_vgm_u32() as usize;
-                self.pcm_stream_pos = self.pcm_stream_pos_init;
-                self.get_vgm_u8();
-                self.pcm_stream_length = self.get_vgm_u32() as usize;
-                self.pcm_stream_offset = 0;
+                let data_stream_id = self.get_vgm_u8() as usize;
+                let data_stream_start_offset = self.get_vgm_u32() as usize;
+                let /* TODO */ _length_mode = self.get_vgm_u8();
+                let pcm_stream_length = self.get_vgm_u32() as usize;
+                // initalize stream and start playback (set pcm_stream_length)
+                if let Some((sound_chip_type, sound_chip_index)) =
+                    self.sound_stream.get(&data_stream_id)
+                {
+                    self.sound_slot.start_data_stream(
+                        *sound_chip_type,
+                        *sound_chip_index,
+                        data_stream_id,
+                        data_stream_start_offset,
+                        pcm_stream_length,
+                    );
+                }
             }
             0x94 => {
                 // Stop Stream
                 // 0x94 ss
-                self.get_vgm_u8();
-                self.pcm_stream_length = 0;
+                let data_stream_id = self.get_vgm_u8() as usize;
+                // stop stream (set pcm_stream_length to 0)
+                if let Some((sound_chip_type, sound_chip_index)) =
+                    self.sound_stream.get(&data_stream_id)
+                {
+                    self.sound_slot.stop_data_stream(
+                        *sound_chip_type,
+                        *sound_chip_index,
+                        data_stream_id,
+                    );
+                }
             }
             0x95 => {
                 // Start Stream (fast call)
                 // 0x95 ss bb bb ff
-                self.get_vgm_u8();
-                self.get_vgm_u16();
-                self.get_vgm_u8();
+                let data_stream_id = self.get_vgm_u8() as usize;
+                let data_block_id = self.get_vgm_u16() as usize;
+                let /* TODO */ _flags = self.get_vgm_u8();
+                // initalize stream and start playback (set pcm_stream_length to data block size)
+                if let Some((sound_chip_type, sound_chip_index)) =
+                    self.sound_stream.get(&data_stream_id)
+                {
+                    self.sound_slot.start_data_stream_fast(
+                        *sound_chip_type,
+                        *sound_chip_index,
+                        data_stream_id,
+                        data_block_id,
+                    );
+                }
             }
             0xa0 => {
                 // TODO: AY8910, write
@@ -627,6 +702,26 @@ impl VgmPlay {
                 self.sound_slot
                     .write(SoundChipType::PWM, 0, channel as u32, dat.into());
             }
+            0xb7 => {
+                // 0xb7: aa dd: OKIM6258, write value dd to register aa
+                let offset = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
+                if offset & 0x80 != 0 {
+                    self.sound_slot.write(
+                        SoundChipType::OKIM6258,
+                        1,
+                        (offset & 0x7f) as u32,
+                        dat.into(),
+                    );
+                } else {
+                    self.sound_slot.write(
+                        SoundChipType::OKIM6258,
+                        0,
+                        (offset & 0x7f) as u32,
+                        dat.into(),
+                    );
+                }
+            }
             0xc0 => {
                 let offset = self.get_vgm_u16();
                 let dat = self.get_vgm_u8();
@@ -634,15 +729,17 @@ impl VgmPlay {
                     .write(SoundChipType::SEGAPCM, 0, u32::from(offset), dat.into());
             }
             0xe0 => {
-                self.pcm_pos = self.get_vgm_u32() as usize;
-                self.pcm_offset = 0;
+                // YM2612 data block 0
+                let pcm_pos = self.get_vgm_u32() as usize;
+                self.ym2612_pcm_pos = pcm_pos as usize;
+                self.ym2612_pcm_offset = 0;
             }
             // unsupport
             0x30..=0x3f | 0x4f => {
                 // 0x4f: dd: Game Gear PSG stereo, write dd to port 0x06
                 self.get_vgm_u8();
             }
-            0x40..=0x4e | 0x5d | 0xb0..=0xbf => {
+            0x40..=0x4e | 0x5d | 0xb0..=0xb6 | 0xb8..=0xbf => {
                 // 0x5d: aa dd: YMZ280B, write value dd to register aa
                 // 0xb0: aa dd: RF5C68, write value dd to register aa
                 // 0xb1: aa dd: RF5C164, write value dd to register aa
@@ -651,7 +748,6 @@ impl VgmPlay {
                 // 0xb4: aa dd: NES APU, write value dd to register aa
                 // 0xb5: aa dd: MultiPCM, write value dd to register aa
                 // 0xb6: aa dd: uPD7759, write value dd to register aa
-                // 0xb7: aa dd: OKIM6258, write value dd to register aa
                 // 0xb8: aa dd: OKIM6295, write value dd to register aa
                 // 0xb9: aa dd: HuC6280, write value dd to register aa
                 // 0xba: aa dd: K053260, write value dd to register aa
@@ -719,37 +815,17 @@ mod tests {
 
     #[test]
     fn ym2612_1() {
-        println!("1st vgm instance");
         play("./docs/vgm/ym2612.vgm");
-        println!("2nd vgm instance(drop and create)");
-        play("./docs/vgm/ym2612-ng.vgz")
     }
 
     #[test]
-    fn ym2612_2() {
-        play("./docs/vgm/2612/20.vgz");
-        play("./docs/vgm/2612/21.vgz");
-        play("./docs/vgm/2612/22.vgz");
-        play("./docs/vgm/2612/23.vgz");
-        play("./docs/vgm/2612/24.vgz");
-        play("./docs/vgm/2612/25.vgz");
-        play("./docs/vgm/2612/26.vgz");
-        play("./docs/vgm/2612/27.vgz");
-        play("./docs/vgm/2612/28.vgz");
-        play("./docs/vgm/2612/29.vgz");
-        play("./docs/vgm/2612/30.vgz");
-        play("./docs/vgm/2612/31.vgz");
-        play("./docs/vgm/2612/32.vgz");
-        play("./docs/vgm/2612/33.vgz");
-        play("./docs/vgm/2612/34.vgz");
-        play("./docs/vgm/2612/35.vgz");
-        play("./docs/vgm/2612/36.vgz");
-        play("./docs/vgm/2612/37.vgz");
-        play("./docs/vgm/2612/38.vgz");
-        play("./docs/vgm/2612/39.vgz");
-        play("./docs/vgm/2612/40.vgz");
-        play("./docs/vgm/2612/41.vgz");
-        play("./docs/vgm/2612/42.vgz");
+    fn ym2612_3() {
+        play("./docs/vgm/ym2612-2.vgz")
+    }
+
+    #[test]
+    fn ym2612_4() {
+        play("./docs/vgm/ym2612-datablock.vgm") // data block
     }
 
     #[test]
@@ -785,6 +861,21 @@ mod tests {
         play("./docs/vgm/segapcm-2.vgz")
     }
 
+    #[test]
+    fn okim6258_1() {
+        play("./docs/vgm/okim6258.vgz")
+    }
+
+    #[test]
+    fn okim6258_2() {
+        play("./docs/vgm/okim6258-2.vgz")
+    }
+
+    #[test]
+    fn okim6258_3() {
+        play("./docs/vgm/okim6258-3.vgz")
+    }
+
     fn play(filepath: &str) {
         println!("Play start! {}", filepath);
         // load sn76489 vgm file
@@ -793,7 +884,7 @@ mod tests {
         let _ = file.read_to_end(&mut buffer).unwrap();
 
         let mut vgmplay = VgmPlay::new(
-            SoundSlot::new(44100, 96000, MAX_SAMPLE_SIZE),
+            SoundSlot::new(44100, 44100, MAX_SAMPLE_SIZE),
             file.metadata().unwrap().len() as usize,
         );
         // set vgmdata (Wasm simulation)

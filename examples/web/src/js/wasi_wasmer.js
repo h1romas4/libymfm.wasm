@@ -1,13 +1,14 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 import { WASI } from '@wasmer/wasi';
+import { WasmFs } from "@wasmer/wasmfs";
 import { lowerI64Imports } from "@wasmer/wasm-transformer";
 import browserBindings from '@wasmer/wasi/lib/bindings/browser';
-import { fs } from 'memfs';
 import { spy } from 'spyfs';
 
 // wasi instance
 export let wasi;
+export let wasmFs;
 export let memFs;
 
 /**
@@ -24,7 +25,9 @@ export let memFs;
  */
 export async function initWasi() {
     // memfs + spy
-    memFs = spy(fs, async (action) => {
+    wasmFs = new WasmFs();
+    // memfs not working ?
+    memFs = spy(wasmFs.fs, async (action) => {
         console.log({ [action.method] : {
             "isAsync": action.isAsync,
             "args": action.args,
@@ -37,7 +40,7 @@ export async function initWasi() {
         env: {},
         bindings: {
             ...browserBindings,
-            fs: memFs,
+            fs: memFs
         }
     });
     // fetch wasm module

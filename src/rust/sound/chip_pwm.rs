@@ -11,7 +11,12 @@
  *  https://github.com/mamedev/mame/blob/master/src/mame/machine/mega32x.cpp
  *  rev. ee1e4f9683a4953cb9d88f9256017fcbc38e3144
  */
-use super::{RomIndex, SoundChipType, interface::{RomBank, SoundChip}, stream::{SoundStream}};
+use super::{
+    rom::RomBank,
+    sound_chip::SoundChip,
+    stream::SoundStream,
+    RomIndex, SoundChipType,
+};
 
 const PWM_FIFO_SIZE: usize = 3;
 const EMU_SAMPLING_RATE: u32 = 22050; /* 22050 / 15611 After Burner Complete */
@@ -124,36 +129,52 @@ impl PWM {
     }
 
     pub fn handle_pwm_callback(&mut self) -> (u32, u32) {
-        let mut ldac= 0;
-        let mut rdac= 0;
+        let mut ldac = 0;
+        let mut rdac = 0;
 
         if self.lch_size > 0 {
             match self.pwm_ctrl & 3 {
                 0 => { /*Speaker OFF*/ }
-                1 => { ldac = self.cur_lch[0]; }
-                2 => { rdac = self.cur_lch[0]; }
-                3 => { panic!("Undefined PWM Lch value 3, contact MESSdev"); }
-                _ => { panic!("Undefined PWM command"); }
+                1 => {
+                    ldac = self.cur_lch[0];
+                }
+                2 => {
+                    rdac = self.cur_lch[0];
+                }
+                3 => {
+                    panic!("Undefined PWM Lch value 3, contact MESSdev");
+                }
+                _ => {
+                    panic!("Undefined PWM command");
+                }
             }
 
             self.lch_pop();
         }
 
-        self.lch_fifo_state = if self.lch_fifo_state == 0 { 0x4000 } else { 0x0000 };
+        self.lch_fifo_state = if self.lch_fifo_state == 0 {
+            0x4000
+        } else {
+            0x0000
+        };
 
         if self.rch_size > 0 {
             match (self.pwm_ctrl & 0xc) >> 2 {
                 0 => { /*Speaker OFF*/ }
-                1 => { rdac = self.cur_rch[0]; }
-                2 => { ldac = self.cur_rch[0]; }
-                3 => { panic!("Undefined PWM Lch value 3, contact MESSdev"); }
-                _ => { panic!("Undefined PWM command"); }
+                1 => rdac = self.cur_rch[0],
+                2 => ldac = self.cur_rch[0],
+                3 => panic!("Undefined PWM Lch value 3, contact MESSdev"),
+                _ => panic!("Undefined PWM command"),
             }
 
             self.rch_pop();
         }
 
-        self.rch_fifo_state = if self.rch_fifo_state == 0 { 0x4000 } else { 0x0000 };
+        self.rch_fifo_state = if self.rch_fifo_state == 0 {
+            0x4000
+        } else {
+            0x0000
+        };
 
         self.pwm_timer_tick += 1;
 
@@ -234,7 +255,7 @@ impl SoundChip for PWM {
         todo!("WIP");
     }
 
-    fn write(&mut self, _: usize, port: u32, data: u32) {
+    fn write(&mut self, _: usize, port: u32, data: u32, _: &mut dyn SoundStream) {
         self.pwm_w(port as u32, data as u16);
     }
 
@@ -257,7 +278,7 @@ impl SoundChip for PWM {
         sound_stream.push(self.emu_out_l, self.emu_out_r);
     }
 
-    fn set_rombank(&mut self, _: RomIndex, _: RomBank) {}
+    fn set_rom_bank(&mut self, _: RomIndex, _: RomBank) {}
 
     fn notify_add_rom(&mut self, _: RomIndex, _: usize) {}
 }

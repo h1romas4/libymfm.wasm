@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use nom::bytes::complete::{tag, take};
@@ -44,8 +42,7 @@ pub struct VgmHeader {
     pub clock_rf5c164: u32,
     pub clock_pwm: u32,
     pub clock_ay8910: u32,
-    pub ay8910_chip_type: u8,
-    pub ay8910_flag: u16,
+    pub ay8910_flag: u32,
     pub volume_modifier: u8,
     pub reserved01: u8,
     pub loop_base: u8,
@@ -133,8 +130,7 @@ fn parse_vgm_header(i: &[u8]) -> IResult<&[u8], VgmHeader> {
     let (i, clock_rf5c164) = le_u32(i)?;
     let (i, clock_pwm) = le_u32(i)?;
     let (i, clock_ay8910) = le_u32(i)?;
-    let (i, ay8910_chip_type) = le_u8(i)?;
-    let (i, ay8910_flag) = le_u16(i)?;
+    let (i, ay8910_flag) = le_u32(i)?;
     let (i, volume_modifier) = le_u8(i)?;
     let (i, reserved01) = le_u8(i)?;
     let (i, loop_base) = le_u8(i)?;
@@ -230,7 +226,6 @@ fn parse_vgm_header(i: &[u8]) -> IResult<&[u8], VgmHeader> {
             clock_rf5c164,
             clock_pwm,
             clock_ay8910,
-            ay8910_chip_type,
             ay8910_flag,
             loop_modifier,
             ..header
@@ -311,7 +306,7 @@ pub(crate) fn parse_vgm_meta(vgmdata: &[u8]) -> Result<(VgmHeader, Gd3), &'stati
         vgm_data_offset = 0xff;
     }
     // The length of vgm_data_offset takes precedence over the length of the header.
-    let mut header = [0_u8; 0xff];
+    let mut header = [0_u8; 0x100];
     header[..vgm_data_offset].copy_from_slice(&vgmdata[..vgm_data_offset]);
 
     let header = match parse_vgm_header(&header) {
@@ -356,6 +351,11 @@ mod tests {
     #[test]
     fn test_2() {
         parse("./docs/vgm/segapcm-2.vgm")
+    }
+
+    #[test]
+    fn test_3() {
+        parse("./docs/vgm/okim6258.vgm")
     }
 
     fn parse(filepath: &str) {
