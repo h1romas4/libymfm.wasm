@@ -16,13 +16,19 @@ impl DataBlock {
     }
 }
 
+pub enum DataStreamStatus {
+    Start,
+    Stop,
+}
+
 pub struct DataStream {
+    status: DataStreamStatus,
     data_block_id: Option<usize>,
     frequency: u32,
     write_port: u32,
     write_reg: u32,
-    data_stream_start_offset: usize,
-    data_stream_length: usize,
+    data_block_start_offset: usize,
+    data_block_length: usize,
     data_stream_sampling_pos: f32,
     data_stream_sample_step: f32,
 }
@@ -30,20 +36,50 @@ pub struct DataStream {
 impl DataStream {
     pub fn new(write_port: u32, write_reg: u32) -> Self {
         DataStream {
+            status: DataStreamStatus::Stop,
             data_block_id: None,
             frequency: 0,
             write_port,
             write_reg,
-            data_stream_start_offset: 0,
-            data_stream_length: 0,
+            data_block_start_offset: 0,
+            data_block_length: 0,
             data_stream_sampling_pos: 0_f32,
             data_stream_sample_step: 0_f32,
         }
     }
 
+    ///
+    /// Set data stream frequency
+    ///
     pub fn set_frequency(&mut self, sampling_rate: u32, frequency: u32) {
         self.frequency = frequency;
         self.data_stream_sampling_pos = 0_f32;
         self.data_stream_sample_step = frequency as f32 / sampling_rate as f32;
+    }
+
+    ///
+    /// Assign data data stream to data block
+    ///
+    pub fn set_data_block_id(&mut self, data_block_id: usize) {
+        self.data_block_id = Some(data_block_id);
+    }
+
+    ///
+    /// Start data stream
+    ///
+    pub fn start_data_stream(&mut self, data_block_start_offset: Option<usize>, data_block_length: usize) {
+        if let Some(data_block_start_offset) = data_block_start_offset {
+            self.data_block_start_offset = data_block_start_offset;
+        }
+        self.data_block_length = data_block_length;
+        self.status = DataStreamStatus::Start;
+    }
+
+    ///
+    /// Stop data stream
+    ///
+    pub fn stop_data_stream(&mut self) {
+        self.data_block_length = 0;
+        self.status = DataStreamStatus::Stop;
     }
 }

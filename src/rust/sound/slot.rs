@@ -326,7 +326,9 @@ impl SoundSlot {
         data_stream_id: usize,
         data_block_id: usize,
     ) {
-        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {}
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
+            sound_device.attach_data_block_to_stream(data_stream_id, data_block_id);
+        }
     }
 
     ///
@@ -337,10 +339,12 @@ impl SoundSlot {
         sound_chip_type: SoundChipType,
         sound_chip_index: usize,
         data_stream_id: usize,
-        data_stream_start_offset: usize,
-        pcm_stream_length: usize,
+        data_block_start_offset: usize,
+        data_block_length: usize,
     ) {
-        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {}
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
+            sound_device.start_data_stream(data_stream_id, data_block_start_offset, data_block_length);
+        }
     }
 
     ///
@@ -353,10 +357,14 @@ impl SoundSlot {
         data_stream_id: usize,
         data_block_id: usize,
     ) {
+        let mut data_block_length = None;
+        if let Some(data_block) = self.data_block.get(&data_block_id) {
+            data_block_length = Some(data_block.get_data_block().len());
+        }
         if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
-            // stream.data_block_id = data_block_id as usize;
-            // stream.pcm_stream_pos = stream.pcm_stream_pos_init;
-            // stream.pcm_stream_length = data.data_length;
+            if let Some(data_block_length) = data_block_length {
+                sound_device.start_data_stream_fast(data_stream_id, data_block_id, data_block_length);
+            }
         }
     }
 
@@ -369,6 +377,9 @@ impl SoundSlot {
         sound_chip_index: usize,
         data_stream_id: usize,
     ) {
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
+            sound_device.stop_data_stream(data_stream_id);
+        }
     }
 
     ///

@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use std::collections::HashMap;
-use super::{RomIndex, data_stream::{self, DataBlock, DataStream}, sound_chip::SoundChip, stream::{SoundStream, Tick}};
+use super::{RomIndex, data_stream::{DataBlock, DataStream}, sound_chip::SoundChip, stream::{SoundStream, Tick}};
 
 ///
 /// Sound Device
@@ -78,9 +78,39 @@ impl SoundDevice {
     }
 
     ///
-    /// Get data stream borrow
+    /// Attach data block to stream
     ///
-    pub fn get_data_stream(&mut self, data_stream_id: usize) -> Option<&mut DataStream> {
-        self.data_stream.get_mut(&data_stream_id)
+    pub fn attach_data_block_to_stream(&mut self, data_stream_id: usize, data_block_id: usize) {
+        if let Some(data_stream) = self.data_stream.get_mut(&data_stream_id) {
+            data_stream.set_data_block_id(data_block_id);
+        }
+    }
+
+    ///
+    /// Start data stream
+    ///
+    pub fn start_data_stream(&mut self, data_stream_id: usize, data_block_start_offset: usize, data_block_length: usize) {
+        if let Some(data_stream) = self.data_stream.get_mut(&data_stream_id) {
+            data_stream.start_data_stream(Some(data_block_start_offset), data_block_length);
+        }
+    }
+
+    ///
+    /// Start data stream fast
+    ///
+    pub fn start_data_stream_fast(&mut self, data_stream_id: usize, data_block_id: usize, data_block_length: usize) {
+        if let Some(data_stream) = self.data_stream.get_mut(&data_stream_id) {
+            data_stream.set_data_block_id(data_block_id);
+            data_stream.start_data_stream(None, data_block_length);
+        }
+    }
+
+    ///
+    /// Stop data stream
+    ///
+    pub fn stop_data_stream(&mut self, data_stream_id: usize) {
+        if let Some(data_stream) = self.data_stream.get_mut(&data_stream_id) {
+            data_stream.stop_data_stream();
+        }
     }
 }
