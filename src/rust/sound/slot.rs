@@ -14,10 +14,7 @@ use super::data_stream::{DataBlock, DataStream};
 use super::device::SoundDevice;
 use super::rom::{RomIndex, RomSet};
 use super::sound_chip::SoundChip;
-use super::stream::{
-    LinearUpSamplingStream, NativeStream, NearestDownSampleStream, OverSampleStream, Resolution,
-    SoundStream,
-};
+use super::stream::{LinearUpSamplingStream, NativeStream, NearestDownSampleStream, OverSampleStream, Resolution, SampleHoldUpSamplingStream, SoundStream};
 use super::SoundChipType;
 
 ///
@@ -129,11 +126,19 @@ impl SoundSlot {
                             self.output_sampling_rate,
                         )),
                     },
-                    _ => Box::new(LinearUpSamplingStream::new(
-                        sound_chip_sampling_rate,
-                        self.output_sampling_rate,
-                        Resolution::RangeAll,
-                    )),
+                    _ => match sound_chip_type {
+                        SoundChipType::OKIM6258 => {
+                            Box::new(SampleHoldUpSamplingStream::new(
+                                sound_chip_sampling_rate,
+                                self.output_sampling_rate,
+                            ))
+                        }
+                        _ => Box::new(LinearUpSamplingStream::new(
+                            sound_chip_sampling_rate,
+                            self.output_sampling_rate,
+                            Resolution::RangeAll,
+                        )),
+                    }
                 };
             // add sound device
             self.sound_device

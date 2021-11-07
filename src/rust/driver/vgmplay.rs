@@ -871,6 +871,11 @@ mod tests {
         play("./docs/vgm/okim6258-2.vgz")
     }
 
+    #[test]
+    fn okim6258_3() {
+        play("./docs/vgm/okim6258-3.vgz")
+    }
+
     fn play(filepath: &str) {
         println!("Play start! {}", filepath);
         // load sn76489 vgm file
@@ -879,7 +884,7 @@ mod tests {
         let _ = file.read_to_end(&mut buffer).unwrap();
 
         let mut vgmplay = VgmPlay::new(
-            SoundSlot::new(44100, 96000, MAX_SAMPLE_SIZE),
+            SoundSlot::new(44100, 44100, MAX_SAMPLE_SIZE),
             file.metadata().unwrap().len() as usize,
         );
         // set vgmdata (Wasm simulation)

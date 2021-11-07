@@ -50,7 +50,7 @@ impl DataStream {
         let mut result = None;
         if self.data_block_length > 0 {
             result = if self.data_stream_sampling_pos >= 1_f32 {
-                self.data_stream_sampling_pos = 0_f32;
+                self.data_stream_sampling_pos = 0_f32; /* -= -1_f32 */
                 self.data_block_length -= 1;
                 self.data_block_pos += 1;
                 Some((
