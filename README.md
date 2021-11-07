@@ -40,6 +40,16 @@ Source code:
 
 > [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web)
 
+## Build require Rust 2021 edition
+
+`Cargo.toml`
+
+```
+[package]
+edition = "2021"
+rust-version = "1.56"
+```
+
 ## WASI commnad line interface
 
 - Install [Wasmer](https://wasmer.io/) runtime

@@ -1,6 +1,11 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-use super::{RomIndex, SoundChipType, interface::{RomBank, SoundChip, get_rom_ref}, stream::{convert_sample_i2f, SoundStream}};
+use super::{
+    rom::{get_rom_ref, RomBank},
+    sound_chip::SoundChip,
+    stream::{convert_sample_i2f, SoundStream},
+    RomIndex, SoundChipType,
+};
 use std::collections::HashMap;
 
 ///
@@ -116,7 +121,7 @@ impl SoundChip for YmFm {
 
     fn reset(&mut self) {}
 
-    fn write(&mut self, index: usize, offset: u32, data: u32) {
+    fn write(&mut self, index: usize, offset: u32, data: u32, _: &mut dyn SoundStream) {
         self.write_chip(index, offset, data as u8);
     }
 
@@ -126,7 +131,7 @@ impl SoundChip for YmFm {
         sound_stream.push(convert_sample_i2f(buffer[0]), convert_sample_i2f(buffer[1]));
     }
 
-    fn set_rombank(&mut self, rom_index: RomIndex, rom_bank: RomBank) {
+    fn set_rom_bank(&mut self, rom_index: RomIndex, rom_bank: RomBank) {
         self.rom_bank.insert(rom_index, rom_bank);
     }
 
