@@ -55,22 +55,25 @@ impl DataStream {
     /// Tick stream
     ///
     pub fn tick(&mut self) -> Option<(usize, usize, u32, u32)> {
+        let mut result = None;
         if self.status == DataStreamStatus::Start && /* TODO: loop mode */ self.data_block_length > 0
         {
-            if self.data_stream_sampling_pos >= 1_f32 {
+            result = if self.data_stream_sampling_pos >= 1_f32 {
                 self.data_stream_sampling_pos = 0_f32;
                 self.data_block_length -= 1;
                 self.data_block_pos += 1;
-                return Some((
+                Some((
                     self.data_block_id.unwrap(/* TODO: */),
                     self.data_block_start_offset + self.data_block_pos,
                     self.write_port,
                     self.write_reg,
-                ));
-            }
+                ))
+            } else {
+                None
+            };
             self.data_stream_sampling_pos += self.data_stream_sample_step;
         }
-        None
+        result
     }
 
     ///
@@ -101,7 +104,7 @@ impl DataStream {
             self.data_block_start_offset = data_block_start_offset;
         }
         self.data_block_pos = 0;
-        self.data_block_length = data_block_length;
+        self.data_block_length = data_block_length - 1;
         self.data_stream_sampling_pos = 1_f32;
         self.status = DataStreamStatus::Start;
     }
