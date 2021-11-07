@@ -27,6 +27,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |SN76489|mame|Rust ports for demo|
 |SEGAPCM|mame|Rust ports for demo|
 |PWM|mame|Rust ports for demo|
+|OKIM6285|mame|Rust ports for demo|
 
 ## Web browser interface
 
