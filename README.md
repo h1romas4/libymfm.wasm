@@ -193,6 +193,7 @@ BSD 3-Clause License
 - [x] VGM driver
     - [x] YM2141 clock worng?
     - [x] Is there a problem with the file parser? The beginning of the song may be wrong.
+    - [ ] Support all data stream (now support only YM2612 and OKIM6285)
 - [ ] Non-vgm driver support
     - [ ] XGM
 - [ ] Multilingual Interface
@@ -212,6 +213,7 @@ BSD 3-Clause License
     - [x] OKIM6285
     - [ ] Next to be determined
 - [ ] Examples source
+    - [ ] Web Frontend: Support YM2608 ADPCM ROM (wasmer-js WASI fopen)
     - [x] Web Frontend: AudioWorklet
     - [x] Web Frontend: Web Worker AudioWorklet and SharedArrayBuffer (The Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers cannot be set in github pages, so they cannot be deployed)
     - [x] Web Frontend: Add buffering mode
