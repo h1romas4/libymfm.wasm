@@ -260,7 +260,7 @@ impl SoundStream for LinearUpSamplingStream {
 
     fn change_sapmling_rate(&mut self, sampling_rate: u32) {
         self.input_sampling_rate = sampling_rate;
-        self.output_sampling_pos = 1_f64;
+        self.output_sampling_pos = 0_f64;
         self.output_sampling_step = Self::calc_output_sampling_step(
             self.input_sampling_rate,
             self.output_sampling_rate,
@@ -335,7 +335,7 @@ impl SoundStream for SampleHoldUpSamplingStream {
 
     fn change_sapmling_rate(&mut self, sampling_rate: u32) {
         self.input_sampling_rate = sampling_rate;
-        self.output_sampling_pos = 1_f64;
+        self.output_sampling_pos = 0_f64;
         self.output_sampling_step = Self::calc_output_sampling_step(
             self.input_sampling_rate,
             self.output_sampling_rate,
