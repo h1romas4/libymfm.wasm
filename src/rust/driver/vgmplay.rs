@@ -511,7 +511,7 @@ impl VgmPlay {
                     // add data block (support uncompressed)
                     self.sound_slot.add_data_block(
                         self.data_block_id,
-                        &self.vgm_data[data_block_pos..=data_block_pos + data_length],
+                        &self.vgm_data[data_block_pos..data_block_pos + data_length],
                     );
                     // data_block_id is a sequence id in vgm
                     self.data_block_id += 1;

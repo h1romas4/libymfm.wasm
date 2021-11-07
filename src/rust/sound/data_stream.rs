@@ -16,14 +16,7 @@ impl DataBlock {
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
-pub enum DataStreamStatus {
-    Start,
-    Stop,
-}
-
 pub struct DataStream {
-    status: DataStreamStatus,
     data_block_id: Option<usize>,
     frequency: u32,
     write_port: u32,
@@ -38,7 +31,6 @@ pub struct DataStream {
 impl DataStream {
     pub fn new(write_port: u32, write_reg: u32) -> Self {
         DataStream {
-            status: DataStreamStatus::Stop,
             data_block_id: None,
             frequency: 0,
             write_port,
@@ -56,8 +48,7 @@ impl DataStream {
     ///
     pub fn tick(&mut self) -> Option<(usize, usize, u32, u32)> {
         let mut result = None;
-        if self.status == DataStreamStatus::Start && /* TODO: loop mode */ self.data_block_length > 0
-        {
+        if self.data_block_length > 0 {
             result = if self.data_stream_sampling_pos >= 1_f32 {
                 self.data_stream_sampling_pos = 0_f32;
                 self.data_block_length -= 1;
@@ -81,7 +72,7 @@ impl DataStream {
     ///
     pub fn set_frequency(&mut self, sampling_rate: u32, frequency: u32) {
         self.frequency = frequency;
-        self.data_stream_sampling_pos = 1_f32;
+        self.data_stream_sampling_pos = 0_f32;
         self.data_stream_sample_step = frequency as f32 / sampling_rate as f32;
     }
 
@@ -105,15 +96,17 @@ impl DataStream {
         }
         self.data_block_pos = 0;
         self.data_block_length = data_block_length - 1;
-        self.data_stream_sampling_pos = 1_f32;
-        self.status = DataStreamStatus::Start;
+        self.data_stream_sampling_pos = 0_f32;
     }
 
     ///
     /// Stop data stream
     ///
     pub fn stop_data_stream(&mut self) {
-        self.data_block_length = 0;
-        self.status = DataStreamStatus::Stop;
+        if self.data_stream_sampling_pos >= 1_f32 {
+            self.data_block_length = 1; /* flash last sample */
+        } else {
+            self.data_block_length = 0;
+        }
     }
 }
