@@ -24,12 +24,12 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |YM3812|ymfm||
 |YMF262|ymfm||
 |YMF278B|ymfm||
-|SN76489|mame|Rust ports for demo|
-|SEGAPCM|mame|Rust ports for demo|
-|PWM|mame|Rust ports for demo|
-|OKIM6285|mame|Rust ports for demo|
+|SN76489|mame|Rust ports|
+|SEGAPCM|mame|Rust ports|
+|PWM|mame|Rust ports|
+|OKIM6285|mame|Rust ports|
 
-## Web browser interface
+## Web Browser Interface
 
 [WebAssembly VGM Player](https://chipstream.netlify.app/)
 
@@ -37,11 +37,14 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 
 Firefox or Chromium is recommended. Currently, Safari does not support SharedArrayBuffer because it is not available.
 
+- Web Worker/Worklet architecture
+- WASI build on browser
+
 Source code:
 
 > [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web)
 
-## WASI commnad line interface
+## WASI Commnad Line Interface
 
 - Install [Wasmer](https://wasmer.io/) runtime
 - Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.3.1) from pre-build release
@@ -50,7 +53,7 @@ Options
 
 ```
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.2.1
+libymfm-cli 0.3.1
 h1romas4 <h1romas4@gmail.com>
 libymfm CLI
 
@@ -138,7 +141,7 @@ cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake  ..
 make -j4
 ```
 
-### Web browser interface (`examples/web`)
+### Web Browser Interface (`examples/web`)
 
 Install wasm-bindgen
 
@@ -162,11 +165,11 @@ npm install
 npm run start
 ```
 
-### WASI commnad line interface (`examples/libymfm-cli`)
+### WASI Commnad Line Interface (`examples/libymfm-cli`)
 
 @see [libymfm command line interface](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/libymfm-cli/README.md)
 
-### Build note
+### Build Note
 
 Essentially, wasm-bindgen is incompatible with wasm32-wasi.
 
@@ -188,12 +191,17 @@ wasm-bindgen outputs a TextEncoder TextDecoder function that cannot be used in a
 
 BSD 3-Clause License
 
-## TODO / known issues
+## Thanks
+
+- [ymfm](https://github.com/aaronsgiles/ymfm)
+- [MAME](https://github.com/mamedev/mame)
+
+## TODO / Known Issues
 
 - [x] VGM driver
     - [x] YM2141 clock worng?
     - [x] Is there a problem with the file parser? The beginning of the song may be wrong.
-    - [ ] Support all data stream (now support only YM2612 and OKIM6285)
+    - [ ] Support all data stream (now only support YM2612 and OKIM6285)
 - [ ] Non-vgm driver support
     - [ ] XGM
 - [ ] Multilingual Interface

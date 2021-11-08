@@ -24,7 +24,7 @@ pub struct VgmPlay {
     vgm_header: VgmHeader,
     vgm_gd3: Gd3,
     data_block_id: usize,
-    sound_stream: HashMap<usize, (SoundChipType, usize)>,
+    data_stream: HashMap<usize, (SoundChipType, usize)>,
     ym2612_pcm_pos: usize,
     ym2612_pcm_offset: usize,
     remain_tick_count: usize,
@@ -48,7 +48,7 @@ impl VgmPlay {
             vgm_header: VgmHeader::default(),
             vgm_gd3: Gd3::default(),
             data_block_id: 0,
-            sound_stream: HashMap::new(),
+            data_stream: HashMap::new(),
             ym2612_pcm_pos: 0,
             ym2612_pcm_offset: 0,
             remain_tick_count: 0,
@@ -517,7 +517,6 @@ impl VgmPlay {
                     self.data_block_id += 1;
                 } else if (0x80..=0xbf).contains(&data_type) {
                     // ROM/RAM Image dumps
-                    // do not use real_rom_size
                     let _real_rom_size = u32::from_le_bytes(
                         self.vgm_data[data_block_pos..(data_block_pos + 4)]
                             .try_into()
@@ -590,7 +589,7 @@ impl VgmPlay {
                         write_port,
                         write_reg,
                     );
-                    self.sound_stream
+                    self.data_stream
                         .insert(data_stream_id, (sound_chip_type, sound_chip_index));
                 }
             }
@@ -604,7 +603,7 @@ impl VgmPlay {
                 let /* TODO: */ _step_size = self.get_vgm_u8();
                 // assosiate data block to stream
                 if let Some((sound_chip_type, sound_chip_index)) =
-                    self.sound_stream.get(&data_stream_id)
+                    self.data_stream.get(&data_stream_id)
                 {
                     self.sound_slot.attach_data_block_to_stream(
                         *sound_chip_type,
@@ -621,7 +620,7 @@ impl VgmPlay {
                 let data_stream_id = self.get_vgm_u8() as usize;
                 let frequency = self.get_vgm_u32();
                 if let Some((sound_chip_type, sound_chip_index)) =
-                    self.sound_stream.get(&data_stream_id)
+                    self.data_stream.get(&data_stream_id)
                 {
                     self.sound_slot.set_data_stream_frequency(
                         *sound_chip_type,
@@ -641,7 +640,7 @@ impl VgmPlay {
                 let pcm_stream_length = self.get_vgm_u32() as usize;
                 // initalize stream and start playback (set pcm_stream_length)
                 if let Some((sound_chip_type, sound_chip_index)) =
-                    self.sound_stream.get(&data_stream_id)
+                    self.data_stream.get(&data_stream_id)
                 {
                     self.sound_slot.start_data_stream(
                         *sound_chip_type,
@@ -658,7 +657,7 @@ impl VgmPlay {
                 let data_stream_id = self.get_vgm_u8() as usize;
                 // stop stream (set pcm_stream_length to 0)
                 if let Some((sound_chip_type, sound_chip_index)) =
-                    self.sound_stream.get(&data_stream_id)
+                    self.data_stream.get(&data_stream_id)
                 {
                     self.sound_slot.stop_data_stream(
                         *sound_chip_type,
@@ -675,7 +674,7 @@ impl VgmPlay {
                 let /* TODO */ _flags = self.get_vgm_u8();
                 // initalize stream and start playback (set pcm_stream_length to data block size)
                 if let Some((sound_chip_type, sound_chip_index)) =
-                    self.sound_stream.get(&data_stream_id)
+                    self.data_stream.get(&data_stream_id)
                 {
                     self.sound_slot.start_data_stream_fast(
                         *sound_chip_type,

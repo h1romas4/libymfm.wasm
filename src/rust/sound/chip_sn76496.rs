@@ -5,9 +5,10 @@
  *  Hiromasa Tanaka <h1romas4@gmail.com>
  *  https://github.com/h1romas4/libymfm.wasm
  *
- * Converted from:
+ * Porting from:
  *  SN76489 emulation by Nicola Salmoria
- *  https://github.com/mamedev/mame/blob/ee1e4f9683a4953cb9d88f9256017fcbc38e3144/src/devices/sound/sn76496.cpp
+ *  https://github.com/mamedev/mame/blob/master/src/devices/sound/sn76496.cpp
+ *  rev. ee1e4f9683a4953cb9d88f9256017fcbc38e3144
  */
 
 /**
@@ -521,7 +522,11 @@ impl SoundChip for SN76496 {
         sound_stream.push(l[0], r[0]);
     }
 
-    fn set_rom_bank(&mut self, _: RomIndex, _: RomBank) {}
+    fn set_rom_bank(&mut self, _: RomIndex, _: RomBank) {
+        /* nothing to do */
+    }
 
-    fn notify_add_rom(&mut self, _: RomIndex, _: usize) {}
+    fn notify_add_rom(&mut self, _: RomIndex, _: usize) {
+        /* nothing to do */
+    }
 }

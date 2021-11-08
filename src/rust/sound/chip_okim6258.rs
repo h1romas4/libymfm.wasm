@@ -5,7 +5,7 @@
  *  Hiromasa Tanaka <h1romas4@gmail.com>
  *  https://github.com/h1romas4/libymfm.wasm
  *
- * Converted from:
+ * Porting from:
  *  MAME
  *  copyright-holders:Barry Rodewald
  *  https://github.com/mamedev/mame/blob/master/src/devices/sound/okim6258.cpp

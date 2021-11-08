@@ -278,7 +278,11 @@ impl SoundChip for PWM {
         sound_stream.push(self.emu_out_l, self.emu_out_r);
     }
 
-    fn set_rom_bank(&mut self, _: RomIndex, _: RomBank) {}
+    fn set_rom_bank(&mut self, _: RomIndex, _: RomBank) {
+        /* nothing to do */
+    }
 
-    fn notify_add_rom(&mut self, _: RomIndex, _: usize) {}
+    fn notify_add_rom(&mut self, _: RomIndex, _: usize) {
+        /* nothing to do */
+    }
 }
