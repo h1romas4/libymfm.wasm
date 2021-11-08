@@ -1,8 +1,5 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-///
-/// Sound stream interface
-///
 pub enum OutputChannel {
     Stereo,
     Left,
@@ -10,6 +7,9 @@ pub enum OutputChannel {
     Mute,
 }
 
+///
+/// Sound stream interface
+///
 pub trait SoundStream {
     fn is_tick(&mut self) -> Tick;
     fn push(&mut self, sampling_l: f32, sampling_r: f32);
@@ -63,6 +63,9 @@ impl SoundStream for NativeStream {
     }
 }
 
+///
+/// Nearest down sample stream
+///
 pub struct NearestDownSampleStream {
     input_sampling_rate: u32,
     now_input_sampling_l: f32,
@@ -135,7 +138,7 @@ impl SoundStream for NearestDownSampleStream {
 }
 
 ///
-/// Resample stream for sound chip
+/// Linear up sampling stream
 ///
 pub struct LinearUpSamplingStream {
     now_input_sampling_l: Option<f32>,
@@ -277,6 +280,9 @@ impl SoundStream for LinearUpSamplingStream {
     }
 }
 
+///
+/// Sample and hold up sampling stream
+///
 pub struct SampleHoldUpSamplingStream {
     now_input_sampling_l: f32,
     now_input_sampling_r: f32,
@@ -351,6 +357,9 @@ impl SoundStream for SampleHoldUpSamplingStream {
     }
 }
 
+///
+/// Over sample down sampling stream
+///
 pub struct OverSampleStream {
     now_input_sampling_l: f32,
     now_input_sampling_r: f32,
