@@ -88,8 +88,7 @@ impl SoundDevice {
     pub fn write(&mut self, sound_chip_index: usize, port: u32, data: u32) {
         // If the current playback position is in the future,
         // the command will be delayed to the next tick.
-        // However, if there is a data stream, it will not be delayed to synchronize.
-        if !self.sound_stream.is_adjust() || /* hack */!self.data_stream.is_empty() {
+        if !self.sound_stream.is_adjust() {
             self.sound_chip
                 .write(sound_chip_index, port, data, &mut *self.sound_stream);
         } else {
