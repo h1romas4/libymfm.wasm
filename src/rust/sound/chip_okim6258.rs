@@ -133,8 +133,8 @@ impl OKIM6258 {
 
     pub fn data_w(&mut self, data: u8) {
         // printf("data_w: %d\n", data);
-        // println!("data_w: {}", data);
-        self.data_state.push(data);
+        self.data_in = data;
+        // self.data_state.push(data); unused buffer
         self.nibble_shift = 0;
     }
 
