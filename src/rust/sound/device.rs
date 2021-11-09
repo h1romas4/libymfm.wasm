@@ -15,6 +15,8 @@ pub struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
     sound_stream: Box<dyn SoundStream>,
     data_stream: HashMap<usize, DataStream>,
+    write_adjust: Vec<(u32, u32)>,
+    adjust_tick: usize,
 }
 
 impl SoundDevice {
@@ -23,6 +25,8 @@ impl SoundDevice {
             sound_chip,
             sound_stream,
             data_stream: HashMap::new(),
+            write_adjust: Vec::new(),
+            adjust_tick: 0,
         }
     }
 
@@ -47,7 +51,7 @@ impl SoundDevice {
                     data_stream.tick()
                 {
                     if let Some(data_block) = data_block.get(&data_block_id) {
-                        // stream command write
+                        // write stream command
                         self.sound_chip.write(
                             sound_chip_index,
                             write_reg,
@@ -56,6 +60,16 @@ impl SoundDevice {
                         )
                     }
                 }
+            }
+            // write adjust command
+            if !self.write_adjust.is_empty() && self.adjust_tick == 1 {
+                for (port, data) in self.write_adjust.iter() {
+                    self.sound_chip.write(sound_chip_index, *port, *data, &mut *self.sound_stream);
+                }
+                self.write_adjust.clear();
+            }
+            if self.adjust_tick > 0 {
+                self.adjust_tick -= 1;
             }
             // sound chip update
             self.sound_chip
@@ -72,8 +86,15 @@ impl SoundDevice {
     /// Write command to sound chip.
     ///
     pub fn write(&mut self, sound_chip_index: usize, port: u32, data: u32) {
-        self.sound_chip
-            .write(sound_chip_index, port, data, &mut *self.sound_stream);
+        // If the current playback position is in the future,
+        // the command will be delayed to the next tick.
+        if !self.sound_stream.is_adjust() {
+            self.sound_chip
+                .write(sound_chip_index, port, data, &mut *self.sound_stream);
+        } else {
+            self.write_adjust.push((port, data));
+            self.adjust_tick = 2;
+        }
     }
 
     ///
