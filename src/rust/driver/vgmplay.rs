@@ -232,11 +232,11 @@ impl VgmPlay {
         if self.vgm_header.clock_okim6258 != 0 {
             self.sound_slot.add_sound_device(
                 SoundChipType::OKIM6258,
-                2,
+                self.number_of_chip(self.vgm_header.clock_okim6258),
                 self.vgm_header.clock_okim6258,
             );
             let flag = self.vgm_header.okmi6258_flag;
-            for i in 0..=1 {
+            for i in 0..self.number_of_chip(self.vgm_header.clock_okim6258) {
                 self.sound_slot.write(
                     SoundChipType::OKIM6258,
                     i,
