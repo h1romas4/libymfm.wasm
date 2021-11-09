@@ -289,7 +289,7 @@ impl SoundStream for LinearUpSamplingStream {
     }
 
     fn is_adjust(&self) -> bool {
-        self.output_sampling_pos >= 1_f64
+        self.output_sampling_pos > 1_f64
     }
 }
 
@@ -370,7 +370,7 @@ impl SoundStream for SampleHoldUpSamplingStream {
     }
 
     fn is_adjust(&self) -> bool {
-        self.output_sampling_pos >= 1_f64
+        self.output_sampling_pos > 1_f64
     }
 }
 
