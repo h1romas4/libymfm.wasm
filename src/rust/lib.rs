@@ -7,5 +7,4 @@ extern crate serde_json;
 
 pub mod sound;
 pub mod driver;
-#[cfg(feature = "wasm")]
 pub mod wasm;

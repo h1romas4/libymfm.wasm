@@ -153,7 +153,7 @@ Rust build and wasm-bindgen
 
 ```
 rustup target add wasm32-wasi
-cargo build --release --target wasm32-wasi
+cargo build --release --target wasm32-wasi --features bindgen
 wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
 ```
 
