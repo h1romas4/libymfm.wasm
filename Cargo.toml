@@ -14,8 +14,9 @@ crate-type = ["cdylib", "rlib"]
 path = "src/rust/lib.rs"
 
 [features]
-default = ["wasm", "console_error_panic_hook"]
-wasm = []
+default = ["basic"]
+basic = ["console_error_panic_hook"]
+bindgen = ["console_error_panic_hook"]
 
 [dependencies]
 flate2 = "1.0"

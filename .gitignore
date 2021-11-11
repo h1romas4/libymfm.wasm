@@ -6,6 +6,7 @@ dist/
 examples/web/src/wasm/
 examples/web/dist/
 examples/web/node_modules/
+__pycache__
 *.vgm
 *.vgz
 *.pcm
@@ -13,3 +14,4 @@ examples/web/node_modules/
 *.bin
 !docs/vgm/ym2612.vgm
 !public/vgm/ym2612.vgm
+!examples/python/vgm/ym2612.vgm

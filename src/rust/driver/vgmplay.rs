@@ -77,6 +77,13 @@ impl VgmPlay {
     }
 
     ///
+    /// Return s16le sampling buffer referance.
+    ///
+    pub fn get_output_sampling_s16le_ref(&mut self) -> *const i16 {
+        self.sound_slot.get_output_sampling_s16le_ref()
+    }
+
+    ///
     /// get_vgm_meta
     ///
     pub fn get_vgm_meta(&self) -> (&VgmHeader, &Gd3) {
@@ -232,11 +239,11 @@ impl VgmPlay {
         if self.vgm_header.clock_okim6258 != 0 {
             self.sound_slot.add_sound_device(
                 SoundChipType::OKIM6258,
-                2,
-                self.vgm_header.clock_okim6258,
+                self.number_of_chip(self.vgm_header.clock_okim6258),
+                self.vgm_header.clock_okim6258 & 0x3fffffff,
             );
             let flag = self.vgm_header.okmi6258_flag;
-            for i in 0..=1 {
+            for i in 0..self.number_of_chip(self.vgm_header.clock_okim6258) {
                 self.sound_slot.write(
                     SoundChipType::OKIM6258,
                     i,

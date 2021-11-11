@@ -153,7 +153,7 @@ Rust build and wasm-bindgen
 
 ```
 rustup target add wasm32-wasi
-cargo build --release --target wasm32-wasi
+cargo build --release --target wasm32-wasi --features bindgen
 wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
 ```
 
@@ -168,6 +168,24 @@ npm run start
 ### WASI Commnad Line Interface (`examples/libymfm-cli`)
 
 @see [libymfm command line interface](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/libymfm-cli/README.md)
+
+### Python Binding Test (`examples/python`)
+
+Rust build and copy .wasm to Python project
+
+```
+rustup target add wasm32-wasi
+cargo build --release --target wasm32-wasi
+cp -p target/wasm32-wasi/release/libymfm.wasm ./examples/python/src/wasm/
+```
+
+Run Python
+
+```
+cd examples/python
+pip3 install -r requirements.txt
+python src/main.py
+```
 
 ### Build Note
 
