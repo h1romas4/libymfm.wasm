@@ -14,3 +14,4 @@ examples/python/src/wasm/*.wasm
 *.bin
 !docs/vgm/ym2612.vgm
 !public/vgm/ym2612.vgm
+!examples/python/vgm/ym2612.vgm
