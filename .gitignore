@@ -7,6 +7,7 @@ examples/web/src/wasm/
 examples/web/dist/
 examples/web/node_modules/
 examples/python/src/wasm/*.wasm
+__pycache__
 *.vgm
 *.vgz
 *.pcm

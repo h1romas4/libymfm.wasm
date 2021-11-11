@@ -1,32 +1,11 @@
 # -*- coding: utf-8 -*-
-from wasmer import engine, wasi, Store, Module, ImportObject, Instance
-from wasmer_compiler_cranelift import Compiler
-import os
+from wasm.chipstream import ChipStream
 
-# Let's get the `wasi.wasm` bytes!
-__dir__ = os.path.dirname(os.path.realpath(__file__))
-wasm_bytes = open(__dir__ + '/wasm/libymfm.wasm', 'rb').read()
+# create Wasm instance
+chip_stream = ChipStream()
 
-# Create a store.
-store = Store(engine.JIT(Compiler))
+# Setup VGM
+chip_stream.create_vgm_instance(0, "./vgm/ym2612.vgm", 44100, 735)
 
-# Let's compile the Wasm module, as usual.
-module = Module(store, wasm_bytes)
-
-# Get WASI version (wasi_snapshot_preview1)
-wasi_version = wasi.get_version(module, strict=False)
-
-# Set WASI env
-wasi_env = \
-    wasi.StateBuilder('libymfm'). \
-        map_directory('the_host_current_dir', '.'). \
-        finalize()
-
-# Get import objects.
-import_object = wasi_env.generate_import_object(store, wasi_version)
-
-# Now we can instantiate the module.
-instance = Instance(module, import_object)
-
-# test
-instance.exports.wasi_interface_test()
+# Play 1 frame (735 sample)
+chip_stream.vgm_play(0)
