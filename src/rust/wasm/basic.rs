@@ -42,3 +42,9 @@ pub extern "C" fn create_vgm_instance(
         ),
     );
 }
+
+#[no_mangle]
+pub extern "C" fn wasi_interface_test() -> u32 {
+    println!("Hello, wasmer-python!");
+    1
+}

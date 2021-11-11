@@ -29,4 +29,4 @@ import_object = wasi_env.generate_import_object(store, wasi_version)
 instance = Instance(module, import_object)
 
 # test
-print(instance.exports)
+instance.exports.wasi_interface_test()

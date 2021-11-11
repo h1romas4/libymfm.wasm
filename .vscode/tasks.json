@@ -51,7 +51,7 @@
             "label": "Run Build (Rust and wasm-basic)",
             "type": "shell",
             "linux": {
-                "command": "cargo build --release --target wasm32-wasi && cp -p target/wasm32-wasi/release/libymfm.wasm ./examples/python/wasm/"
+                "command": "cargo build --release --target wasm32-wasi && cp -p target/wasm32-wasi/release/libymfm.wasm ./examples/python/src/wasm/"
             }
         },
         {
