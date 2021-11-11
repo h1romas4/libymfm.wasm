@@ -15,15 +15,16 @@ pygame.init()
 chip_stream = ChipStream()
 
 # Setup VGM
-chip_stream.create_vgm_instance(VGM_INDEX, "./vgm/ym2151.vgz", SAMPLING_RATE, SAMPLING_CHUNK_SIZE)
+chip_stream.create_vgm_instance(VGM_INDEX, "./vgm/ym2612.vgm", SAMPLING_RATE, SAMPLING_CHUNK_SIZE)
 
-# Play 1 frame (735 sample)
+# Play
 while chip_stream.vgm_play(VGM_INDEX) == 0:
     # Get sampling referance
     s16le = chip_stream.vgm_get_sampling_ref(VGM_INDEX)
     # Sounds
     sample = pygame.mixer.Sound(buffer=s16le)
     pygame.mixer.Sound.play(sample)
+    # Wait pygame mixer
     while pygame.mixer.get_busy() == True:
         pass
 
