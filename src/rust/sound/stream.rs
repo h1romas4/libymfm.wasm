@@ -445,6 +445,20 @@ pub fn convert_sample_i2f(i32_sample: i32) -> f32 {
     f32_sample
 }
 
+///
+/// convert_sample_f2i
+///
+pub fn convert_sample_f2i(f32_sample: f32) -> i16 {
+    let mut float: f32 = f32_sample * 32768_f32;
+    if float > 32767_f32 {
+        float = 32767_f32
+    }
+    if float < -32768_f32 {
+        float = -32768_f32;
+    }
+    float as i16
+}
+
 #[cfg(test)]
 mod tests {
     #[allow(unused_imports)]

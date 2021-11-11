@@ -48,10 +48,10 @@ class ChipStream:
         self.output_sample_chunk_size = output_sample_chunk_size * 4 # f32
         # Write VGM data to Wasm memory
         vgm_ref_pointer = self.wasm.vgm_get_seq_data_ref(vgm_instance_id)
-        vgm_ref = self.wasm.memory.uint8_view()
+        vgm_ref = self.wasm.memory.uint8_view(offset = vgm_ref_pointer)
         vgm_data = bytearray(vgm_bytes)
         for i in range(vgm_length):
-            vgm_ref[vgm_ref_pointer + i] = vgm_data[i]
+            vgm_ref[i] = vgm_data[i]
         # Initialize VgmPlay
         self.wasm.vgm_init(vgm_instance_id)
 
@@ -77,7 +77,16 @@ class ChipStream:
         ----------
         (sampling_l, sampling_r): (memory, memory)
         """
-        l = self.wasm.vgm_get_sampling_l_ref(vgm_instance_id)
-        r = self.wasm.vgm_get_sampling_r_ref(vgm_instance_id)
+        ref = self.wasm.vgm_get_sampling_s16le_ref(vgm_instance_id)
         memory = bytearray(self.wasm.memory.buffer)
-        return (memory[l:l + self.output_sample_chunk_size], memory[r:r + self.output_sample_chunk_size])
+        return memoryview(memory[ref:ref + self.output_sample_chunk_size])
+
+    def drop_vgm_instance(self, vgm_instance_id):
+        """
+        Drop VGM instance
+
+        Parameters
+        ----------
+        vgm_instance_id: int
+        """
+        self.wasm.vgm_drop(vgm_instance_id)

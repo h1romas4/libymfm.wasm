@@ -71,6 +71,15 @@ pub extern "C" fn vgm_get_sampling_r_ref(vgm_index_id: u32) -> *const f32 {
 }
 
 #[no_mangle]
+pub extern "C" fn vgm_get_sampling_s16le_ref(vgm_index_id: u32) -> *const i16 {
+    get_vgm_vec()
+        .borrow_mut()
+        .get_mut(vgm_index_id as usize)
+        .unwrap()
+        .get_output_sampling_s16le_ref()
+}
+
+#[no_mangle]
 #[allow(improper_ctypes_definitions)]
 pub extern "C" fn vgm_get_seq_header(vgm_index_id: u32) {
     get_vgm_vec()

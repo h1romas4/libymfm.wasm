@@ -77,6 +77,13 @@ impl VgmPlay {
     }
 
     ///
+    /// Return s16le sampling buffer referance.
+    ///
+    pub fn get_output_sampling_s16le_ref(&mut self) -> *const i16 {
+        self.sound_slot.get_output_sampling_s16le_ref()
+    }
+
+    ///
     /// get_vgm_meta
     ///
     pub fn get_vgm_meta(&self) -> (&VgmHeader, &Gd3) {
