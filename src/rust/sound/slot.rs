@@ -14,7 +14,10 @@ use super::data_stream::{DataBlock, DataStream};
 use super::device::SoundDevice;
 use super::rom::{RomIndex, RomSet};
 use super::sound_chip::SoundChip;
-use super::stream::{LinearUpSamplingStream, NativeStream, NearestDownSampleStream, OverSampleStream, Resolution, SampleHoldUpSamplingStream, SoundStream};
+use super::stream::{
+    convert_sample_f2i, LinearUpSamplingStream, NativeStream, NearestDownSampleStream,
+    OverSampleStream, Resolution, SampleHoldUpSamplingStream, SoundStream,
+};
 use super::SoundChipType;
 
 ///
@@ -27,6 +30,7 @@ pub struct SoundSlot {
     output_sample_chunk_size: usize,
     output_sampling_l: Vec<f32>,
     output_sampling_r: Vec<f32>,
+    output_sampling_s16le: Vec<i16>,
     output_sampling_buffer_l: VecDeque<f32>,
     output_sampling_buffer_r: VecDeque<f32>,
     sound_device: HashMap<SoundChipType, Vec<SoundDevice>>,
@@ -48,6 +52,7 @@ impl SoundSlot {
             output_sample_chunk_size,
             output_sampling_l: vec![0_f32; output_sample_chunk_size],
             output_sampling_r: vec![0_f32; output_sample_chunk_size],
+            output_sampling_s16le: vec![0; output_sample_chunk_size * 2],
             output_sampling_buffer_l: VecDeque::with_capacity(output_sample_chunk_size * 2),
             output_sampling_buffer_r: VecDeque::with_capacity(output_sample_chunk_size * 2),
             sound_device: HashMap::new(),
@@ -127,18 +132,16 @@ impl SoundSlot {
                         )),
                     },
                     _ => match sound_chip_type {
-                        SoundChipType::OKIM6258 => {
-                            Box::new(SampleHoldUpSamplingStream::new(
-                                sound_chip_sampling_rate,
-                                self.output_sampling_rate,
-                            ))
-                        }
+                        SoundChipType::OKIM6258 => Box::new(SampleHoldUpSamplingStream::new(
+                            sound_chip_sampling_rate,
+                            self.output_sampling_rate,
+                        )),
                         _ => Box::new(LinearUpSamplingStream::new(
                             sound_chip_sampling_rate,
                             self.output_sampling_rate,
                             Resolution::RangeAll,
                         )),
-                    }
+                    },
                 };
             // add sound device
             self.sound_device
@@ -235,6 +238,19 @@ impl SoundSlot {
     ///
     pub fn get_output_sampling_r_ref(&self) -> *const f32 {
         self.output_sampling_r.as_ptr()
+    }
+
+    ///
+    /// Convert and return s16le sampling buffer
+    ///
+    pub fn get_output_sampling_s16le_ref(&mut self) -> *const i16 {
+        for i in 0..self.output_sample_chunk_size {
+            self.output_sampling_s16le[i * 2] =
+                convert_sample_f2i(self.output_sampling_l[i]);
+            self.output_sampling_s16le[i * 2 + 1] =
+                convert_sample_f2i(self.output_sampling_r[i]);
+        }
+        self.output_sampling_s16le.as_ptr()
     }
 
     ///
@@ -348,7 +364,11 @@ impl SoundSlot {
         data_block_length: usize,
     ) {
         if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
-            sound_device.start_data_stream(data_stream_id, data_block_start_offset, data_block_length);
+            sound_device.start_data_stream(
+                data_stream_id,
+                data_block_start_offset,
+                data_block_length,
+            );
         }
     }
 
@@ -368,7 +388,11 @@ impl SoundSlot {
         }
         if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
             if let Some(data_block_length) = data_block_length {
-                sound_device.start_data_stream_fast(data_stream_id, data_block_id, data_block_length);
+                sound_device.start_data_stream_fast(
+                    data_stream_id,
+                    data_block_id,
+                    data_block_length,
+                );
             }
         }
     }

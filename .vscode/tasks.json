@@ -44,7 +44,14 @@
             "label": "Run Build (Rust and wasm-bindgen)",
             "type": "shell",
             "linux": {
-                "command": "cargo build --release --target wasm32-wasi && wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/"
+                "command": "cargo build --release --target wasm32-wasi --features bindgen && wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/"
+            }
+        },
+        {
+            "label": "Run Build (Rust and wasm-basic)",
+            "type": "shell",
+            "linux": {
+                "command": "cargo build --release --target wasm32-wasi && cp -p target/wasm32-wasi/release/libymfm.wasm ./examples/python/src/wasm/"
             }
         },
         {
