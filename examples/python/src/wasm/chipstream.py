@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# license:BSD-3-Clause
 from wasmer import engine, wasi, Store, Module, ImportObject, Instance
 from wasmer_compiler_cranelift import Compiler
 import os
@@ -75,7 +76,7 @@ class ChipStream:
 
         Returns
         ----------
-        (sampling_l, sampling_r): (memory, memory)
+        memoryview
         """
         ref = self.wasm.vgm_get_sampling_s16le_ref(vgm_instance_id)
         memory = bytearray(self.wasm.memory.buffer)
