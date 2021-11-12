@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+# license:BSD-3-Clause
+#
+# VGM play example
+#
 import pygame
 from wasm.chipstream import ChipStream
 
