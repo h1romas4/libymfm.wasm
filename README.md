@@ -183,8 +183,12 @@ Run Python
 
 ```
 cd examples/python
+# Install require
 pip3 install -r requirements.txt
-python src/main.py
+# Simple VGM Player
+python src/sample_vgmplay.py
+# pyxel impliments example
+python src/sample_pyxel.py
 ```
 
 ### Build Note
