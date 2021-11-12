@@ -4,5 +4,5 @@
 
 ```
 php3 install -r requirements.txt
-python src/main.py
+python src/sample_vgmplay.py
 ```
