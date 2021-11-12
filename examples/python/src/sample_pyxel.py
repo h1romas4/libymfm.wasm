@@ -26,6 +26,9 @@ class App:
         self.chip_stream.create_vgm_instance(App.VGM_INDEX, "./vgm/ym2612.vgm", App.SAMPLING_RATE, App.SAMPLING_CHUNK_SIZE)
         # Create sampling buffer
         self.sampling_buffer = []
+        # pyxel sample
+        self.moji_x = 46
+        self.moji_vx = 1
         # Initialize pyxel
         pyxel.init(160, 120, caption="Hello ChipStream")
         pyxel.run(self.update, self.draw)
@@ -39,6 +42,10 @@ class App:
             s16le = self.chip_stream.vgm_get_sampling_ref(App.VGM_INDEX)
             # Add to the sampling buffer
             self.sampling_buffer.append(s16le)
+        # pyxel sample
+        self.moji_x += self.moji_vx
+        if self.moji_x >= 86 or self.moji_x <= 2:
+            self.moji_vx *= -1
         if pyxel.btnp(pyxel.KEY_Q):
             # Drop instance
             self.chip_stream.drop_vgm_instance(App.VGM_INDEX)
@@ -55,7 +62,7 @@ class App:
             # Play!
             pygame.mixer.Sound.play(s16le)
         pyxel.cls(0)
-        pyxel.text(46, 46, "Hello, ChipStream!", pyxel.frame_count % 16)
+        pyxel.text(self.moji_x, 48, "Hello, ChipStream!", pyxel.frame_count % 16)
         pyxel.blt(61, 66, 0, 0, 0, 38, 16)
 
 App()
