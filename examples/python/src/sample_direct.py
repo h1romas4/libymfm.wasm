@@ -82,7 +82,7 @@ while loop_count > 0:
         # Get sequence command
         command = MUSIC_SEQUENCE[track][seq_index[track]]
         # Tone
-        if 0 < command < len(TONE_TABLE):
+        if 0 <= command < len(TONE_TABLE):
             tone = TONE_TABLE[command]
             # 16bit little endian
             lower = tone & 0xff
