@@ -27,9 +27,26 @@ TONE_TABLE = [
 	  53,  50,  48,  45,  42,  40,  38,  36,  34,  32,  30,  28, #o7 72〜 83
 	  27,  25,  24,  22,  21,  20,  19,  18,  17,  16,  15,  14, #o8 84〜 95
 ]
+
+#
 # Music sequence data
+# [
+#   # Channel 1
+#   [
+#       TONE_NUMBER|COMMAND, WAIT_TICK_COUNT,
+#       ...
+#   ],
+#   # Channel 2
+#   [
+#       ...
+#   ],
+#   # Channel 3
+#   [
+#       ...
+#   ],
+# ]
 MUSIC_SEQUENCE = [
-    # Track 1
+    # Channel 1
     [
         48,  6, 60, 6, 59, 6, 60, 6,
         64,  6, 60, 6, 59, 6, 60, 6,
@@ -75,7 +92,7 @@ while loop_count > 0:
     for track in range(0, 3):
         if len(MUSIC_SEQUENCE[track]) <= 0:
             continue
-        # Wait
+        # Wait 1 tick
         if wait[track] > 0:
             wait[track] -= 1
             continue
@@ -93,7 +110,7 @@ while loop_count > 0:
             # Set frequency
             chip_stream.sound_slot_write(SOUND_SLOT_INDEX, SoundChipType.YM2149, 0, track * 2, lower)
             chip_stream.sound_slot_write(SOUND_SLOT_INDEX, SoundChipType.YM2149, 0, track * 2 + 1, upper)
-            # Set wait (1/60 * 8)
+            # Set wait tick
             seq_index[track] += 1
             wait[track] = MUSIC_SEQUENCE[track][seq_index[track]]
         # Next sequence
@@ -105,7 +122,7 @@ while loop_count > 0:
     #
     # Update sound
     #
-    # 1 tick sound slot
+    # Tick "One" sound slot (SOUND_DRIVER_TICK_RATE = 1/60)
     chip_stream.sound_slot_update(SOUND_SLOT_INDEX, 1)
     # Query sampling chunk filled
     if chip_stream.sound_slot_is_stream_filled(SOUND_SLOT_INDEX) == 1:
