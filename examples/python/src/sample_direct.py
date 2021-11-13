@@ -48,6 +48,8 @@ TONE_TABLE = [
 MUSIC_SEQUENCE = [
     # Channel 1
     [
+        201, 0b10,                      # Noise/ToneSw 0:On,1:Off
+        200, 14,                        # Volume
         48,  6, 60, 6, 59, 6, 60, 6,
         64,  6, 60, 6, 59, 6, 60, 6,
         48,  6, 60, 6, 58, 6, 60, 6,
@@ -57,7 +59,19 @@ MUSIC_SEQUENCE = [
         48,  6, 60, 6, 56, 6, 60, 6,
         64,  6, 60, 6, 56, 6, 60, 6,
     ],
-    [],
+    [
+        201, 0b10,                      # Noise/ToneSw 0:On,1:Off
+        200, 14,                        # Volume
+        210, 1,                         # Detune
+        48,  6, 60, 6, 59, 6, 60, 6,
+        64,  6, 60, 6, 59, 6, 60, 6,
+        48,  6, 60, 6, 58, 6, 60, 6,
+        64,  6, 60, 6, 58, 6, 60, 6,
+        48,  6, 60, 6, 57, 6, 60, 6,
+        64,  6, 60, 6, 57, 6, 60, 6,
+        48,  6, 60, 6, 56, 6, 60, 6,
+        64,  6, 60, 6, 56, 6, 60, 6,
+    ],
     [],
 ]
 
@@ -76,12 +90,14 @@ chip_stream.sound_slot_create(SOUND_SLOT_INDEX, SOUND_DRIVER_TICK_RATE, SAMPLING
 # Add "one" YM2149 sound chip in sound slot
 chip_stream.sound_slot_add_sound_device(SOUND_SLOT_INDEX, SoundChipType.YM2149, 1, YM2149_CLOCK)
 
-# YM2149 initialize (write reg: 0x7, data: 0b00111000)
-chip_stream.sound_slot_write(SOUND_SLOT_INDEX, SoundChipType.YM2149, 0, 0x7, 0b00111000)
+# YM2149 initialize (write reg: 0x7, data: 0b10111000)
+mixing = 0b10111000
+chip_stream.sound_slot_write(SOUND_SLOT_INDEX, SoundChipType.YM2149, 0, 0x7, mixing)
 
 # Setup sequence work
 seq_index = [0, 0, 0]
 wait = [0, 0, 0]
+detune = [0, 0, 0]
 loop_count = 30
 
 # Play loop (1 loop is 1 tick)
@@ -96,17 +112,40 @@ while loop_count > 0:
         if wait[track] > 0:
             wait[track] -= 1
             continue
-        # Get sequence command
-        command = MUSIC_SEQUENCE[track][seq_index[track]]
+        # Control commands (no wait)
+        while True:
+            # Get sequence command
+            command = MUSIC_SEQUENCE[track][seq_index[track]]
+            if command == 200:
+                # Set volume
+                seq_index[track] += 1
+                volume = MUSIC_SEQUENCE[track][seq_index[track]]
+                chip_stream.sound_slot_write(SOUND_SLOT_INDEX, SoundChipType.YM2149, 0, track + 0x8, volume)
+            elif command == 201:
+                # Mixing control
+                seq_index[track] += 1
+                data = MUSIC_SEQUENCE[track][seq_index[track]]
+                tone = (data & 0b10) << track + 2
+                noise = (data & 0b01) << track
+                mixing = mixing | (tone | noise)
+                chip_stream.sound_slot_write(SOUND_SLOT_INDEX, SoundChipType.YM2149, 0, 0x7, mixing)
+            elif command == 210:
+                # Detune
+                seq_index[track] += 1
+                detune[track] = MUSIC_SEQUENCE[track][seq_index[track]]
+            else:
+                break
+            # Next command
+            seq_index[track] += 1
         # Tone
         if 0 <= command < len(TONE_TABLE):
             tone = TONE_TABLE[command]
             # 16bit little endian
             lower = tone & 0xff
             upper = (tone & 0xff00) >> 8
+            # Detune
+            lower += detune[track]
             # Write YM2149
-            # Set volume
-            chip_stream.sound_slot_write(SOUND_SLOT_INDEX, SoundChipType.YM2149, 0, track + 0x8, 15)
             # Set frequency
             chip_stream.sound_slot_write(SOUND_SLOT_INDEX, SoundChipType.YM2149, 0, track * 2, lower)
             chip_stream.sound_slot_write(SOUND_SLOT_INDEX, SoundChipType.YM2149, 0, track * 2 + 1, upper)
