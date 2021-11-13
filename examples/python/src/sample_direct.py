@@ -123,5 +123,8 @@ while loop_count > 0:
         # Play!
         pygame.mixer.Sound.play(s16le)
 
+# PyGame quit
+pygame.quit()
+
 # Drop sound slot
 chip_stream.sound_slot_drop(SOUND_SLOT_INDEX)
