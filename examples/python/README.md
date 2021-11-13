@@ -11,6 +11,6 @@ php3 install -r requirements.txt
 ```
 # Simple VGM Player
 python src/sample_vgmplay.py
-# pyxel impliments example
+# Pyxel impliments example
 python src/sample_pyxel.py
 ```

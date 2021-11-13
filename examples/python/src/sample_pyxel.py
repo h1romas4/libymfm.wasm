@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # license:BSD-3-Clause
 #
-# pyxel example
+# In Pyxel Example
 #
 import pygame
 import pyxel
