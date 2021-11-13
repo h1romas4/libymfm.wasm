@@ -14,5 +14,5 @@ python src/sample_vgmplay.py
 # Pyxel impliments example
 python src/sample_pyxel.py
 # Pyxel impliments example
-python src/sample_sample_direct.py
+python src/sample_direct.py
 ```
