@@ -3,7 +3,6 @@
 #
 # Direct Sound Chip Access Example
 #
-from typing import Sequence
 import pygame
 from wasm.chipstream import ChipStream, SoundChipType
 
@@ -123,8 +122,8 @@ while loop_count > 0:
         # Play!
         pygame.mixer.Sound.play(s16le)
 
-# PyGame quit
-pygame.quit()
-
 # Drop sound slot
 chip_stream.sound_slot_drop(SOUND_SLOT_INDEX)
+
+# PyGame quit
+pygame.quit()
