@@ -124,6 +124,7 @@ while loop_count > 0:
                     # Set volume
                     seq_index[track] += 1
                     volume = MUSIC_SEQUENCE[track][seq_index[track]]
+                    # Write YM2149
                     chip_stream.sound_slot_write(SOUND_SLOT_INDEX, SoundChipType.YM2149, 0, track + 0x8, volume)
                 elif command == 201:
                     # Mixing control
@@ -132,6 +133,7 @@ while loop_count > 0:
                     tone = (data & 0b10) << track + 2
                     noise = (data & 0b01) << track
                     mixing = mixing | (tone | noise)
+                    # Write YM2149
                     chip_stream.sound_slot_write(SOUND_SLOT_INDEX, SoundChipType.YM2149, 0, 0x7, mixing)
                 elif command == 210:
                     # Detune
