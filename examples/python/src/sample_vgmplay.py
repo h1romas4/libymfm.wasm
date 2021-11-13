@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 # license:BSD-3-Clause
 #
-# VGM play example
+# VGM Play Example
 #
 import pygame
 from wasm.chipstream import ChipStream
 
 # VGM instance index
 VGM_INDEX = 0
+# Output sampling rate settings
 SAMPLING_RATE = 44100
 SAMPLING_CHUNK_SIZE = 4096
 
@@ -15,7 +16,7 @@ SAMPLING_CHUNK_SIZE = 4096
 pygame.mixer.pre_init(frequency=SAMPLING_RATE, size=-16, channels=2, buffer=SAMPLING_CHUNK_SIZE)
 pygame.init()
 
-# create Wasm instance
+# Create Wasm instance
 chip_stream = ChipStream()
 
 # Setup VGM

@@ -172,7 +172,7 @@ class ChipStream:
         ----------
         sound_slot_instance_id: int
         """
-        self.wasm.sound_slot_is_stream_filled(sound_slot_instance_id)
+        return self.wasm.sound_slot_is_stream_filled(sound_slot_instance_id)
 
     def sound_slot_stream(self, sound_slot_instance_id):
         """
@@ -199,3 +199,13 @@ class ChipStream:
         ref = self.wasm.sound_slot_sampling_s16le_ref(sound_slot_instance_id)
         memory = bytearray(self.wasm.memory.buffer)
         return memoryview(memory[ref:ref + self.sound_slot_output_sample_chunk_size])
+
+    def sound_slot_drop(self, sound_slot_instance_id):
+        """
+        Drop sound slot instance
+
+        Parameters
+        ----------
+        sound_slot_instance_id: int
+        """
+        self.wasm.sound_slot_drop(sound_slot_instance_id)
