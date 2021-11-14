@@ -30,6 +30,7 @@ extern "C" {
 #[allow(non_camel_case_types)]
 #[allow(dead_code)]
 #[derive(Clone, Copy)]
+#[derive(PartialEq, Eq, Hash)]
 pub enum ChipType {
     CHIP_YM2149 = 0,
     CHIP_YM2151 = 1,
@@ -58,6 +59,10 @@ impl YmFm {
             self.sampling_rate = ymfm_add_chip(self.chip_type as u16, clock);
         }
         self.clock = clock;
+        // ymfm YM2149 internal sampling rate
+        if self.chip_type == ChipType::CHIP_YM2149 {
+            self.sampling_rate *= 4
+        }
         self.sampling_rate
     }
 
