@@ -152,16 +152,15 @@ impl VgmPlay {
             );
         }
         if self.vgm_header.clock_ay8910 != 0 {
-            // TODO: YM2149 - AY8910 clock hack (* 4 ?)
             let clock_ay8910: u32;
             if self.vgm_header.clock_ym2151 != 0 {
-                // TODO: X1 Turbo sync YM2151
-                clock_ay8910 = self.vgm_header.clock_ym2151 * 4;
+                // X1 Turbo sync YM2151
+                clock_ay8910 = self.vgm_header.clock_ym2151;
             } else if self.vgm_header.clock_ym2413 != 0 {
-                // TODO: MSX sync YM2413
-                clock_ay8910 = self.vgm_header.clock_ym2413 * 4;
+                // MSX sync YM2413
+                clock_ay8910 = self.vgm_header.clock_ym2413;
             } else {
-                clock_ay8910 = self.vgm_header.clock_ay8910 * 8;
+                clock_ay8910 = self.vgm_header.clock_ay8910 * 2;
             }
             self.sound_slot.add_sound_device(
                 SoundChipType::YM2149,

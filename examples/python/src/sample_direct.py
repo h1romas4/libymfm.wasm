@@ -14,7 +14,7 @@ SAMPLING_CHUNK_SIZE = 4096
 # Sound driver tick rate
 SOUND_DRIVER_TICK_RATE = 60
 # Sound chip clock (*4: temporary hack)
-YM2149_CLOCK = 3579545 * 4
+YM2149_CLOCK = 3579545
 
 # YM2149 tone table
 TONE_TABLE = [
