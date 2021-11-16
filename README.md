@@ -230,8 +230,8 @@ BSD 3-Clause License
     - [x] CLI
     - [x] Web/JavaScript
     - [ ] Python [wasmer-python](https://github.com/wasmerio/wasmer-python)
-- [ ] ymfm
-    - [ ] Add direct ymfm intarfece
+- [x] ymfm
+    - [x] Add direct ymfm intarfece
     - [x] Support yfmf's all sound chips
 - [ ] Refactoring
     - [x] Better upsampling
