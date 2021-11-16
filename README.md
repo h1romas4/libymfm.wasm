@@ -46,7 +46,7 @@ Source code:
 
 ## Python Example
 
-![](https://github.com/h1romas4/libymfm.wasm/raw/main/public/images/pyxel.png)
+![](https://github.com/h1romas4/libymfm.wasm/raw/main/docs/images/pyxel.png)
 
 Source code:
 
