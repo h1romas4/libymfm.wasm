@@ -234,14 +234,15 @@ BSD 3-Clause License
     - [ ] Support all data stream (now only support YM2612 and OKIM6285)
 - [ ] Non-vgm driver support
     - [ ] XGM
-- [ ] Multilingual Interface
+- [x] Multilingual Interface
     - [x] CLI
     - [x] Web/JavaScript
-    - [ ] Python [wasmer-python](https://github.com/wasmerio/wasmer-python)
+    - [x] Python [wasmer-python](https://github.com/wasmerio/wasmer-python)
+    - [x] Add an interface that does not depend on wasm-bindgen
 - [x] ymfm
     - [x] Add direct ymfm intarfece
     - [x] Support yfmf's all sound chips
-- [ ] Refactoring
+- [x] Refactoring
     - [x] Better upsampling
     - [x] Separate the sound stream from the sound driver.
     - [x] Support for arbitrary input tick rate and output sampling rate.
