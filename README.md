@@ -8,7 +8,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 >
 > BSD-licensed Yamaha FM sound cores (OPM, OPN, OPL, and others)
 
-## Supported sound chips
+## Supported Sound Chips
 
 |chip|from|note|
 |----|----|----|
@@ -43,6 +43,14 @@ Firefox or Chromium is recommended. Currently, Safari does not support SharedArr
 Source code:
 
 > [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web)
+
+## Python Example
+
+![](https://github.com/h1romas4/libymfm.wasm/raw/main/public/images/pyxel.png)
+
+Source code:
+
+> [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/python](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/python)
 
 ## WASI Commnad Line Interface
 
