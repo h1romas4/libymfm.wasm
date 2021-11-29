@@ -26,8 +26,8 @@ Options
 
 ```
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.1.0
-h1romas4 <h1romas4@gmail.com>
+libymfm-cli 0.8.0
+Hiromasa Tanaka <h1romas4@gmail.com>
 libymfm CLI
 
 USAGE:
@@ -38,6 +38,7 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
+        --loop <loop>                 Loop count
     -o, --output <output filepath>    Output file path
     -r, --rate <rate>                 Output sampling rate
 

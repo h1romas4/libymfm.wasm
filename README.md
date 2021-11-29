@@ -55,14 +55,14 @@ Source code:
 ## WASI Commnad Line Interface
 
 - Install [Wasmer](https://wasmer.io/) runtime
-- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.3.1) from pre-build release
+- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.8.0) from pre-build release
 
 Options
 
 ```
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.3.1
-h1romas4 <h1romas4@gmail.com>
+libymfm-cli 0.8.0
+Hiromasa Tanaka <h1romas4@gmail.com>
 libymfm CLI
 
 USAGE:
@@ -73,6 +73,7 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
+        --loop <loop>                 Loop count
     -o, --output <output filepath>    Output file path
     -r, --rate <rate>                 Output sampling rate
 
