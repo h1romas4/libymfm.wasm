@@ -256,7 +256,7 @@ BSD 3-Clause License
     - [x] Web Frontend: AudioWorklet
     - [x] Web Frontend: Web Worker AudioWorklet and SharedArrayBuffer (The Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers cannot be set in github pages, so they cannot be deployed)
     - [x] Web Frontend: Add buffering mode
-    - [ ] CLI: Support loop and feedout
+    - [x] CLI: Support loop
 - [x] To BSD license
     - [x] SN76489
     - [x] PWM

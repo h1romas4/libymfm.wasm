@@ -33,6 +33,12 @@ fn main() {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("loop")
+                .help("Loop count")
+                .long("loop")
+                .takes_value(true),
+        )
+        .arg(
             Arg::with_name("output filepath")
                 .help("Output file path")
                 .short("o")
@@ -46,6 +52,12 @@ fn main() {
     let sampling_rate: u32 = match matches.value_of("rate") {
         Some(rate) => String::from(rate).parse().unwrap(),
         None => 44100,
+    };
+
+    // loop count
+    let loop_count: usize = match matches.value_of("loop") {
+        Some(loop_count) => String::from(loop_count).parse().unwrap(),
+        None => 1,
     };
 
     // vgm file
@@ -75,10 +87,10 @@ fn main() {
         output_file = None;
     }
 
-    play(vgmfile, output_file, sampling_rate);
+    play(vgmfile, output_file, sampling_rate, loop_count);
 }
 
-fn play(mut file: File, mut output_file: Option<File>, sampling_rate: u32) {
+fn play(mut file: File, mut output_file: Option<File>, sampling_rate: u32, loop_count: usize) {
     // load sn76489 vgm file
     let mut buffer = Vec::new();
     let _ = file.read_to_end(&mut buffer).unwrap();
@@ -103,7 +115,8 @@ fn play(mut file: File, mut output_file: Option<File>, sampling_rate: u32) {
     // play
     // ffplay -f f32le -ar 44100 -ac 2 output.pcm
     #[allow(clippy::absurd_extreme_comparisons)]
-    while vgmplay.play(false) <= 0 {
+    loop {
+        let loop_now = vgmplay.play(true);
         for i in 0..MAX_SAMPLE_SIZE {
             unsafe {
                 let slice_l = std::slice::from_raw_parts(sampling_l.add(i) as *const u8, 4);
@@ -116,6 +129,9 @@ fn play(mut file: File, mut output_file: Option<File>, sampling_rate: u32) {
                     io::stdout().write_all(slice_r).expect("stdout error");
                 }
             }
+        }
+        if loop_now >= loop_count {
+            break;
         }
     }
 }
