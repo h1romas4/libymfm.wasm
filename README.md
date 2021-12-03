@@ -106,7 +106,7 @@ Source code:
 
 ## Build
 
-Build require Rust rustc 1.56.1 (Currently, Rust 1.57 and above will cause a link error)
+Build require Rust rustc 1.56.1 (Currently, Rust 1.57 and above will cause a link error and It does not work with wasi-sdk-14)
 
 `Cargo.toml`
 
