@@ -106,7 +106,7 @@ Source code:
 
 ## Build
 
-Build require Rust 2021 edition
+Build require Rust rustc 1.56.1 (Currently, Rust 1.57 and above will cause a link error)
 
 `Cargo.toml`
 
