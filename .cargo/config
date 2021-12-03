@@ -3,6 +3,8 @@
 # linker = "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/bin/lld"
 rustflags = [
   "-Ctarget-feature=+bulk-memory",
+#   "-mexec-model=reactor",
+#   "-Z", "wasi-exec-model=reactor",
   # CARGO_TARGET_WASM32_WASI_RUSTFLAGS
   # "-L", "/home/hiromasa/devel/toolchain/wasi-sdk-12.0/share/wasi-sysroot/lib/wasm32-wasi",
   "-lc++",

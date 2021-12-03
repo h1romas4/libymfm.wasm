@@ -106,7 +106,12 @@ Source code:
 
 ## Build
 
-Build require Rust rustc 1.56.1 (Currently, Rust 1.57 and above will cause a link error and It does not work with wasi-sdk-14)
+Build require Rust rustc **1.56.1** (Currently, Rust 1.57(LLVM 13) and above will cause function export is "Command" life cycle)
+
+- [Add a -Zwasi-exec-model codegen option for emitting WASI reactors #79997](https://github.com/rust-lang/rust/pull/79997)
+- [Reactor support. #74](https://github.com/WebAssembly/wasi-libc/pull/74)
+- [WASI Libraries #24](https://github.com/WebAssembly/WASI/issues/24)
+- [New-style command support](https://reviews.llvm.org/D81689)
 
 `Cargo.toml`
 
