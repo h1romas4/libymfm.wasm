@@ -228,11 +228,11 @@ impl VgmPlay {
             self.sound_slot
                 .add_sound_device(SoundChipType::PWM, 1, self.vgm_header.clock_pwm);
         }
-        if self.vgm_header.sega_pcm_clock != 0 {
+        if self.vgm_header.clock_sega_pcm != 0 {
             self.sound_slot.add_sound_device(
                 SoundChipType::SEGAPCM,
                 1,
-                self.vgm_header.sega_pcm_clock,
+                self.vgm_header.clock_sega_pcm,
             );
         }
         if self.vgm_header.clock_okim6258 != 0 {
@@ -538,16 +538,7 @@ impl VgmPlay {
                         data_size = 1;
                     }
                     let start_address = start_address as usize;
-                    let rom_index: RomIndex = match data_type {
-                        0x80 => RomIndex::SEGAPCM_ROM,
-                        0x81 => RomIndex::YM2608_DELTA_T,
-                        0x82 => RomIndex::YM2610_ADPCM,
-                        0x83 => RomIndex::YM2610_DELTA_T,
-                        0x84 => RomIndex::YMF278B_ROM,
-                        0x87 => RomIndex::YMF278B_RAM,
-                        0x88 => RomIndex::Y8950_ROM,
-                        _ => RomIndex::NOT_SUPPOTED,
-                    };
+                    let rom_index: RomIndex = Self::get_rom_index(data_type);
                     self.sound_slot.add_rom(
                         rom_index,
                         &self.vgm_data[(data_block_pos + 8)..(data_block_pos + 8) + data_size],
@@ -581,11 +572,7 @@ impl VgmPlay {
                 let write_port = self.get_vgm_u8() as u32;
                 let write_reg = self.get_vgm_u8() as u32;
                 // create new stream
-                let sound_chip_type = match chip_type & 0x7f {
-                    2 => Some(SoundChipType::YM2612),
-                    23 => Some(SoundChipType::OKIM6258),
-                    _ => None, /* TODO: not supported stream */
-                };
+                let sound_chip_type = Self::get_stream_chip_type(chip_type);
                 let sound_chip_index = (chip_type >> 7) as usize;
                 if let Some(sound_chip_type) = sound_chip_type {
                     self.sound_slot.add_data_stream(
@@ -748,7 +735,6 @@ impl VgmPlay {
                 // 0x5d: aa dd: YMZ280B, write value dd to register aa
                 // 0xb0: aa dd: RF5C68, write value dd to register aa
                 // 0xb1: aa dd: RF5C164, write value dd to register aa
-                // 0xb2: aa dd: PWM, write value ddd to register a (d is MSB, dd is LSB)
                 // 0xb3: aa dd: GameBoy DMG, write value dd to register aa
                 // 0xb4: aa dd: NES APU, write value dd to register aa
                 // 0xb5: aa dd: MultiPCM, write value dd to register aa
@@ -792,6 +778,66 @@ impl VgmPlay {
             }
         }
         wait
+    }
+
+    fn get_rom_index(data_type: u8) -> RomIndex {
+        match data_type {
+            0x80 => RomIndex::SEGAPCM_ROM,
+            0x81 => RomIndex::YM2608_DELTA_T,
+            0x82 => RomIndex::YM2610_ADPCM,
+            0x83 => RomIndex::YM2610_DELTA_T,
+            0x84 => RomIndex::YMF278B_ROM,
+            0x87 => RomIndex::YMF278B_RAM,
+            0x88 => RomIndex::Y8950_ROM,
+            _ => RomIndex::NOT_SUPPOTED,
+        }
+    }
+
+    fn get_stream_chip_type(chip_type: u8) -> Option<SoundChipType> {
+        match chip_type & 0x7f {
+            0 => Some(SoundChipType::SN76489),
+            1 => Some(SoundChipType::YM2413),
+            2 => Some(SoundChipType::YM2612),
+            3 => Some(SoundChipType::YM2151),
+            4 => Some(SoundChipType::SEGAPCM),
+            5 => None, // rf5c68
+            6 => Some(SoundChipType::YM2203),
+            7 => Some(SoundChipType::YM2608),
+            8 => Some(SoundChipType::YM2610),
+            9 => Some(SoundChipType::YM3812),
+            10 => Some(SoundChipType::YM3526),
+            11 => Some(SoundChipType::Y8950),
+            12 => Some(SoundChipType::YMF262),
+            13 => Some(SoundChipType::YMF278B),
+            14 => None, // ymf271
+            15 => None, // ymz280b
+            16 => None, // rf5c16
+            17 => Some(SoundChipType::PWM),
+            18 => Some(SoundChipType::YM2149),
+            19 => None, // gb_dmg
+            20 => None, // nes_apu
+            21 => None, // multi_pcm
+            22 => None, // upd7759
+            23 => Some(SoundChipType::OKIM6258),
+            24 => None, // okim6295
+            25 => None, // k051649
+            26 => None, // k054539
+            27 => None, // huc6280
+            28 => None, // c140
+            29 => None, // k053260
+            30 => None, // pokey
+            31 => None, // qsound
+            32 => None, // scsp
+            33 => None, // wonder_swan
+            34 => None, // vsu
+            35 => None, // saa1099
+            36 => None, // es5503
+            37 => None, // es5506
+            38 => None, // x1_010
+            39 => None, // c352
+            40 => None, // ga20
+            _ => None, /* TODO: not supported stream */
+        }
     }
 }
 
