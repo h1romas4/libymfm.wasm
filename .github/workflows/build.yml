@@ -16,18 +16,16 @@ jobs:
     - name: wasi-sdk Toolchain Setup
       run: |
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        rustup toolchain install 1.56-x86_64-unknown-linux-gnu
-        rustup default 1.56-x86_64-unknown-linux-gnu
         rustup target add wasm32-wasi
-        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk-12.0-linux.tar.gz
-        tar zxvf wasi-sdk-12.0-linux.tar.gz
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-14/wasi-sdk-14.0-linux.tar.gz
+        tar zxvf wasi-sdk-14.0-linux.tar.gz
     - name: Build libymfm
       run: |
-        export WASI_SDK_PATH=$(pwd)/wasi-sdk-12.0
+        export WASI_SDK_PATH=$(pwd)/wasi-sdk-14.0
         export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
         export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
         (mkdir build && cd build && cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake .. && make -j4)
-        cargo build --release --target wasm32-wasi --features bindgen
+        cargo +nightly build --release --target wasm32-wasi --features bindgen
         ls -laF target/wasm32-wasi/release/
     - name: Buile examples/web
       run: |
@@ -35,11 +33,3 @@ jobs:
         wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
         (cd examples/web && npm install && npm run build)
         ls -laF examples/web/dist/
-    - name: Build examples/libymfm-cli
-      run: |
-        sudo apt install lld-12
-        export WASI_SDK_PATH=$(pwd)/wasi-sdk-12.0
-        export CARGO_TARGET_WASM32_WASI_LINKER=/usr/lib/llvm-12/bin/lld # use lld 12
-        export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
-        (cd examples/libymfm-cli && cargo build --release --target wasm32-wasi)
-        ls -laF examples/libymfm-cli/target/wasm32-wasi/release/
