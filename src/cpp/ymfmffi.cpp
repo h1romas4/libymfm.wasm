@@ -346,7 +346,7 @@ void ymfm_add_rom_data(uint16_t chip_num, uint16_t access_type, uint8_t *buffer,
         case 0x81: // YM2608_DELTA_T
             type = ymfm::ACCESS_ADPCM_B;
             break;
-        case 0x82: // YM2610_ADPCM
+        case 0x82: // YM2610_ADPCM (Also used as YM2608)
             type = ymfm::ACCESS_ADPCM_A;
             break;
         case 0x83: // YM2610_DELTA_T

@@ -6,7 +6,10 @@ use crate::{driver::VgmPlay, driver::VGM_TICK_RATE, sound::SoundSlot};
 
 #[wasm_bindgen]
 pub struct WgmPlay {
-    vgmplay: VgmPlay,
+    output_sampling_rate: u32,
+    output_sample_chunk_size: usize,
+    vgm_file: Vec<u8>,
+    vgmplay: Option<VgmPlay>,
 }
 
 ///
@@ -27,14 +30,10 @@ impl WgmPlay {
         console_error_panic_hook::set_once();
 
         WgmPlay {
-            vgmplay: VgmPlay::new(
-                SoundSlot::new(
-                    VGM_TICK_RATE,
-                    output_sampling_rate,
-                    output_sample_chunk_size,
-                ),
-                data_length,
-            ),
+            output_sampling_rate,
+            output_sample_chunk_size,
+            vgm_file: vec![0; data_length],
+            vgmplay: None,
         }
     }
 
@@ -42,42 +41,66 @@ impl WgmPlay {
     /// Return vgmdata buffer referance.
     ///
     pub fn get_seq_data_ref(&mut self) -> *mut u8 {
-        self.vgmplay.get_vgmfile_ref()
+        self.vgm_file.as_mut_ptr()
     }
 
     ///
     /// Return sampling_l buffer referance.
     ///
     pub fn get_sampling_l_ref(&self) -> *const f32 {
-        self.vgmplay.get_sampling_l_ref()
+        if let Some(vgmplay) = self.vgmplay.as_ref() {
+            return vgmplay.get_sampling_l_ref();
+        }
+        panic!("vgmplay instance not exsist");
     }
 
     ///
     /// Return sampling_r buffer referance.
     ///
     pub fn get_sampling_r_ref(&self) -> *const f32 {
-        self.vgmplay.get_sampling_r_ref()
+        if let Some(vgmplay) = self.vgmplay.as_ref() {
+            return vgmplay.get_sampling_r_ref();
+        }
+        panic!("vgmplay instance not exsist");
     }
 
     ///
     /// Get the JSON parsed from the header of the VGM file.
     ///
     pub fn get_seq_header(&self) -> String {
-        self.vgmplay.get_vgm_header_json()
+        if let Some(vgmplay) = self.vgmplay.as_ref() {
+            return vgmplay.get_vgm_header_json();
+        }
+        panic!("vgmplay instance not exsist");
     }
 
     ///
     /// Get the JSON parsed GD3 of the VGM file.
     ///
     pub fn get_seq_gd3(&self) -> String {
-        self.vgmplay.get_vgm_gd3_json()
+        if let Some(vgmplay) = self.vgmplay.as_ref() {
+            return vgmplay.get_vgm_gd3_json();
+        }
+        panic!("vgmplay instance not exsist");
     }
 
     ///
     /// Initialize sound driver.
     ///
     pub fn init(&mut self) -> bool {
-        self.vgmplay.init().is_ok()
+        let vgmplay = VgmPlay::new(
+            SoundSlot::new(
+                VGM_TICK_RATE,
+                self.output_sampling_rate,
+                self.output_sample_chunk_size,
+            ),
+            self.vgm_file.as_slice()
+        );
+        if vgmplay.is_err() {
+            return false;
+        }
+        self.vgmplay = Some(vgmplay.unwrap());
+        true
     }
 
     ///
@@ -87,6 +110,9 @@ impl WgmPlay {
     /// In the case of an infinite loop, the std::usize::MAX value is always returned.
     ///
     pub fn play(&mut self) -> usize {
-        self.vgmplay.play(true)
+        if let Some(vgmplay) = self.vgmplay.as_mut() {
+            return vgmplay.play(true)
+        }
+        panic!("vgmplay instance not exsist");
     }
 }

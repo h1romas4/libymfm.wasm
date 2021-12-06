@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+use std::cell::RefCell;
 use std::rc::Rc;
-use std::{cell::RefCell, slice};
 
 use crate::{
     driver::{self, VgmPlay},
@@ -21,6 +21,11 @@ std::thread_local!(static SOUND_SLOT: SoundSlotBank = {
     Rc::new(RefCell::new(Vec::new()))
 });
 
+type MemoryBank = Rc<RefCell<Vec<Vec<u8>>>>;
+std::thread_local!(static MEMORY: MemoryBank = {
+    Rc::new(RefCell::new(Vec::new()))
+});
+
 ///
 /// Get thread local value Utility
 ///
@@ -32,27 +37,77 @@ fn get_sound_slot_bank() -> SoundSlotBank {
     SOUND_SLOT.with(|rc| rc.clone())
 }
 
+fn get_memory_bank() -> MemoryBank {
+    MEMORY.with(|rc| rc.clone())
+}
+
 ///
 /// WebAssembly basic interfaces
 ///
+#[no_mangle]
+pub extern "C" fn memory_alloc(memory_index_id: u32, length: u32) {
+    get_memory_bank()
+        .borrow_mut()
+        .insert(memory_index_id as usize, vec![0; length as usize]);
+}
+
+#[no_mangle]
+pub extern "C" fn memory_get_alloc_len() -> u32 {
+    get_memory_bank()
+        .borrow_mut()
+        .len() as u32
+}
+
+#[no_mangle]
+pub extern "C" fn memory_get_ref(memory_index_id: u32) -> *mut u8 {
+    get_memory_bank()
+        .borrow_mut()
+        .get_mut(memory_index_id as usize)
+        .unwrap()
+        .as_mut_ptr()
+}
+
+#[no_mangle]
+pub extern "C" fn memory_get_len(memory_index_id: u32) -> u32 {
+    get_memory_bank()
+        .borrow_mut()
+        .get_mut(memory_index_id as usize)
+        .unwrap()
+        .len() as u32
+}
+
+#[no_mangle]
+pub extern "C" fn memory_drop(memory_index_id: u32) {
+    get_memory_bank()
+        .borrow_mut()
+        .remove(memory_index_id as usize);
+}
+
 #[no_mangle]
 pub extern "C" fn vgm_create(
     vgm_index_id: u32,
     output_sampling_rate: u32,
     output_sample_chunk_size: u32,
-    vgm_file_size: u32,
-) {
-    get_vgm_bank().borrow_mut().insert(
-        vgm_index_id as usize,
-        VgmPlay::new(
-            SoundSlot::new(
-                driver::VGM_TICK_RATE,
-                output_sampling_rate,
-                output_sample_chunk_size as usize,
-            ),
-            vgm_file_size as usize,
+    memory_index_id: u32,
+) -> bool {
+    let vgmplay = VgmPlay::new(
+        SoundSlot::new(
+            driver::VGM_TICK_RATE,
+            output_sampling_rate,
+            output_sample_chunk_size as usize,
         ),
+        get_memory_bank()
+            .borrow_mut()
+            .get(memory_index_id as usize)
+            .unwrap(),
     );
+    if vgmplay.is_err() {
+        return false;
+    }
+    get_vgm_bank()
+        .borrow_mut()
+        .insert(vgm_index_id as usize, vgmplay.unwrap());
+    true
 }
 
 #[no_mangle]
@@ -169,8 +224,7 @@ pub extern "C" fn sound_slot_sampling_s16le_ref(sounde_slot_index: u32) -> *cons
 pub extern "C" fn sound_slot_add_rom(
     sounde_slot_index: u32,
     rom_index: u32,
-    memory: *const u8,
-    memory_length: u32,
+    memory_index_id: u32,
     start_address: u32,
     end_address: u32,
 ) {
@@ -190,7 +244,10 @@ pub extern "C" fn sound_slot_add_rom(
         .unwrap()
         .add_rom(
             rom_index,
-            unsafe { slice::from_raw_parts(memory, memory_length as usize) },
+            get_memory_bank()
+                .borrow_mut()
+                .get(memory_index_id as usize)
+                .unwrap(),
             start_address as usize,
             end_address as usize,
         );
@@ -200,16 +257,19 @@ pub extern "C" fn sound_slot_add_rom(
 pub extern "C" fn sound_slot_add_data_block(
     sounde_slot_index: u32,
     data_block_id: u32,
-    data_block: *const u8,
-    data_block_length: u32,
+    memory_index_id: u32,
 ) {
     get_sound_slot_bank()
         .borrow_mut()
         .get_mut(sounde_slot_index as usize)
         .unwrap()
-        .add_data_block(data_block_id as usize, unsafe {
-            slice::from_raw_parts(data_block, data_block_length as usize)
-        });
+        .add_data_block(
+            data_block_id as usize,
+            get_memory_bank()
+                .borrow_mut()
+                .get(memory_index_id as usize)
+                .unwrap(),
+        );
 }
 
 #[no_mangle]
@@ -347,15 +407,6 @@ pub extern "C" fn sound_slot_stop_data_stream(
 }
 
 #[no_mangle]
-pub extern "C" fn vgm_get_seq_data_ref(vgm_index_id: u32) -> *mut u8 {
-    get_vgm_bank()
-        .borrow_mut()
-        .get_mut(vgm_index_id as usize)
-        .unwrap()
-        .get_vgmfile_ref()
-}
-
-#[no_mangle]
 pub extern "C" fn vgm_get_sampling_l_ref(vgm_index_id: u32) -> *const f32 {
     get_vgm_bank()
         .borrow_mut()
@@ -383,23 +434,35 @@ pub extern "C" fn vgm_get_sampling_s16le_ref(vgm_index_id: u32) -> *const i16 {
 }
 
 #[no_mangle]
-#[allow(improper_ctypes_definitions)]
-pub extern "C" fn vgm_get_seq_header(vgm_index_id: u32) {
-    get_vgm_bank()
+pub extern "C" fn vgm_get_header_json(vgm_index_id: u32) -> u32 {
+    let json = get_vgm_bank()
         .borrow_mut()
         .get_mut(vgm_index_id as usize)
         .unwrap()
         .get_vgm_header_json();
+    // UTF-8 json into allocate memory
+    let memory_index_id = memory_get_alloc_len();
+    get_memory_bank()
+        .borrow_mut()
+        .insert(memory_index_id as usize, json.into_bytes());
+    // return memory index id
+    memory_index_id
 }
 
 #[no_mangle]
-pub extern "C" fn vgm_init(vgm_index_id: u32) -> bool {
-    get_vgm_bank()
+pub extern "C" fn vgm_get_gd3_json(vgm_index_id: u32) -> u32 {
+    let json = get_vgm_bank()
         .borrow_mut()
         .get_mut(vgm_index_id as usize)
         .unwrap()
-        .init()
-        .is_ok()
+        .get_vgm_gd3_json();
+    // UTF-8 json into allocate memory
+    let memory_index_id = memory_get_alloc_len();
+    get_memory_bank()
+        .borrow_mut()
+        .insert(memory_index_id as usize, json.into_bytes());
+    // return memory index id
+    memory_index_id
 }
 
 #[no_mangle]
@@ -421,12 +484,6 @@ pub extern "C" fn sound_slot_drop(sound_slot_index_id: u32) {
     get_sound_slot_bank()
         .borrow_mut()
         .remove(sound_slot_index_id as usize);
-}
-
-#[no_mangle]
-pub extern "C" fn wasi_interface_test() -> u32 {
-    println!("Hello, wasmer-python!");
-    1
 }
 
 fn get_sound_chip_type(sound_chip_type: u32) -> SoundChipType {

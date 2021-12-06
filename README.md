@@ -55,13 +55,13 @@ Source code:
 ## WASI Commnad Line Interface
 
 - Install [Wasmer](https://wasmer.io/) runtime
-- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.8.0) from pre-build release
+- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.9.0) from pre-build release
 
 Options
 
 ```
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.8.0
+libymfm-cli 0.9.0
 Hiromasa Tanaka <h1romas4@gmail.com>
 libymfm CLI
 
@@ -106,12 +106,7 @@ Source code:
 
 ## Build
 
-Build require Rust rustc **1.56.1** (Currently, Rust 1.57(LLVM 13) and above will cause function export is "Command" life cycle)
-
-- [Add a -Zwasi-exec-model codegen option for emitting WASI reactors #79997](https://github.com/rust-lang/rust/pull/79997)
-- [Reactor support. #74](https://github.com/WebAssembly/wasi-libc/pull/74)
-- [WASI Libraries #24](https://github.com/WebAssembly/WASI/issues/24)
-- [New-style command support](https://reviews.llvm.org/D81689)
+Build require Rust 2021 edition
 
 `Cargo.toml`
 
@@ -121,28 +116,28 @@ edition = "2021"
 rust-version = "1.56"
 ```
 
-Setup [wasi-sdk-12](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-12)
+Setup [wasi-sdk-14](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-14)
 
 `.bashrc`
 
 ```
-export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-12.0
+export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-14.0
 export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
 export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
 ```
 
 ```
 $ echo ${WASI_SDK_PATH}
-/home/hiromasa/devel/toolchain/wasi-sdk-12.0
+/home/hiromasa/devel/toolchain/wasi-sdk-14.0
 $ ls -alF ${WASI_SDK_PATH}
 drwxr-xr-x 2 hiromasa hiromasa 4096 12月  3  2020 bin/
 drwxr-xr-x 3 hiromasa hiromasa 4096 12月  3  2020 lib/
 drwxr-xr-x 6 hiromasa hiromasa 4096 12月  3  2020 share/
 $ ${WASI_SDK_PATH}/bin/clang -v
-clang version 11.0.0 (https://github.com/llvm/llvm-project 176249bd6732a8044d457092ed932768724a6f06)
+clang version 13.0.0 (https://github.com/llvm/llvm-project fd1d8c2f04dde23bee0fb3a7d069a9b1046da979)
 Target: wasm32-unknown-wasi
 Thread model: posix
-InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-12.0/bin
+InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-14.0/bin
 ```
 
 cmake / make
@@ -165,9 +160,11 @@ cargo install wasm-bindgen-cli
 
 Rust build and wasm-bindgen
 
+Always add the **+nightly** flag.
+
 ```
 rustup target add wasm32-wasi
-cargo build --release --target wasm32-wasi --features bindgen
+cargo +nightly build --release --target wasm32-wasi --features bindgen
 wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
 ```
 
@@ -187,9 +184,11 @@ npm run start
 
 Rust build and copy .wasm to Python project
 
+Always add the **+nightly** flag.
+
 ```
 rustup target add wasm32-wasi
-cargo build --release --target wasm32-wasi
+cargo +nightly build --release --target wasm32-wasi
 cp -p target/wasm32-wasi/release/libymfm.wasm ./examples/python/src/wasm/
 ```
 
@@ -206,6 +205,13 @@ python src/sample_pyxel.py
 ```
 
 ### Build Note
+
+WASI Library
+
+- [Add a -Zwasi-exec-model codegen option for emitting WASI reactors #79997](https://github.com/rust-lang/rust/pull/79997)
+- [Reactor support. #74](https://github.com/WebAssembly/wasi-libc/pull/74)
+- [WASI Libraries #24](https://github.com/WebAssembly/WASI/issues/24)
+- [New-style command support](https://reviews.llvm.org/D81689)
 
 Essentially, wasm-bindgen is incompatible with wasm32-wasi.
 

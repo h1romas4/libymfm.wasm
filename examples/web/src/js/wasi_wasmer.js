@@ -3,7 +3,6 @@
 import { WASI } from '@wasmer/wasi';
 import { WasmFs } from "@wasmer/wasmfs";
 import { lowerI64Imports } from "@wasmer/wasm-transformer";
-import browserBindings from '@wasmer/wasi/lib/bindings/browser';
 import { spy } from 'spyfs';
 
 // wasi instance
@@ -26,20 +25,25 @@ export let memFs;
 export async function initWasi() {
     // memfs + spy
     wasmFs = new WasmFs();
-    // memfs not working ?
+    // WasmFs not working ?
     memFs = spy(wasmFs.fs, async (action) => {
         console.log({ [action.method] : {
             "isAsync": action.isAsync,
             "args": action.args,
         }});
+        if(action.args[1] instanceof Uint8Array) {
+            console.log(new TextDecoder().decode(action.args[1]));
+        }
         await action;
     });
+    // It is not read by fopen.
+    // wasmFs.fs.writeFileSync('test.bin', 'test');
     // create WASI instance
     wasi = new WASI({
         args: [""],
         env: {},
         bindings: {
-            ...browserBindings,
+            ...WASI.defaultBindings,
             fs: memFs
         }
     });
@@ -61,6 +65,8 @@ export async function initWasi() {
     });
     // start wasi
     wasi.start(instance);
+    // init wasi (Isn't this necessary?)
+    instance.exports._initialize();
 
     // return wasm exports(for call setWasmExport())
     return instance.exports;
