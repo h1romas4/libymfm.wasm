@@ -21,8 +21,19 @@ Pacth `src/rust/lib.rs`
 // #![no_main] // disable this line
 ```
 
+Pacth `.cargo/config`
+
 ```
-cargo build --target=wasm32-wasi --release
+[target.wasm32-wasi]
+rustflags = [
+  "-Ctarget-feature=+bulk-memory",
+  # "-Z", "wasi-exec-model=reactor", # disable this line
+```
+
+Build
+
+```
+cargo +nightly build --target=wasm32-wasi --release
 ```
 
 ## Run
