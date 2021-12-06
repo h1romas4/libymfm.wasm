@@ -52,12 +52,28 @@ pub extern "C" fn memory_alloc(memory_index_id: u32, length: u32) {
 }
 
 #[no_mangle]
+pub extern "C" fn memory_get_alloc_len() -> u32 {
+    get_memory_bank()
+        .borrow_mut()
+        .len() as u32
+}
+
+#[no_mangle]
 pub extern "C" fn memory_get_ref(memory_index_id: u32) -> *mut u8 {
     get_memory_bank()
         .borrow_mut()
         .get_mut(memory_index_id as usize)
         .unwrap()
         .as_mut_ptr()
+}
+
+#[no_mangle]
+pub extern "C" fn memory_get_len(memory_index_id: u32) -> u32 {
+    get_memory_bank()
+        .borrow_mut()
+        .get_mut(memory_index_id as usize)
+        .unwrap()
+        .len() as u32
 }
 
 #[no_mangle]
@@ -418,13 +434,35 @@ pub extern "C" fn vgm_get_sampling_s16le_ref(vgm_index_id: u32) -> *const i16 {
 }
 
 #[no_mangle]
-#[allow(improper_ctypes_definitions)]
-pub extern "C" fn vgm_get_seq_header(vgm_index_id: u32) {
-    get_vgm_bank()
+pub extern "C" fn vgm_get_header_json(vgm_index_id: u32) -> u32 {
+    let json = get_vgm_bank()
         .borrow_mut()
         .get_mut(vgm_index_id as usize)
         .unwrap()
         .get_vgm_header_json();
+    // UTF-8 json into allocate memory
+    let memory_index_id = memory_get_alloc_len();
+    get_memory_bank()
+        .borrow_mut()
+        .insert(memory_index_id as usize, json.into_bytes());
+    // return memory index id
+    memory_index_id
+}
+
+#[no_mangle]
+pub extern "C" fn vgm_get_gd3_json(vgm_index_id: u32) -> u32 {
+    let json = get_vgm_bank()
+        .borrow_mut()
+        .get_mut(vgm_index_id as usize)
+        .unwrap()
+        .get_vgm_gd3_json();
+    // UTF-8 json into allocate memory
+    let memory_index_id = memory_get_alloc_len();
+    get_memory_bank()
+        .borrow_mut()
+        .insert(memory_index_id as usize, json.into_bytes());
+    // return memory index id
+    memory_index_id
 }
 
 #[no_mangle]
