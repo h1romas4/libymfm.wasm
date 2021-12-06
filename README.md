@@ -106,7 +106,11 @@ Source code:
 
 ## Build
 
-Build require Rust 2021 edition
+Build require Rust 2021 edition and +nightly.
+
+```
+rustup install nightly
+```
 
 `Cargo.toml`
 
