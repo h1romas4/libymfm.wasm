@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # license:BSD-3-Clause
 import os
+import json
 from enum import Enum
 from wasmer import engine, wasi, Store, Module, Instance
 from wasmer_compiler_cranelift import Compiler
@@ -64,17 +65,37 @@ class ChipStream:
         # Read VGM file
         vgm_bytes = open(file_path, 'rb').read()
         vgm_length = len(vgm_bytes)
-        # Create VgmPlay instance in Wasm
-        self.wasm.vgm_create(vgm_instance_id, output_sampling_rate, output_sample_chunk_size, vgm_length)
-        self.output_sample_chunk_size = output_sample_chunk_size * 4 # s16le * 2ch
-        # Write VGM data to Wasm memory
-        vgm_ref_pointer = self.wasm.vgm_get_seq_data_ref(vgm_instance_id)
+        # Allocate memory in wasm
+        memory_id = 0
+        self.wasm.memory_alloc(memory_id, vgm_length)
+        # Trancefar vgm data
+        vgm_ref_pointer = self.wasm.memory_get_ref(memory_id)
         vgm_ref = self.wasm.memory.uint8_view(offset = vgm_ref_pointer)
         vgm_data = bytearray(vgm_bytes)
         for i in range(vgm_length):
             vgm_ref[i] = vgm_data[i]
-        # Initialize VgmPlay
-        self.wasm.vgm_init(vgm_instance_id)
+        # Create VgmPlay instance in Wasm
+        self.wasm.vgm_create(vgm_instance_id, output_sampling_rate, output_sample_chunk_size, memory_id)
+        # Drop allocate memory in wasm
+        self.wasm.memory_drop(memory_id)
+        # Set sampling chunk into instance
+        self.output_sample_chunk_size = output_sample_chunk_size * 4 # s16le * 2ch
+        # Get VGM header JSON
+        return json.loads(self.get_wasm_string(self.wasm.vgm_get_header_json(vgm_instance_id))), \
+            json.loads(self.get_wasm_string(self.wasm.vgm_get_gd3_json(vgm_instance_id)))
+
+    def get_wasm_string(self, memory_index_id):
+        # Create memory view
+        memory_view = self.wasm.memory.uint8_view(offset = self.wasm.memory_get_ref(memory_index_id))
+        memory_length = self.wasm.memory_get_len(memory_index_id)
+        # Copy into Python array
+        wasm_string = [0] * memory_length
+        for i in range(memory_length):
+            wasm_string[i] = memory_view[i]
+        # Memory drop
+        self.wasm.memory_drop(memory_index_id)
+        # UTF-8 string
+        return bytearray(wasm_string).decode()
 
     def vgm_play(self, vgm_instance_id):
         """

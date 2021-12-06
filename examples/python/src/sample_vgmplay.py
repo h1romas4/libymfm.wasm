@@ -20,7 +20,10 @@ pygame.init()
 chip_stream = ChipStream()
 
 # Setup VGM
-chip_stream.create_vgm_instance(VGM_INDEX, "./vgm/ym2612.vgm", SAMPLING_RATE, SAMPLING_CHUNK_SIZE)
+header, gd3 = chip_stream.create_vgm_instance(VGM_INDEX, "./vgm/ym2612.vgm", SAMPLING_RATE, SAMPLING_CHUNK_SIZE)
+# Print VGM meta
+print(header)
+print(gd3)
 
 # Play
 while chip_stream.vgm_play(VGM_INDEX) == 0:
