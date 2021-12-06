@@ -12,6 +12,7 @@ license = "BSD-3-Clause"
 [lib]
 # https://github.com/rust-lang/rust/pull/79997
 # https://github.com/bazelbuild/rules_rust/issues/771
+# https://github.com/rust-lang/rfcs/pull/3180/files
 crate-type = ["bin"]
 # crate-type = ["cdylib", "rlib"]
 path = "src/rust/lib.rs"
