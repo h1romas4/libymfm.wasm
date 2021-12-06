@@ -16,6 +16,8 @@ jobs:
     - name: wasi-sdk Toolchain Setup
       run: |
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        rustup install nightly
+        rustup default nightly
         rustup target add wasm32-wasi
         wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-14/wasi-sdk-14.0-linux.tar.gz
         tar zxvf wasi-sdk-14.0-linux.tar.gz
