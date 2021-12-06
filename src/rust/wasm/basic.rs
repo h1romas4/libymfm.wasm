@@ -21,6 +21,11 @@ std::thread_local!(static SOUND_SLOT: SoundSlotBank = {
     Rc::new(RefCell::new(Vec::new()))
 });
 
+type MemoryBank = Rc<RefCell<Vec<Vec<u8>>>>;
+std::thread_local!(static MEMORY: MemoryBank = {
+    Rc::new(RefCell::new(Vec::new()))
+});
+
 ///
 /// Get thread local value Utility
 ///
@@ -32,27 +37,62 @@ fn get_sound_slot_bank() -> SoundSlotBank {
     SOUND_SLOT.with(|rc| rc.clone())
 }
 
+fn get_memory_bank() -> MemoryBank {
+    MEMORY.with(|rc| rc.clone())
+}
+
 ///
 /// WebAssembly basic interfaces
 ///
+#[no_mangle]
+pub extern "C" fn memory_alloc(memory_index_id: u32, length: u32) {
+    get_memory_bank()
+        .borrow_mut()
+        .insert(memory_index_id as usize, vec![0; length as usize]);
+}
+
+#[no_mangle]
+pub extern "C" fn memory_get_ref(memory_index_id: u32) -> *mut u8 {
+    get_memory_bank()
+        .borrow_mut()
+        .get_mut(memory_index_id as usize)
+        .unwrap()
+        .as_mut_ptr()
+}
+
+#[no_mangle]
+pub extern "C" fn memory_drop(memory_index_id: u32) {
+    get_memory_bank()
+        .borrow_mut()
+        .remove(memory_index_id as usize);
+}
+
 #[no_mangle]
 pub extern "C" fn vgm_create(
     vgm_index_id: u32,
     output_sampling_rate: u32,
     output_sample_chunk_size: u32,
-    vgm_file_size: u32,
-) {
-    get_vgm_bank().borrow_mut().insert(
-        vgm_index_id as usize,
-        VgmPlay::new(
-            SoundSlot::new(
-                driver::VGM_TICK_RATE,
-                output_sampling_rate,
-                output_sample_chunk_size as usize,
-            ),
-            vgm_file_size as usize,
+    memory_index_id: u32,
+) -> bool {
+    print!("test!!!!!!!!!");
+    let vgmplay = VgmPlay::new(
+        SoundSlot::new(
+            driver::VGM_TICK_RATE,
+            output_sampling_rate,
+            output_sample_chunk_size as usize,
         ),
+        get_memory_bank()
+            .borrow_mut()
+            .get(memory_index_id as usize)
+            .unwrap(),
     );
+    if vgmplay.is_err() {
+        return false;
+    }
+    get_vgm_bank()
+        .borrow_mut()
+        .insert(vgm_index_id as usize, vgmplay.unwrap());
+    true
 }
 
 #[no_mangle]
@@ -347,15 +387,6 @@ pub extern "C" fn sound_slot_stop_data_stream(
 }
 
 #[no_mangle]
-pub extern "C" fn vgm_get_seq_data_ref(vgm_index_id: u32) -> *mut u8 {
-    get_vgm_bank()
-        .borrow_mut()
-        .get_mut(vgm_index_id as usize)
-        .unwrap()
-        .get_vgmfile_ref()
-}
-
-#[no_mangle]
 pub extern "C" fn vgm_get_sampling_l_ref(vgm_index_id: u32) -> *const f32 {
     get_vgm_bank()
         .borrow_mut()
@@ -390,16 +421,6 @@ pub extern "C" fn vgm_get_seq_header(vgm_index_id: u32) {
         .get_mut(vgm_index_id as usize)
         .unwrap()
         .get_vgm_header_json();
-}
-
-#[no_mangle]
-pub extern "C" fn vgm_init(vgm_index_id: u32) -> bool {
-    get_vgm_bank()
-        .borrow_mut()
-        .get_mut(vgm_index_id as usize)
-        .unwrap()
-        .init()
-        .is_ok()
 }
 
 #[no_mangle]

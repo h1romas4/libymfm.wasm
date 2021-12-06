@@ -97,18 +97,10 @@ fn play(mut file: File, mut output_file: Option<File>, sampling_rate: u32, loop_
 
     let mut vgmplay = VgmPlay::new(
         SoundSlot::new(VGM_TICK_RATE, sampling_rate, MAX_SAMPLE_SIZE),
-        file.metadata().unwrap().len() as usize,
-    );
-    // set vgmdata (Wasm simulation)
-    let vgmdata_ref = vgmplay.get_vgmfile_ref();
-    for (i, buf) in buffer.iter().enumerate() {
-        unsafe {
-            *vgmdata_ref.add(i) = *buf;
-        }
-    }
+        buffer.as_slice(),
+    ).expect("vgm file is not valid error.");
 
     // init & sample
-    vgmplay.init().unwrap();
     let sampling_l = vgmplay.get_sampling_l_ref();
     let sampling_r = vgmplay.get_sampling_r_ref();
 
