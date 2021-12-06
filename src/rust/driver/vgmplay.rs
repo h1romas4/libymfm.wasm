@@ -79,21 +79,21 @@ impl VgmPlay {
     }
 
     ///
-    /// get_vgm_meta
+    /// Get VGM meta.
     ///
     pub fn get_vgm_meta(&self) -> (&VgmHeader, &Gd3) {
         (&self.vgm_header, &self.vgm_gd3)
     }
 
     ///
-    /// get_vgm_header_json
+    /// Get VGM header JSON.
     ///
     pub fn get_vgm_header_json(&self) -> String {
         self.vgm_header.get_json()
     }
 
     ///
-    /// get_vgm_header_json
+    /// Get VGM header GD3 JSON.
     ///
     pub fn get_vgm_gd3_json(&self) -> String {
         self.vgm_gd3.get_json()
@@ -128,7 +128,7 @@ impl VgmPlay {
     }
 
     ///
-    /// extract vgz and initialize sound driver.
+    /// Extract vgz and initialize sound driver.
     ///
     fn init(&mut self, vgm_file: &[u8]) -> Result<(), &'static str> {
         // try vgz extract to vgm_data
@@ -832,7 +832,7 @@ impl VgmPlay {
             38 => None, // x1_010
             39 => None, // c352
             40 => None, // ga20
-            _ => None, /* TODO: not supported stream */
+            _ => None,  // not supported stream
         }
     }
 }
@@ -940,10 +940,8 @@ mod tests {
         let mut buffer = Vec::new();
         let _ = file.read_to_end(&mut buffer).unwrap();
 
-        let mut vgmplay = VgmPlay::new(
-            SoundSlot::new(44100, 44100, MAX_SAMPLE_SIZE),
-            &buffer,
-        ).unwrap();
+        let mut vgmplay =
+            VgmPlay::new(SoundSlot::new(44100, 44100, MAX_SAMPLE_SIZE), &buffer).unwrap();
 
         // init & sample
         let sampling_l = vgmplay.get_sampling_l_ref();
