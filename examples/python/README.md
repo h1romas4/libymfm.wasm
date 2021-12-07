@@ -20,6 +20,6 @@ pyxel==1.4.3
 python src/sample_vgmplay.py
 # Pyxel impliments example
 python src/sample_pyxel.py
-# Pyxel impliments example
+# Sound chip direct access example
 python src/sample_direct.py
 ```

@@ -206,6 +206,8 @@ pip3 install -r requirements.txt
 python src/sample_vgmplay.py
 # Pyxel impliments example
 python src/sample_pyxel.py
+# Sound chip direct access example
+python src/sample_direct.py
 ```
 
 ### Build Note
