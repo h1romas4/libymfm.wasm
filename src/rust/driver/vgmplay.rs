@@ -940,12 +940,9 @@ mod tests {
         let mut buffer = Vec::new();
         let _ = file.read_to_end(&mut buffer).unwrap();
 
+        // read vgm
         let mut vgmplay =
             VgmPlay::new(SoundSlot::new(44100, 44100, MAX_SAMPLE_SIZE), &buffer).unwrap();
-
-        // init & sample
-        let sampling_l = vgmplay.get_sampling_l_ref();
-        let sampling_r = vgmplay.get_sampling_r_ref();
 
         let mut pcm = File::create("output.pcm").expect("file open error.");
         // play
@@ -954,6 +951,8 @@ mod tests {
         #[allow(clippy::absurd_extreme_comparisons)]
         while vgmplay.play(false) <= 0 {
             for i in 0..MAX_SAMPLE_SIZE {
+                let sampling_l = vgmplay.get_sampling_l_ref();
+                let sampling_r = vgmplay.get_sampling_r_ref();
                 unsafe {
                     let slice_l = std::slice::from_raw_parts(sampling_l.add(i) as *const u8, 4);
                     let slice_r = std::slice::from_raw_parts(sampling_r.add(i) as *const u8, 4);
