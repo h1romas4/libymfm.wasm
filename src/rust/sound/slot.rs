@@ -426,6 +426,15 @@ impl SoundSlot {
     }
 
     ///
+    /// Change external tick rate.
+    ///
+    /// This only works correctly when the sound slot is in its initial state.
+    ///
+    pub fn change_external_tick_rate(&mut self, external_tick_rate: u32) {
+        self.output_sampling_step = external_tick_rate as f64 / self.output_sampling_rate as f64;
+    }
+
+    ///
     /// Get the sound chip from the sound slot.
     ///
     #[inline]
