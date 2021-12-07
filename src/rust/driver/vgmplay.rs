@@ -4,10 +4,10 @@ use flate2::read::GzDecoder;
 use std::collections::HashMap;
 use std::io::prelude::*;
 
-use crate::driver::gd3meta::Gd3;
+use crate::driver::meta::Jsonlize;
 use crate::driver::vgmmeta;
-use crate::driver::vgmmeta::Jsonlize;
 use crate::driver::vgmmeta::VgmHeader;
+use crate::driver::gd3meta::Gd3;
 use crate::sound::{RomIndex, SoundChipType, SoundSlot};
 
 pub const VGM_TICK_RATE: u32 = 44100;
