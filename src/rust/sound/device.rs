@@ -46,33 +46,50 @@ impl SoundDevice {
         data_block: &HashMap<usize, DataBlock>,
     ) -> (f32, f32) {
         let mut is_tick;
-        #[allow(clippy::blocks_in_if_conditions)]
         while {
             is_tick = self.sound_stream.is_tick();
             is_tick != Tick::No
         } {
             // data stream write to sound chip
+            let mut merge_data: Option<u32> = None;
+            let mut merge_reg = None;
             for (_, (_, data_stream)) in self.data_stream.iter_mut().enumerate() {
                 if let Some((data_block_id, data_block_pos, _write_port, write_reg, priority)) =
                     data_stream.tick()
                 {
-                    match self.data_stream_mode {
-                        DataStreamMode::Parallel => {
-                            // If the data stream has no priority, stream command.
-                            if let Some(data_block) = data_block.get(&data_block_id) {
-                                // stream command write
+                    if let Some(data_block) = data_block.get(&data_block_id) {
+                        let data = *data_block.get_data_block().get(data_block_pos).unwrap() as u32;
+                        match self.data_stream_mode {
+                            DataStreamMode::Parallel => {
+                                // stream command write each data stream
                                 self.sound_chip.write(
                                     sound_chip_index,
                                     write_reg,
-                                    *data_block.get_data_block().get(data_block_pos).unwrap()
-                                        as u32,
+                                    data,
                                     &mut *self.sound_stream,
                                 )
                             }
+                            DataStreamMode::PCMMerge => {
+                                // stream merge as pcm data
+                                if let Some(priority) = priority {
+                                    if self.data_stream_priority_limit < priority {
+                                        merge_data = Some(data + merge_data.unwrap_or_default());
+                                    }
+                                    merge_reg = Some(write_reg);
+                                }
+                            }
                         }
-                        DataStreamMode::PCMMerge => todo!(),
                     }
                 }
+            }
+            // merged data stream write
+            if let Some(data) = merge_data {
+                self.sound_chip.write(
+                    sound_chip_index,
+                    merge_reg.unwrap(),
+                    data,
+                    &mut *self.sound_stream,
+                );
             }
             // sound chip update
             self.sound_chip
