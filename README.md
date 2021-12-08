@@ -210,6 +210,40 @@ python src/sample_pyxel.py
 python src/sample_direct.py
 ```
 
+### Native Debug & Test
+
+Since Rust currently does not allow create-type switching, the following modification to the source code is required for native debugging.
+
+> [Cargo --crate-type CLI Argument](https://github.com/rust-lang/rfcs/pull/3180/files)
+
+It is also required if you want to use this library as a simple native library.
+
+These are the codes needed to make the library the "WASI Library".
+
+Pacth `Cargo.toml`
+
+```
+[lib]
+# https://github.com/rust-lang/rust/pull/79997
+# https://github.com/bazelbuild/rules_rust/issues/771
+# crate-type = ["bin"] # disable this line
+crate-type = ["cdylib", "rlib"] # enable this line
+path = "src/rust/lib.rs"
+```
+
+Pacth `src/rust/lib.rs`
+
+```
+// #![no_main] // disable this line
+```
+
+Buile or test on native
+
+```
+cargo build --release
+cargo test ym2612_1 -- --nocapture
+```
+
 ### Build Note
 
 WASI Library
