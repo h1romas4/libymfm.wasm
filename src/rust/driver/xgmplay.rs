@@ -8,7 +8,7 @@ use flate2::read::GzDecoder;
 use super::{
     gd3meta::Gd3,
     meta::Jsonlize,
-    xgmmeta::{self, XgmHeader, VDPMode},
+    xgmmeta::{self, VDPMode, XgmHeader},
 };
 use crate::sound::{SoundChipType, SoundSlot};
 
@@ -111,12 +111,13 @@ impl XgmPlay {
         // set sound chip clock
         let header = self.xgm_header.as_ref().unwrap();
         let (clock_ym2612, clock_sn76489) = match header.vdp_mode {
-            VDPMode::NTSC => (MASTER_CLOCK_NTSC / 7 , MASTER_CLOCK_NTSC / 15),
+            VDPMode::NTSC => (MASTER_CLOCK_NTSC / 7, MASTER_CLOCK_NTSC / 15),
             VDPMode::PAL => (MASTER_CLOCK_PAL / 7, MASTER_CLOCK_NTSC / 15),
         };
         // change external tick rate
         if header.vdp_mode == VDPMode::PAL {
-            self.sound_slot.change_external_tick_rate(VDPMode::PAL as u32);
+            self.sound_slot
+                .change_external_tick_rate(VDPMode::PAL as u32);
         }
 
         // add sound chip
@@ -125,6 +126,32 @@ impl XgmPlay {
 
         self.sound_slot
             .add_sound_device(SoundChipType::SEGAPSG, 1, clock_sn76489);
+
+        // parse sample table
+        for (xgm_sample_id, (address, size)) in header.sample_id_table.iter().enumerate() {
+            let start_address: usize =
+                *address as usize * 256 + xgmmeta::XGM_SAMPLE_DATA_BLOC_ADDRESS;
+            let end_address: usize = *size as usize * 256 + start_address;
+            let sound_chip_type = SoundChipType::YM2612;
+            let sound_chip_index = 0;
+            // create data stream into sound device
+            self.sound_slot
+                .add_data_block(xgm_sample_id, &self.xgm_data[start_address..end_address]);
+            self.sound_slot
+                .add_data_stream(sound_chip_type, sound_chip_index, xgm_sample_id, 0, 0x2a);
+            self.sound_slot.set_data_stream_frequency(
+                sound_chip_type,
+                sound_chip_index,
+                xgm_sample_id,
+                XGM_PCM_SAMPLING_RATE,
+            );
+            self.sound_slot.attach_data_block_to_stream(
+                sound_chip_type,
+                sound_chip_index,
+                xgm_sample_id,
+                xgm_sample_id,
+            );
+        }
 
         Ok(())
     }
@@ -160,8 +187,11 @@ mod tests {
         let _ = file.read_to_end(&mut buffer).unwrap();
 
         // read vgm
-        let mut xgmplay =
-            XgmPlay::new(SoundSlot::new(/* XGM NTSC */ 60, 44100, MAX_SAMPLE_SIZE), &buffer).unwrap();
+        let mut xgmplay = XgmPlay::new(
+            SoundSlot::new(/* XGM NTSC */ 60, 44100, MAX_SAMPLE_SIZE),
+            &buffer,
+        )
+        .unwrap();
 
         let mut pcm = File::create("output.pcm").expect("file open error.");
         // play

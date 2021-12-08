@@ -17,6 +17,8 @@ pub enum VDPMode {
     PAL = 50,
 }
 
+pub const XGM_SAMPLE_DATA_BLOC_ADDRESS: usize = 0x104;
+
 ///
 /// https://github.com/Stephane-D/SGDK/blob/master/bin/xgm.txt
 ///
