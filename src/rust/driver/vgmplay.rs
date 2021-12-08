@@ -327,20 +327,18 @@ impl VgmPlay {
 
     fn parse_vgm(&mut self, repeat: bool) -> u16 {
         let command: u8;
-        let reg: u8;
-        let dat: u8;
         let mut wait: u16 = 0;
 
         command = self.get_vgm_u8();
         match command {
             0x50 => {
-                dat = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot
                     .write(SoundChipType::SEGAPSG, 0, 0, dat.into());
             }
             0x51 | 0xa1 => {
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YM2413,
                     (command >> 7) as usize,
@@ -349,8 +347,8 @@ impl VgmPlay {
                 );
             }
             0x52 | 0xa2 => {
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YM2612,
                     (command >> 7) as usize,
@@ -359,8 +357,8 @@ impl VgmPlay {
                 );
             }
             0x53 | 0xa3 => {
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YM2612,
                     (command >> 7) as usize,
@@ -369,8 +367,8 @@ impl VgmPlay {
                 );
             }
             0x54 | 0xa4 => {
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YM2151,
                     (command >> 7) as usize,
@@ -379,8 +377,8 @@ impl VgmPlay {
                 );
             }
             0x55 | 0xa5 => {
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YM2203,
                     (command >> 7) as usize,
@@ -390,8 +388,8 @@ impl VgmPlay {
             }
             0x56 | 0xa6 => {
                 // YM2608 port 0 write
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YM2608,
                     (command >> 7) as usize,
@@ -401,8 +399,8 @@ impl VgmPlay {
             }
             0x57 | 0xa7 => {
                 // YM2608 port 1 write
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YM2608,
                     (command >> 7) as usize,
@@ -412,8 +410,8 @@ impl VgmPlay {
             }
             0x58 | 0xa8 => {
                 // YM2610 port 0 write
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YM2610,
                     (command >> 7) as usize,
@@ -423,8 +421,8 @@ impl VgmPlay {
             }
             0x59 | 0xa9 => {
                 // YM2610 port 1 write
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YM2610,
                     (command >> 7) as usize,
@@ -433,8 +431,8 @@ impl VgmPlay {
                 );
             }
             0x5a | 0xaa => {
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YM3812,
                     (command >> 7) as usize,
@@ -443,8 +441,8 @@ impl VgmPlay {
                 );
             }
             0x5b | 0xab => {
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YM3526,
                     (command >> 7) as usize,
@@ -453,8 +451,8 @@ impl VgmPlay {
                 );
             }
             0x5c | 0xac => {
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::Y8950,
                     (command >> 7) as usize,
@@ -464,8 +462,8 @@ impl VgmPlay {
             }
             0x5e | 0xae => {
                 // YMF262 port 0 write
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YMF262,
                     (command >> 7) as usize,
@@ -475,8 +473,8 @@ impl VgmPlay {
             }
             0x5f | 0xaf => {
                 // YMF262 port 1 write
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot.write(
                     SoundChipType::YMF262,
                     (command >> 7) as usize,
@@ -676,9 +674,9 @@ impl VgmPlay {
                 }
             }
             0xa0 => {
-                // TODO: AY8910, write
-                reg = self.get_vgm_u8();
-                dat = self.get_vgm_u8();
+                // TODO: YM2149 as AY8910, write
+                let reg = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
                 self.sound_slot
                     .write(SoundChipType::YM2149, 0, reg as u32, dat.into());
             }

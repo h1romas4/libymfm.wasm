@@ -4,7 +4,7 @@
 use super::{
     gd3meta::Gd3,
     meta::Jsonlize,
-    xgmmeta::{self, VDPMode, XgmHeader},
+    xgmmeta::{self, VDPMode, XgmHeader, XGM_SAMPLE_DATA_BLOC_ADDRESS},
 };
 use crate::sound::{DataStreamMode, SoundChipType, SoundSlot};
 use flate2::read::GzDecoder;
@@ -95,10 +95,38 @@ impl XgmPlay {
     }
 
     ///
-    /// Extract vgz and initialize sound driver.
+    /// Play Sound.
+    ///
+    pub fn play(&mut self, repeat: bool) -> usize {
+        while !self.sound_slot.is_stream_filled() && !self.xgm_end {
+            for _ in 0..self.remain_tick_count {
+                self.sound_slot.update(1);
+                self.remain_tick_count -= 1;
+                if self.sound_slot.is_stream_filled() {
+                    break;
+                }
+            }
+            if self.remain_tick_count == 0 {
+                self.remain_tick_count = self.parse_vgm(repeat) as usize;
+            };
+        }
+        self.sound_slot.stream();
+
+        if self.xgm_loop_count == std::usize::MAX {
+            self.xgm_loop_count = 0;
+        }
+        if self.xgm_end {
+            std::usize::MAX
+        } else {
+            self.xgm_loop_count
+        }
+    }
+
+    ///
+    /// Extract xgz and initialize sound driver.
     ///
     fn init(&mut self, xgm_file: &[u8]) -> Result<(), &'static str> {
-        // try vgz extract to vgm_data
+        // try xgz extract to xgm_data
         self.extract(xgm_file);
 
         // parse vgm header
@@ -110,8 +138,13 @@ impl XgmPlay {
             Err(message) => return Err(message),
         };
 
-        // set sound chip clock
+        // set sequence offset
         let header = self.xgm_header.as_ref().unwrap();
+        self.xgm_pos =
+            XGM_SAMPLE_DATA_BLOC_ADDRESS + header.sample_data_bloc_size as usize * 256 + 4;
+        self.xgm_loop_offset = self.xgm_pos;
+
+        // set sound chip clock
         let (clock_ym2612, clock_sn76489) = match header.vdp_mode {
             VDPMode::NTSC => (MASTER_CLOCK_NTSC / 7, MASTER_CLOCK_NTSC / 15),
             VDPMode::PAL => (MASTER_CLOCK_PAL / 7, MASTER_CLOCK_NTSC / 15),
@@ -130,11 +163,8 @@ impl XgmPlay {
 
         // set up YM2612 data stream
         // 4 PCM channels (8 bits signed at 14 Khz)
-        self.sound_slot.set_data_stream_mode(
-            SoundChipType::YM2612,
-            0,
-            DataStreamMode::PCMMerge,
-        );
+        self.sound_slot
+            .set_data_stream_mode(SoundChipType::YM2612, 0, DataStreamMode::PCMMerge);
         self.sound_slot.set_data_stream_priority_limit(
             SoundChipType::YM2612,
             0,
@@ -142,31 +172,14 @@ impl XgmPlay {
         );
         // parse sample table
         for (xgm_sample_id, (address, size)) in header.sample_id_table.iter().enumerate() {
+            // sapmle id starts with 1
+            let data_stream_id = xgm_sample_id + 1;
             let start_address: usize =
                 *address as usize * 256 + xgmmeta::XGM_SAMPLE_DATA_BLOC_ADDRESS;
             let end_address: usize = *size as usize * 256 + start_address;
             // create data stream into sound device
             self.sound_slot
-                .add_data_block(xgm_sample_id, &self.xgm_data[start_address..end_address]);
-            self.sound_slot.add_data_stream(
-                SoundChipType::YM2612,
-                0,
-                xgm_sample_id,
-                0,
-                0x2a,
-            );
-            self.sound_slot.set_data_stream_frequency(
-                SoundChipType::YM2612,
-                0,
-                xgm_sample_id,
-                XGM_PCM_SAMPLING_RATE,
-            );
-            self.sound_slot.attach_data_block_to_stream(
-                SoundChipType::YM2612,
-                0,
-                xgm_sample_id,
-                xgm_sample_id,
-            );
+                .add_data_block(data_stream_id, &self.xgm_data[start_address..end_address]);
         }
 
         Ok(())
@@ -194,6 +207,95 @@ impl XgmPlay {
             + (u32::from(self.get_xgm_u8()) << 8)
             + (u32::from(self.get_xgm_u8()) << 16)
             + (u32::from(self.get_xgm_u8()) << 24)
+    }
+
+    fn get_run_length(command: u8) -> u8 {
+        (command & 0xf) + 1
+    }
+
+    fn parse_vgm(&mut self, repeat: bool) -> u16 {
+        let command: u8;
+        let mut wait: u16 = 0;
+
+        command = self.get_xgm_u8();
+        match command {
+            0x00 => {
+                // frame wait (1/60 of second in NTSC, 1/50 of second in PAL)
+                wait = 1;
+            }
+            0x10..=0x1f => {
+                // PSG register write
+                for _ in 0..Self::get_run_length(command) {
+                    let dat = self.get_xgm_u8();
+                    self.sound_slot
+                        .write(SoundChipType::SEGAPSG, 0, 0, dat.into());
+                }
+            }
+            0x20..=0x2f => {
+                // YM2612 port 0 register write
+                for _ in 0..Self::get_run_length(command) {
+                    let reg = self.get_xgm_u8();
+                    let dat = self.get_xgm_u8();
+                    self.sound_slot
+                        .write(SoundChipType::YM2612, 0, reg as u32, dat.into());
+                }
+            }
+            0x30..=0x3f => {
+                // YM2612 port 1 register write
+                for _ in 0..Self::get_run_length(command) {
+                    let reg = self.get_xgm_u8();
+                    let dat = self.get_xgm_u8();
+                    self.sound_slot
+                        .write(SoundChipType::YM2612, 0, reg as u32 | 0x100, dat.into());
+                }
+            }
+            0x40..=0x4f => {
+                // YM2612 key off/on ($28) command write
+                for _ in 0..Self::get_run_length(command) {
+                    let dat = self.get_xgm_u8();
+                    self.sound_slot
+                        .write(SoundChipType::YM2612, 0, 0x28, dat.into());
+                }
+            }
+            0x50..=0x5f => {
+                // PCM play command
+                let _priority = command & 0xc;
+                let channel = (command & 0x3) as usize;
+                let sample_id = self.get_xgm_u8() as usize;
+                // TODO: split data block and data stream
+                self.sound_slot
+                    .add_data_stream(SoundChipType::YM2612, 0, channel, 0, 0x2a);
+                self.sound_slot.set_data_stream_frequency(
+                    SoundChipType::YM2612,
+                    0,
+                    channel,
+                    XGM_PCM_SAMPLING_RATE,
+                );
+                self.sound_slot.attach_data_block_to_stream(
+                    SoundChipType::YM2612,
+                    0,
+                    channel,
+                    sample_id,
+                );
+            }
+            0x7e => {
+                let loop_offset = self.get_xgm_u32();
+                if self.xgm_loop == 0 {
+                    self.xgm_end = true;
+                } else if repeat {
+                    self.xgm_pos = self.xgm_loop_offset + loop_offset as usize;
+                    self.xgm_loop_count += 1;
+                } else {
+                    self.xgm_end = true;
+                }
+            }
+            0x7f => {
+                self.xgm_end = true;
+            }
+            _ => panic!("xgm parse error"),
+        }
+
+        wait
     }
 }
 
@@ -230,19 +332,19 @@ mod tests {
         // play
         // ffplay -f f32le -ar 96000 -ac 2 output.pcm
         // ffmpeg -f f32le -ar 96000 -ac 2 -i output.pcm output-96000.wav
-        // #[allow(clippy::absurd_extreme_comparisons)]
-        // while xgmplay.play(false) <= 0 {
-        //     for i in 0..MAX_SAMPLE_SIZE {
-        //         let sampling_l = xgmplay.get_sampling_l_ref();
-        //         let sampling_r = xgmplay.get_sampling_r_ref();
-        //         unsafe {
-        //             let slice_l = std::slice::from_raw_parts(sampling_l.add(i) as *const u8, 4);
-        //             let slice_r = std::slice::from_raw_parts(sampling_r.add(i) as *const u8, 4);
-        //             pcm.write_all(slice_l).expect("stdout error");
-        //             pcm.write_all(slice_r).expect("stdout error");
-        //         }
-        //     }
-        // }
+        #[allow(clippy::absurd_extreme_comparisons)]
+        while xgmplay.play(false) <= 0 {
+            for i in 0..MAX_SAMPLE_SIZE {
+                let sampling_l = xgmplay.get_sampling_l_ref();
+                let sampling_r = xgmplay.get_sampling_r_ref();
+                unsafe {
+                    let slice_l = std::slice::from_raw_parts(sampling_l.add(i) as *const u8, 4);
+                    let slice_r = std::slice::from_raw_parts(sampling_r.add(i) as *const u8, 4);
+                    pcm.write_all(slice_l).expect("stdout error");
+                    pcm.write_all(slice_r).expect("stdout error");
+                }
+            }
+        }
         println!("Play end! {} (xgm instance drop)", filepath);
     }
 }
