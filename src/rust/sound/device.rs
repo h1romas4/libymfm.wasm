@@ -8,13 +8,21 @@ use super::{
 };
 use std::collections::HashMap;
 
+#[derive(std::cmp::PartialEq)]
+pub enum DataStreamMode {
+    Parallel,
+    PCMMerge,
+}
+
 ///
 /// Sound Device
 ///
 pub struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
     sound_stream: Box<dyn SoundStream>,
+    data_stream_mode: DataStreamMode,
     data_stream: HashMap<usize, DataStream>,
+    data_stream_priority_limit: u32,
 }
 
 impl SoundDevice {
@@ -22,7 +30,9 @@ impl SoundDevice {
         SoundDevice {
             sound_chip,
             sound_stream,
+            data_stream_mode: DataStreamMode::Parallel,
             data_stream: HashMap::new(),
+            data_stream_priority_limit: 0,
         }
     }
 
@@ -43,17 +53,24 @@ impl SoundDevice {
         } {
             // data stream write to sound chip
             for (_, (_, data_stream)) in self.data_stream.iter_mut().enumerate() {
-                if let Some((data_block_id, data_block_pos, _write_port, write_reg)) =
+                if let Some((data_block_id, data_block_pos, _write_port, write_reg, priority)) =
                     data_stream.tick()
                 {
-                    if let Some(data_block) = data_block.get(&data_block_id) {
-                        // stream command write
-                        self.sound_chip.write(
-                            sound_chip_index,
-                            write_reg,
-                            *data_block.get_data_block().get(data_block_pos).unwrap() as u32,
-                            &mut *self.sound_stream,
-                        )
+                    match self.data_stream_mode {
+                        DataStreamMode::Parallel => {
+                            // If the data stream has no priority, stream command.
+                            if let Some(data_block) = data_block.get(&data_block_id) {
+                                // stream command write
+                                self.sound_chip.write(
+                                    sound_chip_index,
+                                    write_reg,
+                                    *data_block.get_data_block().get(data_block_pos).unwrap()
+                                        as u32,
+                                    &mut *self.sound_stream,
+                                )
+                            }
+                        }
+                        DataStreamMode::PCMMerge => todo!(),
                     }
                 }
             }
@@ -88,6 +105,29 @@ impl SoundDevice {
     ///
     pub fn add_data_stream(&mut self, data_stream_id: usize, data_stream: DataStream) {
         self.data_stream.insert(data_stream_id, data_stream);
+    }
+
+    ///
+    /// Set data stream mode
+    ///
+    pub fn set_data_stream_mode(&mut self, data_stream_mode: DataStreamMode) {
+        self.data_stream_mode = data_stream_mode;
+    }
+
+    ///
+    /// Set data stream priority limit
+    ///
+    pub fn set_data_stream_priority_limit(&mut self, data_stream_priority_limit: u32) {
+        self.data_stream_priority_limit = data_stream_priority_limit;
+    }
+
+    ///
+    /// Set data stream priority
+    ///
+    pub fn set_data_stream_priority(&mut self, data_stream_id: usize, priority: Option<u32>) {
+        if let Some(data_stream) = self.data_stream.get_mut(&data_stream_id) {
+            data_stream.set_priority(priority);
+        }
     }
 
     ///

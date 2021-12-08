@@ -1,22 +1,24 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 
-use std::io::Read;
-
-use flate2::read::GzDecoder;
-
 use super::{
     gd3meta::Gd3,
     meta::Jsonlize,
     xgmmeta::{self, VDPMode, XgmHeader},
 };
-use crate::sound::{SoundChipType, SoundSlot};
+use crate::sound::{DataStreamMode, SoundChipType, SoundSlot};
+use flate2::read::GzDecoder;
+use std::io::Read;
 
 pub const XGM_NTSC_TICK_RATE: u32 = 60;
 const XGM_PCM_SAMPLING_RATE: u32 = 14000;
+const XGM_PCM_MAX_CHANNEL: u32 = 4;
 const MASTER_CLOCK_NTSC: u32 = 53693175;
 const MASTER_CLOCK_PAL: u32 = 53203424;
 
+///
+/// XGM Driver
+///
 pub struct XgmPlay {
     sound_slot: SoundSlot,
     xgm_pos: usize,
@@ -123,31 +125,45 @@ impl XgmPlay {
         // add sound chip
         self.sound_slot
             .add_sound_device(SoundChipType::YM2612, 1, clock_ym2612);
-
         self.sound_slot
             .add_sound_device(SoundChipType::SEGAPSG, 1, clock_sn76489);
 
+        // set up YM2612 data stream
+        // 4 PCM channels (8 bits signed at 14 Khz)
+        self.sound_slot.set_data_stream_mode(
+            SoundChipType::YM2612,
+            0,
+            DataStreamMode::PCMMerge,
+        );
+        self.sound_slot.set_data_stream_priority_limit(
+            SoundChipType::YM2612,
+            0,
+            XGM_PCM_MAX_CHANNEL,
+        );
         // parse sample table
         for (xgm_sample_id, (address, size)) in header.sample_id_table.iter().enumerate() {
             let start_address: usize =
                 *address as usize * 256 + xgmmeta::XGM_SAMPLE_DATA_BLOC_ADDRESS;
             let end_address: usize = *size as usize * 256 + start_address;
-            let sound_chip_type = SoundChipType::YM2612;
-            let sound_chip_index = 0;
             // create data stream into sound device
             self.sound_slot
                 .add_data_block(xgm_sample_id, &self.xgm_data[start_address..end_address]);
-            self.sound_slot
-                .add_data_stream(sound_chip_type, sound_chip_index, xgm_sample_id, 0, 0x2a);
+            self.sound_slot.add_data_stream(
+                SoundChipType::YM2612,
+                0,
+                xgm_sample_id,
+                0,
+                0x2a,
+            );
             self.sound_slot.set_data_stream_frequency(
-                sound_chip_type,
-                sound_chip_index,
+                SoundChipType::YM2612,
+                0,
                 xgm_sample_id,
                 XGM_PCM_SAMPLING_RATE,
             );
             self.sound_slot.attach_data_block_to_stream(
-                sound_chip_type,
-                sound_chip_index,
+                SoundChipType::YM2612,
+                0,
                 xgm_sample_id,
                 xgm_sample_id,
             );
@@ -161,6 +177,23 @@ impl XgmPlay {
         if d.read_to_end(&mut self.xgm_data).is_err() {
             self.xgm_data = xgm_file.to_vec();
         }
+    }
+
+    fn get_xgm_u8(&mut self) -> u8 {
+        let ret = self.xgm_data[self.xgm_pos];
+        self.xgm_pos += 1;
+        ret
+    }
+
+    fn get_xgm_u16(&mut self) -> u16 {
+        u16::from(self.get_xgm_u8()) + (u16::from(self.get_xgm_u8()) << 8)
+    }
+
+    fn get_xgm_u32(&mut self) -> u32 {
+        u32::from(self.get_xgm_u8())
+            + (u32::from(self.get_xgm_u8()) << 8)
+            + (u32::from(self.get_xgm_u8()) << 16)
+            + (u32::from(self.get_xgm_u8()) << 24)
     }
 }
 

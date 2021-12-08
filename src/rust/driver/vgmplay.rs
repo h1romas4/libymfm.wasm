@@ -12,6 +12,9 @@ use crate::sound::{RomIndex, SoundChipType, SoundSlot};
 
 pub const VGM_TICK_RATE: u32 = 44100;
 
+///
+/// VGM Driver
+///
 pub struct VgmPlay {
     sound_slot: SoundSlot,
     vgm_pos: usize,

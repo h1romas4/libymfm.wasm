@@ -16,3 +16,4 @@ mod chip_okim6258;
 pub use crate::sound::sound_chip::SoundChipType as SoundChipType;
 pub use crate::sound::slot::SoundSlot as SoundSlot;
 pub use crate::sound::rom::RomIndex as RomIndex;
+pub use crate::sound::device::DataStreamMode as DataStreamMode;

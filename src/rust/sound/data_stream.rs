@@ -18,6 +18,7 @@ impl DataBlock {
 
 pub struct DataStream {
     data_block_id: Option<usize>,
+    priority: Option<u32>,
     frequency: u32,
     write_port: u32,
     write_reg: u32,
@@ -32,6 +33,7 @@ impl DataStream {
     pub fn new(write_port: u32, write_reg: u32) -> Self {
         DataStream {
             data_block_id: None,
+            priority: None,
             frequency: 0,
             write_port,
             write_reg,
@@ -46,7 +48,7 @@ impl DataStream {
     ///
     /// Tick stream
     ///
-    pub fn tick(&mut self) -> Option<(usize, usize, u32, u32)> {
+    pub fn tick(&mut self) -> Option<(usize, usize, u32, u32, Option<u32>)> {
         let mut result = None;
         if self.data_block_length > 0 {
             result = if self.data_stream_sampling_pos >= 1_f32 {
@@ -57,6 +59,7 @@ impl DataStream {
                     self.data_block_start_offset + self.data_block_pos,
                     self.write_port,
                     self.write_reg,
+                    self.priority,
                 ));
                 self.data_block_pos += 1;
                 result
@@ -66,6 +69,13 @@ impl DataStream {
             self.data_stream_sampling_pos += self.data_stream_sample_step;
         }
         result
+    }
+
+    ///
+    /// Set stream priority
+    ///
+    pub fn set_priority(&mut self, priority: Option<u32>) {
+        self.priority = priority;
     }
 
     ///
