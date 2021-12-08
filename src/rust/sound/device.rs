@@ -82,7 +82,7 @@ impl SoundDevice {
                     }
                 }
             }
-            // merged data stream write
+            // write merged data stream
             if let Some(data) = merge_data {
                 self.sound_chip.write(
                     sound_chip_index,
