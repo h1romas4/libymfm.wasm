@@ -297,7 +297,7 @@ fn parse_vgm_header(i: &[u8]) -> IResult<&[u8], VgmHeader> {
 }
 
 ///
-/// parse_vgm_meta
+/// Parse VGM meta
 ///
 pub(crate) fn parse_vgm_meta(vgmdata: &[u8]) -> Result<(VgmHeader, Gd3), &'static str> {
     // clean header

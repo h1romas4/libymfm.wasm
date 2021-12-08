@@ -85,7 +85,7 @@ fn parse_xgm_header(i: &[u8]) -> IResult<&[u8], XgmHeader> {
 }
 
 ///
-/// parse_vgm_meta
+/// Parse XGM meta
 ///
 pub(crate) fn parse_xgm_meta(xgmdata: &[u8]) -> Result<(XgmHeader, Gd3), &'static str> {
     let header = match parse_xgm_header(xgmdata) {
