@@ -47,7 +47,7 @@ Hiromasa Tanaka <h1romas4@gmail.com>
 libymfm CLI
 
 USAGE:
-    libymfm-cli.wasm [OPTIONS] <vgm filename>
+    libymfm-cli.wasm [OPTIONS] <filename>
 
 FLAGS:
     -h, --help       Prints help information
@@ -59,7 +59,7 @@ OPTIONS:
     -r, --rate <rate>                 Output sampling rate
 
 ARGS:
-    <vgm filename>    Play .vgm/.vzg file path
+    <filename>    Play .vgm/.vzg/.xgm/.xgz file path
 ```
 
 Example 1 - specify output file name
