@@ -121,6 +121,11 @@ mod tests {
         parse("./docs/vgm/sor2.xgm")
     }
 
+    #[test]
+    fn test_2() {
+        parse("./docs/vgm/sor3.xgm")
+    }
+
     fn parse(filepath: &str) {
         // load sn76489 vgm file
         let mut file = File::open(filepath).unwrap();

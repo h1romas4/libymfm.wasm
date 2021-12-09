@@ -327,6 +327,16 @@ mod tests {
         play("./docs/vgm/sor2.xgm")
     }
 
+    #[test]
+    fn xgm_2() {
+        play("./docs/vgm/sor3.xgm")
+    }
+
+    #[test]
+    fn xgm_3() {
+        play("./docs/vgm/bare03.xgm")
+    }
+
     fn play(filepath: &str) {
         println!("Play start! {}", filepath);
 
