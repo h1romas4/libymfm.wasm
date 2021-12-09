@@ -98,6 +98,13 @@ impl XgmPlay {
     }
 
     ///
+    /// Get VGM header GD3 JSON.
+    ///
+    pub fn get_xgm_gd3_json(&self) -> String {
+        self.xgm_gd3.as_ref().unwrap(/* There always is */).get_json()
+    }
+
+    ///
     /// Play Sound.
     ///
     pub fn play(&mut self, repeat: bool) -> usize {

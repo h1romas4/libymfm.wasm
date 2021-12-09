@@ -126,16 +126,18 @@ export class WgmController {
     /**
      * Create playable instance
      *
-     * @param {ArrayBuffer} vgmdata
+     * @param {ArrayBuffer} wgmdata
+     * @param {string} type(vgm|xgm)
      * @param {Function} callback(gd3meta)
      */
-    create(vgmdata, callback) {
+    create(wgmdata, type, callback) {
         // Stop the current loop if there is one
         // Stop Atomic wait via Worklet
         this.sendWorklet({"message": "stop"}, () => {
             this.sendWorker({
                 "message": "create",
-                "vgmdata": vgmdata,
+                "wgmdata": wgmdata,
+                "type": type,
                 "options": {
                     "samplingRate": this.samplingRate,
                     "chunkSize": this.chunkSize,

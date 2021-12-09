@@ -130,8 +130,9 @@ const start = () => {
     fillTextCenterd("YM2149 | YM2151 | YM2203 | YM2413 | YM2608 | YM2610(B) | YM2612 | YM3526 | Y8950", CANVAS_HEIGHT / 2 - 32 * 4 + 16);
     fillTextCenterd("YM3812 | YMF262 | YMF278B | SN76489(MD) | PWM(32x) | SEGAPCM | OKIM6285(X68K)", CANVAS_HEIGHT / 2 - 32 * 3 + 4);
     canvasContext.font = '20px sans-serif';
-    fillTextCenterd("🎵 DRAG AND DROP VGM(vgm/vgz) HEAR", CANVAS_HEIGHT / 2 - 32 * 1);
-    fillTextCenterd("OR CLICK(TAP) TO PLAY SAMPLE VGM", CANVAS_HEIGHT / 2 + 32 * 1);
+    fillTextCenterd("🎶 DRAG AND DROP VGM(vgm/vgz) || XGM(xgm/xgz) HEAR", CANVAS_HEIGHT / 2 - 32 * 1);
+    canvasContext.font = '15px sans-serif';
+    fillTextCenterd("or click to play sample music", CANVAS_HEIGHT / 2 + 32 * 1);
     printStatus();
     // Set UI event
     canvas.addEventListener('dragover', function(e) {
@@ -185,16 +186,16 @@ const sample = async () => {
     canvas.removeEventListener('click', sample, false);
     // it takes precedence over VGM metadata
     musicMeta = createGd3meta({
-        track_name: "WebAssembly 👾 VGM Player",
+        track_name: "🤍 Thank you for trying this player",
         track_name_j: "",
         game_name: "",
-        game_name_j: "YM2612 sample VGM",
-        track_author: "@h1romas4",
+        game_name_j: "A synthesizer written in WebAssembly",
+        track_author: "See the GitHub repository for more information",
         track_author_j: ""
     });
     const response = await fetch('./vgm/ym2612.vgm');
     const bytes = await response.arrayBuffer();
-    play(bytes, musicMeta);
+    play(bytes, 'vgm', musicMeta);
 }
 
 /**
@@ -231,7 +232,7 @@ const onDrop = (ev) => {
                 canvas.addEventListener('drop', onDrop, false);
                 playlist = [];
                 Object.keys(filelist).sort().forEach(function(key) {
-                    playlist.push(filelist[key]);
+                    playlist.push({ filename: key, xgmdata: filelist[key] });
                 });
                 totalPlaylistCount = playlist.length;
                 next();
@@ -247,16 +248,22 @@ const onDrop = (ev) => {
  */
 const next = function() {
     if(playlist.length <= 0) return;
-    play(playlist.shift());
+    const target = playlist.shift();
+    let type = 'vgm';
+    if(/\.xg[m|z]$/.test(target.filename)) {
+        type = 'xgm';
+    }
+    play(target.xgmdata, type);
 }
 
 /**
- * Play VGM
+ * Play Music
  *
- * @param {ArrayBuffer} vgmfile
+ * @param {ArrayBuffer} xgmfile
+ * @param {string} type(vgm|xgm)
  * @param {*} altMeta
  */
-const play = function(vgmfile, altMeta) {
+const play = function(xgmfile, type, altMeta) {
     // Worklet exchange callbacks
     // iOS only sounds AudioWorklet that created by the click event.
     // In the case of ScriptProcessorNode, I had to create an AudioContext here.
@@ -268,7 +275,7 @@ const play = function(vgmfile, altMeta) {
         // create audionode and gain
         player.init();
     }
-    player.create(vgmfile, (gd3) => {
+    player.create(xgmfile, type, (gd3) => {
         if(altMeta == null) {
             musicMeta = createGd3meta(gd3);
         }

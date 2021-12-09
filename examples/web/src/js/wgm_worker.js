@@ -1,7 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 import * as def from './const.js'
-import { WgmPlay, setWasmExport } from "../wasm/libymfm_bg";
+import { VgmPlay, XgmPlay, setWasmExport } from "../wasm/libymfm_bg";
 import { initWasi /*, memFs */ } from './wasi_wasmer';
 
 class WgmWorker {
@@ -37,10 +37,11 @@ class WgmWorker {
     /**
      * Create or recreate WgmPlay instance for play VGM
      *
-     * @param {*} vgmdata
+     * @param {*} wgmdata
+     * @param {string} type(vgm|xgm)
      * @returns music GD3 meta
      */
-     create(vgmdata, options) {
+     create(wgmdata, type, options) {
         // init instance (init sound devicies)
         if(this.wgmplay != null) {
             this.wgmplay.free();
@@ -54,9 +55,13 @@ class WgmWorker {
         this.feedOutRemain = options.feedOutRemain;
         this.chunkSize = options.chunkSize;
         // create and set data
-        this.wgmplay = new WgmPlay(options.samplingRate, this.chunkSize, vgmdata.byteLength);
-        let seqdata = new Uint8Array(this.memory.buffer, this.wgmplay.get_seq_data_ref(), vgmdata.byteLength);
-        seqdata.set(new Uint8Array(vgmdata));
+        if(type == 'xgm') {
+            this.wgmplay = new XgmPlay(options.samplingRate, this.chunkSize, wgmdata.byteLength);
+        } else {
+            this.wgmplay = new VgmPlay(options.samplingRate, this.chunkSize, wgmdata.byteLength);
+        }
+        let seqdata = new Uint8Array(this.memory.buffer, this.wgmplay.get_seq_data_ref(), wgmdata.byteLength);
+        seqdata.set(new Uint8Array(wgmdata));
         if(!this.wgmplay.init()) {
             this.wgmplay.free();
             this.wgmplay = null;
@@ -174,7 +179,7 @@ class WgmWorker {
             case 'create': {
                 this.worker.postMessage({
                     "message": "callback",
-                    "data": this.create(event.data.vgmdata, event.data.options)
+                    "data": this.create(event.data.wgmdata, event.data.type, event.data.options)
                 });
                 break;
             }
