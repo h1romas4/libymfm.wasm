@@ -186,13 +186,13 @@ impl SoundDevice {
         // write merged data stream
         if let Some(mut data) = merge_data {
             if self.data_stream_mode == DataStreamMode::MergeS8leYM3012 {
-                if data > u16::MAX.into() {
-                    data = u16::MAX.into();
-                }
-                if data < u16::MIN.into() {
-                    data = u16::MIN.into();
+                if data > i8::MAX.into() {
+                    data = i8::MAX.into();
+                } else if data < i8::MIN.into() {
+                    data = i8::MIN.into();
                 }
                 data += 0x80;
+                data &= 0xff;
             }
             self.sound_chip.write(
                 sound_chip_index,
