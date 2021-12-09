@@ -11,7 +11,7 @@ use std::collections::HashMap;
 #[derive(std::cmp::PartialEq)]
 pub enum DataStreamMode {
     Parallel,
-    MergeS8leYM3012,
+    MergeS8le,
 }
 
 ///
@@ -173,7 +173,7 @@ impl SoundDevice {
                                 &mut *self.sound_stream,
                             )
                         }
-                        DataStreamMode::MergeS8leYM3012 => {
+                        DataStreamMode::MergeS8le => {
                             // merge stream as YM3012 format pcm data
                             let data = data as i8;
                             merge_data = Some(data as i32 + merge_data.unwrap_or_default());
@@ -185,14 +185,14 @@ impl SoundDevice {
         }
         // write merged data stream
         if let Some(mut data) = merge_data {
-            if self.data_stream_mode == DataStreamMode::MergeS8leYM3012 {
+            if self.data_stream_mode == DataStreamMode::MergeS8le {
                 if data > i8::MAX.into() {
                     data = i8::MAX.into();
                 } else if data < i8::MIN.into() {
                     data = i8::MIN.into();
                 }
-                data += 0x80;
-                data &= 0xff;
+                // unsigned
+                data += 128;
             }
             self.sound_chip.write(
                 sound_chip_index,

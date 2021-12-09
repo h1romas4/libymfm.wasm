@@ -174,7 +174,7 @@ impl XgmPlay {
         self.sound_slot.set_data_stream_mode(
             SoundChipType::YM2612,
             0,
-            DataStreamMode::MergeS8leYM3012,
+            DataStreamMode::MergeS8le,
         );
         for channel in 0..XGM_PCM_MAX_CHANNEL as usize {
             self.sound_slot
