@@ -284,8 +284,8 @@ BSD 3-Clause License
     - [x] YM2141 clock worng?
     - [x] Is there a problem with the file parser? The beginning of the song may be wrong.
     - [x] Support all data stream (now only support YM2612 and OKIM6285)
-- [ ] Non-vgm driver support
-    - [ ] XGM
+- [x] Non-vgm driver support
+    - [x] XGM
 - [x] Multilingual Interface
     - [x] CLI
     - [x] Web/JavaScript
