@@ -4,7 +4,8 @@ use nom::bytes::complete::{tag, take};
 use nom::number::complete::{le_u16, le_u32, le_u8};
 use nom::IResult;
 
-use crate::driver::gd3meta::{Gd3, parse_vgm_gd3};
+use crate::driver::gd3meta::{Gd3, parse_gd3};
+use crate::driver::meta::Jsonlize;
 
 ///
 /// https://vgmrips.net/wiki/VGM_Specification
@@ -88,10 +89,9 @@ pub struct VgmHeader {
 }
 
 ///
-/// parse_vgm_header
+/// Parse VGM header
 ///
 fn parse_vgm_header(i: &[u8]) -> IResult<&[u8], VgmHeader> {
-
     let (i, _) = tag("Vgm ")(i)?;
     let (i, eof) = le_u32(i)?;
     let (i, version) = take(4usize)(i)?;
@@ -297,7 +297,7 @@ fn parse_vgm_header(i: &[u8]) -> IResult<&[u8], VgmHeader> {
 }
 
 ///
-/// parse_vgm_meta
+/// Parse VGM meta
 ///
 pub(crate) fn parse_vgm_meta(vgmdata: &[u8]) -> Result<(VgmHeader, Gd3), &'static str> {
     // clean header
@@ -313,7 +313,7 @@ pub(crate) fn parse_vgm_meta(vgmdata: &[u8]) -> Result<(VgmHeader, Gd3), &'stati
         Ok((_, header)) => header,
         Err(_) => return Err("vgm header parse error."),
     };
-    let gd3 = match parse_vgm_gd3(&vgmdata[(0x14 + header.offset_gd3 as usize)..]) {
+    let gd3 = match parse_gd3(&vgmdata[(0x14 + header.offset_gd3 as usize)..]) {
         Ok((_, gd3)) => gd3,
         Err(_) => Gd3::default(), // blank values
     };
@@ -321,20 +321,7 @@ pub(crate) fn parse_vgm_meta(vgmdata: &[u8]) -> Result<(VgmHeader, Gd3), &'stati
     Ok((header, gd3))
 }
 
-///
-/// Jsonlize
-///
-pub(crate) trait Jsonlize: serde::Serialize {
-    fn get_json(&self) -> String {
-        match serde_json::to_string(&self) {
-            Ok(json) => json,
-            Err(_) => String::from(""),
-        }
-    }
-}
-
 impl Jsonlize for VgmHeader {}
-impl Jsonlize for Gd3 {}
 
 #[cfg(test)]
 mod tests {

@@ -9,6 +9,7 @@ examples/web/node_modules/
 __pycache__
 *.vgm
 *.vgz
+*.xgm
 *.pcm
 *.wav
 *.bin

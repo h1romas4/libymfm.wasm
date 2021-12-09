@@ -4,13 +4,13 @@
 extern crate clap;
 extern crate libymfm;
 
+use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{Read, Write};
+use std::path::Path;
 use std::{env, io, process};
-
 use clap::{App, Arg};
-
-use crate::libymfm::driver::{VgmPlay, VGM_TICK_RATE};
+use crate::libymfm::driver::{VgmPlay, VGM_TICK_RATE, XgmPlay, XGM_NTSC_TICK_RATE};
 use crate::libymfm::sound::SoundSlot;
 
 const MAX_SAMPLE_SIZE: usize = 2048;
@@ -21,8 +21,8 @@ fn main() {
         .author(crate_authors!())
         .about(crate_description!())
         .arg(
-            Arg::with_name("vgm filename")
-                .help("Play .vgm/.vzg file path")
+            Arg::with_name("filename")
+                .help("Play .vgm/.vzg/.xgm/.xgz file path")
                 .required(true),
         )
         .arg(
@@ -60,14 +60,16 @@ fn main() {
         None => 1,
     };
 
-    // vgm file
-    let vgmfile = match File::open(matches.value_of("vgm filename").unwrap()) {
+    // filename
+    let file_name = matches.value_of("filename").unwrap();
+    let file = match File::open(file_name) {
         Ok(file) => file,
         Err(error) => {
             eprintln!("There was a problem opening the file: {:?}", error);
             process::exit(1);
         }
     };
+    let file_type = Path::new(file_name).extension().and_then(OsStr::to_str);
 
     // output file
     let output_file: Option<File>;
@@ -87,11 +89,14 @@ fn main() {
         output_file = None;
     }
 
-    play(vgmfile, output_file, sampling_rate, loop_count);
+    match file_type {
+        Some("vgm") | Some("vgz") => play_vgm(file, output_file, sampling_rate, loop_count),
+        Some("xgm") | Some("xgz") => play_xgm(file, output_file, sampling_rate, loop_count),
+        Some(_) | None => eprintln!("Known extention type: {:?}", file_type),
+    }
 }
 
-fn play(mut file: File, mut output_file: Option<File>, sampling_rate: u32, loop_count: usize) {
-    // load sn76489 vgm file
+fn play_vgm(mut file: File, mut output_file: Option<File>, sampling_rate: u32, loop_count: usize) {
     let mut buffer = Vec::new();
     let _ = file.read_to_end(&mut buffer).unwrap();
 
@@ -109,6 +114,43 @@ fn play(mut file: File, mut output_file: Option<File>, sampling_rate: u32, loop_
     #[allow(clippy::absurd_extreme_comparisons)]
     loop {
         let loop_now = vgmplay.play(true);
+        for i in 0..MAX_SAMPLE_SIZE {
+            unsafe {
+                let slice_l = std::slice::from_raw_parts(sampling_l.add(i) as *const u8, 4);
+                let slice_r = std::slice::from_raw_parts(sampling_r.add(i) as *const u8, 4);
+                if let Some(ref mut output_file) = output_file {
+                    output_file.write_all(slice_l).expect("file write error");
+                    output_file.write_all(slice_r).expect("file write error");
+                } else {
+                    io::stdout().write_all(slice_l).expect("stdout error");
+                    io::stdout().write_all(slice_r).expect("stdout error");
+                }
+            }
+        }
+        if loop_now >= loop_count {
+            break;
+        }
+    }
+}
+
+fn play_xgm(mut file: File, mut output_file: Option<File>, sampling_rate: u32, loop_count: usize) {
+    let mut buffer = Vec::new();
+    let _ = file.read_to_end(&mut buffer).unwrap();
+
+    let mut xgmplay = XgmPlay::new(
+        SoundSlot::new(XGM_NTSC_TICK_RATE, sampling_rate, MAX_SAMPLE_SIZE),
+        buffer.as_slice(),
+    ).expect("xgm file is not valid error.");
+
+    // init & sample
+    let sampling_l = xgmplay.get_sampling_l_ref();
+    let sampling_r = xgmplay.get_sampling_r_ref();
+
+    // play
+    // ffplay -f f32le -ar 44100 -ac 2 output.pcm
+    #[allow(clippy::absurd_extreme_comparisons)]
+    loop {
+        let loop_now = xgmplay.play(true);
         for i in 0..MAX_SAMPLE_SIZE {
             unsafe {
                 let slice_l = std::slice::from_raw_parts(sampling_l.add(i) as *const u8, 4);

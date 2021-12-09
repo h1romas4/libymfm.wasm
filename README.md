@@ -206,6 +206,42 @@ pip3 install -r requirements.txt
 python src/sample_vgmplay.py
 # Pyxel impliments example
 python src/sample_pyxel.py
+# Sound chip direct access example
+python src/sample_direct.py
+```
+
+### Native Debug & Test
+
+Since Rust currently does not allow create-type switching, the following modification to the source code is required for native debugging.
+
+> [Cargo --crate-type CLI Argument](https://github.com/rust-lang/rfcs/pull/3180/files)
+
+It is also required if you want to use this library as a simple native library.
+
+These are the codes needed to make the library the "WASI Library".
+
+Pacth `Cargo.toml`
+
+```
+[lib]
+# https://github.com/rust-lang/rust/pull/79997
+# https://github.com/bazelbuild/rules_rust/issues/771
+# crate-type = ["bin"] # disable this line
+crate-type = ["cdylib", "rlib"] # enable this line
+path = "src/rust/lib.rs"
+```
+
+Pacth `src/rust/lib.rs`
+
+```
+// #![no_main] // disable this line
+```
+
+Buile or test on native
+
+```
+cargo build --release
+cargo test ym2612_1 -- --nocapture
 ```
 
 ### Build Note
@@ -248,8 +284,8 @@ BSD 3-Clause License
     - [x] YM2141 clock worng?
     - [x] Is there a problem with the file parser? The beginning of the song may be wrong.
     - [x] Support all data stream (now only support YM2612 and OKIM6285)
-- [ ] Non-vgm driver support
-    - [ ] XGM
+- [x] Non-vgm driver support
+    - [x] XGM
 - [x] Multilingual Interface
     - [x] CLI
     - [x] Web/JavaScript

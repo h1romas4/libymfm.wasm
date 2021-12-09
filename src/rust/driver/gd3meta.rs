@@ -3,6 +3,8 @@
 use nom::bytes::complete::{tag, take};
 use nom::IResult;
 
+use crate::driver::meta::Jsonlize;
+
 ///
 /// https://vgmrips.net/wiki/GD3_Specification
 ///
@@ -40,10 +42,12 @@ fn parse_utf16_until_null(i: &[u8]) -> IResult<&[u8], String> {
     Ok((i, string))
 }
 
+impl Jsonlize for Gd3 {}
+
 ///
 /// parse_vgm_gd3
 ///
-pub fn parse_vgm_gd3(i: &[u8]) -> IResult<&[u8], Gd3> {
+pub fn parse_gd3(i: &[u8]) -> IResult<&[u8], Gd3> {
     let (i, _) = tag("Gd3 ")(i)?;
     let (i, _) = take(4usize)(i)?; // version
     let (i, _) = take(4usize)(i)?; // length
