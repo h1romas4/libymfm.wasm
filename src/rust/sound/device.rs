@@ -11,7 +11,7 @@ use std::collections::HashMap;
 #[derive(std::cmp::PartialEq)]
 pub enum DataStreamMode {
     Parallel,
-    PCMMerge,
+    MergeS8leYM3012,
 }
 
 ///
@@ -49,42 +49,8 @@ impl SoundDevice {
             is_tick != Tick::No
         } {
             // write data stream to sound chip
-            let mut merge_data: Option<u32> = None;
-            let mut merge_reg = None;
-            for (_, data_stream) in self.data_stream.iter_mut() {
-                if let Some((data_block_id, data_block_pos, _write_port, write_reg)) =
-                    data_stream.tick()
-                {
-                    if let Some(data_block) = data_block.get(&data_block_id) {
-                        let data = *data_block.get_data_block().get(data_block_pos).unwrap() as u32;
-                        match self.data_stream_mode {
-                            DataStreamMode::Parallel => {
-                                // stream command write each data stream
-                                self.sound_chip.write(
-                                    sound_chip_index,
-                                    write_reg,
-                                    data,
-                                    &mut *self.sound_stream,
-                                )
-                            }
-                            DataStreamMode::PCMMerge => {
-                                // merge stream as pcm data
-                                merge_data = Some(data + merge_data.unwrap_or_default());
-                                merge_reg = Some(write_reg);
-                            }
-                        }
-                    }
-                }
-            }
-            // write merged data stream
-            if let Some(data) = merge_data {
-                self.sound_chip.write(
-                    sound_chip_index,
-                    merge_reg.unwrap(),
-                    data,
-                    &mut *self.sound_stream,
-                );
-            }
+            self.write_data_stream(sound_chip_index, data_block);
+
             // sound chip update
             self.sound_chip
                 .tick(sound_chip_index, &mut *self.sound_stream);
@@ -178,6 +144,62 @@ impl SoundDevice {
     pub fn stop_data_stream(&mut self, data_stream_id: usize) {
         if let Some(data_stream) = self.data_stream.get_mut(&data_stream_id) {
             data_stream.stop_data_stream();
+        }
+    }
+
+    ///
+    /// Write data stream
+    ///
+    fn write_data_stream(
+        &mut self,
+        sound_chip_index: usize,
+        data_block: &HashMap<usize, DataBlock>,
+    ) {
+        let mut merge_data: Option<i32> = None;
+        let mut merge_reg = None;
+        for (_, data_stream) in self.data_stream.iter_mut() {
+            if let Some((data_block_id, data_block_pos, _write_port, write_reg)) =
+                data_stream.tick()
+            {
+                if let Some(data_block) = data_block.get(&data_block_id) {
+                    let data = *data_block.get_data_block().get(data_block_pos).unwrap();
+                    match self.data_stream_mode {
+                        DataStreamMode::Parallel => {
+                            // write stream command each data stream
+                            self.sound_chip.write(
+                                sound_chip_index,
+                                write_reg,
+                                data as u32,
+                                &mut *self.sound_stream,
+                            )
+                        }
+                        DataStreamMode::MergeS8leYM3012 => {
+                            // merge stream as YM3012 format pcm data
+                            let data = data as i8;
+                            merge_data = Some(data as i32 + merge_data.unwrap_or_default());
+                            merge_reg = Some(write_reg);
+                        }
+                    }
+                }
+            }
+        }
+        // write merged data stream
+        if let Some(mut data) = merge_data {
+            if self.data_stream_mode == DataStreamMode::MergeS8leYM3012 {
+                if data > u16::MAX.into() {
+                    data = u16::MAX.into();
+                }
+                if data < u16::MIN.into() {
+                    data = u16::MIN.into();
+                }
+                data += 0x80;
+            }
+            self.sound_chip.write(
+                sound_chip_index,
+                merge_reg.unwrap(),
+                data as u32,
+                &mut *self.sound_stream,
+            );
         }
     }
 }

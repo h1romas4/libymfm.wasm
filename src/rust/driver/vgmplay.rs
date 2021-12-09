@@ -942,7 +942,7 @@ mod tests {
 
         // read vgm
         let mut vgmplay =
-            VgmPlay::new(SoundSlot::new(44100, 96000, MAX_SAMPLE_SIZE), &buffer).unwrap();
+            VgmPlay::new(SoundSlot::new(44100, 44100, MAX_SAMPLE_SIZE), &buffer).unwrap();
 
         let mut pcm = File::create("output.pcm").expect("file open error.");
         // play
