@@ -84,6 +84,39 @@ class ChipStream:
         return json.loads(self.get_wasm_string(self.wasm.vgm_get_header_json(vgm_instance_id))), \
             json.loads(self.get_wasm_string(self.wasm.vgm_get_gd3_json(vgm_instance_id)))
 
+    def create_xgm_instance(self, xgm_instance_id, file_path, output_sampling_rate, output_sample_chunk_size):
+        """
+        Create XGM Instance in Wasm
+
+        Parameters
+        ----------
+        xgm_instance_id: int
+        file_path: string
+        output_sampling_rate: int
+        output_sample_chunk_size: int
+        """
+        # Read VGM file
+        xgm_bytes = open(file_path, 'rb').read()
+        xgm_length = len(xgm_bytes)
+        # Allocate memory in wasm
+        memory_id = 0
+        self.wasm.memory_alloc(memory_id, xgm_length)
+        # Trancefar vgm data
+        xgm_ref_pointer = self.wasm.memory_get_ref(memory_id)
+        xgm_ref = self.wasm.memory.uint8_view(offset = xgm_ref_pointer)
+        xgm_data = bytearray(xgm_bytes)
+        for i in range(xgm_length):
+            xgm_ref[i] = xgm_data[i]
+        # Create VgmPlay instance in Wasm
+        self.wasm.xgm_create(xgm_instance_id, output_sampling_rate, output_sample_chunk_size, memory_id)
+        # Drop allocate memory in wasm
+        self.wasm.memory_drop(memory_id)
+        # Set sampling chunk into instance
+        self.output_sample_chunk_size = output_sample_chunk_size * 4 # s16le * 2ch
+        # Get VGM header JSON
+        return json.loads(self.get_wasm_string(self.wasm.xgm_get_header_json(xgm_instance_id))), \
+            json.loads(self.get_wasm_string(self.wasm.xgm_get_gd3_json(xgm_instance_id)))
+
     def get_wasm_string(self, memory_index_id):
         # Create memory view
         memory_view = self.wasm.memory.uint8_view(offset = self.wasm.memory_get_ref(memory_index_id))
@@ -132,6 +165,42 @@ class ChipStream:
         vgm_instance_id: int
         """
         self.wasm.vgm_drop(vgm_instance_id)
+
+    def xgm_play(self, xgm_instance_id):
+        """
+        Play XGM
+
+        Parameters
+        ----------
+        xgm_instance_id: int
+        """
+        return self.wasm.xgm_play(xgm_instance_id)
+
+    def xgm_get_sampling_ref(self, xgm_instance_id):
+        """
+        Get sampling s16le
+
+        Parameters
+        ----------
+        xgm_instance_id: int
+
+        Returns
+        ----------
+        memoryview
+        """
+        ref = self.wasm.xgm_get_sampling_s16le_ref(xgm_instance_id)
+        memory = bytearray(self.wasm.memory.buffer)
+        return memoryview(memory[ref:ref + self.output_sample_chunk_size])
+
+    def drop_xgm_instance(self, xgm_instance_id):
+        """
+        Drop VGM instance
+
+        Parameters
+        ----------
+        xgm_instance_id: int
+        """
+        self.wasm.xgm_drop(xgm_instance_id)
 
     def sound_slot_create(self, sound_slot_instance_id, external_tick_rate, output_sampling_rate, output_sample_chunk_size):
         """

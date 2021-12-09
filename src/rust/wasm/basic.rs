@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::{
-    driver::{self, VgmPlay},
+    driver::{self, VgmPlay, XgmPlay},
     sound::{RomIndex, SoundChipType, SoundSlot},
 };
 
@@ -13,6 +13,11 @@ use crate::{
 ///
 type VgmPlayBank = Rc<RefCell<Vec<VgmPlay>>>;
 std::thread_local!(static VGM_PLAY: VgmPlayBank = {
+    Rc::new(RefCell::new(Vec::new()))
+});
+
+type XgmPlayBank = Rc<RefCell<Vec<XgmPlay>>>;
+std::thread_local!(static XGM_PLAY: XgmPlayBank = {
     Rc::new(RefCell::new(Vec::new()))
 });
 
@@ -31,6 +36,10 @@ std::thread_local!(static MEMORY: MemoryBank = {
 ///
 fn get_vgm_bank() -> VgmPlayBank {
     VGM_PLAY.with(|rc| rc.clone())
+}
+
+fn get_xgm_bank() -> XgmPlayBank {
+    XGM_PLAY.with(|rc| rc.clone())
 }
 
 fn get_sound_slot_bank() -> SoundSlotBank {
@@ -107,6 +116,33 @@ pub extern "C" fn vgm_create(
     get_vgm_bank()
         .borrow_mut()
         .insert(vgm_index_id as usize, vgmplay.unwrap());
+    true
+}
+
+#[no_mangle]
+pub extern "C" fn xgm_create(
+    xgm_index_id: u32,
+    output_sampling_rate: u32,
+    output_sample_chunk_size: u32,
+    memory_index_id: u32,
+) -> bool {
+    let xgmplay = XgmPlay::new(
+        SoundSlot::new(
+            driver::XGM_NTSC_TICK_RATE,
+            output_sampling_rate,
+            output_sample_chunk_size as usize,
+        ),
+        get_memory_bank()
+            .borrow_mut()
+            .get(memory_index_id as usize)
+            .unwrap(),
+    );
+    if xgmplay.is_err() {
+        return false;
+    }
+    get_xgm_bank()
+        .borrow_mut()
+        .insert(xgm_index_id as usize, xgmplay.unwrap());
     true
 }
 
@@ -466,6 +502,65 @@ pub extern "C" fn vgm_get_gd3_json(vgm_index_id: u32) -> u32 {
 }
 
 #[no_mangle]
+pub extern "C" fn xgm_get_sampling_l_ref(xgm_index_id: u32) -> *const f32 {
+    get_xgm_bank()
+        .borrow_mut()
+        .get_mut(xgm_index_id as usize)
+        .unwrap()
+        .get_sampling_l_ref()
+}
+
+#[no_mangle]
+pub extern "C" fn xgm_get_sampling_r_ref(xgm_index_id: u32) -> *const f32 {
+    get_xgm_bank()
+        .borrow_mut()
+        .get_mut(xgm_index_id as usize)
+        .unwrap()
+        .get_sampling_r_ref()
+}
+
+#[no_mangle]
+pub extern "C" fn xgm_get_sampling_s16le_ref(xgm_index_id: u32) -> *const i16 {
+    get_xgm_bank()
+        .borrow_mut()
+        .get_mut(xgm_index_id as usize)
+        .unwrap()
+        .get_output_sampling_s16le_ref()
+}
+
+#[no_mangle]
+pub extern "C" fn xgm_get_header_json(xgm_index_id: u32) -> u32 {
+    let json = get_xgm_bank()
+        .borrow_mut()
+        .get_mut(xgm_index_id as usize)
+        .unwrap()
+        .get_xgm_header_json();
+    // UTF-8 json into allocate memory
+    let memory_index_id = memory_get_alloc_len();
+    get_memory_bank()
+        .borrow_mut()
+        .insert(memory_index_id as usize, json.into_bytes());
+    // return memory index id
+    memory_index_id
+}
+
+#[no_mangle]
+pub extern "C" fn xgm_get_gd3_json(xgm_index_id: u32) -> u32 {
+    let json = get_xgm_bank()
+        .borrow_mut()
+        .get_mut(xgm_index_id as usize)
+        .unwrap()
+        .get_xgm_gd3_json();
+    // UTF-8 json into allocate memory
+    let memory_index_id = memory_get_alloc_len();
+    get_memory_bank()
+        .borrow_mut()
+        .insert(memory_index_id as usize, json.into_bytes());
+    // return memory index id
+    memory_index_id
+}
+
+#[no_mangle]
 pub extern "C" fn vgm_play(vgm_index_id: u32) -> usize {
     get_vgm_bank()
         .borrow_mut()
@@ -475,8 +570,22 @@ pub extern "C" fn vgm_play(vgm_index_id: u32) -> usize {
 }
 
 #[no_mangle]
+pub extern "C" fn xgm_play(xgm_index_id: u32) -> usize {
+    get_xgm_bank()
+        .borrow_mut()
+        .get_mut(xgm_index_id as usize)
+        .unwrap()
+        .play(true)
+}
+
+#[no_mangle]
 pub extern "C" fn vgm_drop(vgm_index_id: u32) {
     get_vgm_bank().borrow_mut().remove(vgm_index_id as usize);
+}
+
+#[no_mangle]
+pub extern "C" fn xgm_drop(xgm_index_id: u32) {
+    get_xgm_bank().borrow_mut().remove(xgm_index_id as usize);
 }
 
 #[no_mangle]
