@@ -23,7 +23,6 @@ const MASTER_CLOCK_PAL: u32 = 53203424;
 pub struct XgmPlay {
     sound_slot: SoundSlot,
     xgm_pos: usize,
-    xgm_loop: usize,
     xgm_loop_offset: usize,
     xgm_loop_count: usize,
     xgm_end: bool,
@@ -43,7 +42,6 @@ impl XgmPlay {
         let mut xgmplay = XgmPlay {
             sound_slot,
             xgm_pos: 0,
-            xgm_loop: 0,
             xgm_loop_offset: 0,
             xgm_loop_count: 0,
             xgm_end: false,
@@ -222,6 +220,12 @@ impl XgmPlay {
         u16::from(self.get_xgm_u8()) + (u16::from(self.get_xgm_u8()) << 8)
     }
 
+    fn get_xgm_u24(&mut self) -> u32 {
+        u32::from(self.get_xgm_u8())
+            + (u32::from(self.get_xgm_u8()) << 8)
+            + (u32::from(self.get_xgm_u8()) << 16)
+    }
+
     fn get_xgm_u32(&mut self) -> u32 {
         u32::from(self.get_xgm_u8())
             + (u32::from(self.get_xgm_u8()) << 8)
@@ -299,10 +303,8 @@ impl XgmPlay {
                 }
             }
             0x7e => {
-                let loop_offset = self.get_xgm_u32();
-                if self.xgm_loop == 0 {
-                    self.xgm_end = true;
-                } else if repeat {
+                let loop_offset = self.get_xgm_u24();
+                if repeat {
                     self.xgm_pos = self.xgm_loop_offset + loop_offset as usize;
                     self.xgm_loop_count += 1;
                 } else {
