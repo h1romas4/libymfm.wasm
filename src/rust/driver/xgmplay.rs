@@ -1,16 +1,17 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-
-use super::{
-    gd3meta::Gd3,
-    meta::Jsonlize,
-    xgmmeta::{self, VDPMode, XgmHeader, XGM_SAMPLE_DATA_BLOC_ADDRESS},
-};
+use crate::driver::gd3meta::Gd3;
+use crate::driver::meta::Jsonlize;
+use crate::driver::xgmmeta::{self, VDPMode, XgmHeader, XGM_SAMPLE_DATA_BLOC_ADDRESS};
 use crate::sound::{DataStreamMode, SoundChipType, SoundSlot};
 use flate2::read::GzDecoder;
 use std::{collections::HashMap, io::Read};
 
+#[allow(dead_code)]
 pub const XGM_NTSC_TICK_RATE: u32 = 60;
+#[allow(dead_code)]
+pub const XGM_PAL_TICK_RATE: u32 = 50;
+
 const XGM_PCM_SAMPLING_RATE: u32 = 14000;
 const XGM_PCM_MAX_CHANNEL: u32 = 4;
 const MASTER_CLOCK_NTSC: u32 = 53693175;
