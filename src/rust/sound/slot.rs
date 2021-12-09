@@ -11,7 +11,7 @@ use super::chip_segapcm::SEGAPCM;
 use super::chip_sn76496::SN76496;
 use super::chip_ymfm::YmFm;
 use super::data_stream::{DataBlock, DataStream};
-use super::device::SoundDevice;
+use super::device::{DataStreamMode, SoundDevice};
 use super::rom::{RomIndex, RomSet};
 use super::sound_chip::SoundChip;
 use super::stream::{
@@ -245,10 +245,8 @@ impl SoundSlot {
     ///
     pub fn get_output_sampling_s16le_ref(&mut self) -> *const i16 {
         for i in 0..self.output_sample_chunk_size {
-            self.output_sampling_s16le[i * 2] =
-                convert_sample_f2i(self.output_sampling_l[i]);
-            self.output_sampling_s16le[i * 2 + 1] =
-                convert_sample_f2i(self.output_sampling_r[i]);
+            self.output_sampling_s16le[i * 2] = convert_sample_f2i(self.output_sampling_l[i]);
+            self.output_sampling_s16le[i * 2 + 1] = convert_sample_f2i(self.output_sampling_r[i]);
         }
         self.output_sampling_s16le.as_ptr()
     }
@@ -319,6 +317,20 @@ impl SoundSlot {
     ) {
         if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
             sound_device.add_data_stream(data_stream_id, DataStream::new(write_port, write_reg));
+        }
+    }
+
+    ///
+    /// Set data stream mode
+    ///
+    pub fn set_data_stream_mode(
+        &mut self,
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
+        data_stream_mode: DataStreamMode,
+    ) {
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
+            sound_device.set_data_stream_mode(data_stream_mode);
         }
     }
 
@@ -423,6 +435,15 @@ impl SoundSlot {
             // hold romset in slot
             self.sound_rom_set.insert(rom_index, romset);
         }
+    }
+
+    ///
+    /// Change external tick rate.
+    ///
+    /// This only works correctly when the sound slot is in its initial state.
+    ///
+    pub fn change_external_tick_rate(&mut self, external_tick_rate: u32) {
+        self.output_sampling_step = external_tick_rate as f64 / self.output_sampling_rate as f64;
     }
 
     ///

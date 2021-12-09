@@ -8,6 +8,18 @@ use crate::driver::meta::Jsonlize;
 use crate::driver::gd3meta::{parse_gd3, Gd3};
 
 ///
+/// VDP Mode
+///
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+#[allow(clippy::upper_case_acronyms)]
+pub enum VDPMode {
+    NTSC = 60,
+    PAL = 50,
+}
+
+pub const XGM_SAMPLE_DATA_BLOC_ADDRESS: usize = 0x104;
+
+///
 /// https://github.com/Stephane-D/SGDK/blob/master/bin/xgm.txt
 ///
 #[derive(Deserialize, Serialize, Debug)]
@@ -15,7 +27,7 @@ pub struct XgmHeader {
     pub sample_id_table: Vec<(u16, u16)>,
     pub sample_data_bloc_size: u16,
     pub version: u8,
-    pub nesc_pal: u8,
+    pub vdp_mode: VDPMode,
     pub gd3_tag: bool,
     pub multi_track_file: bool,
     pub music_data_bloc_size: u32,
@@ -30,7 +42,7 @@ fn parse_xgm_header(i: &[u8]) -> IResult<&[u8], XgmHeader> {
     let (i, sample_data_bloc_size) = le_u16(i)?;
     let (i, version) = le_u8(i)?;
     let (i, flags) = le_u8(i)?;
-    let nesc_pal = flags & 0b00000001;
+    let vdp_mode = if flags & 0b00000001 == 0 { VDPMode::NTSC } else { VDPMode::PAL };
     let gd3_tag = flags & 0b00000010 != 0;
     let multi_track_file = flags & 0b00000100 != 0;
     let (i, /* sample data bloc */ _) = take(sample_data_bloc_size * 256)(i)?;
@@ -64,7 +76,7 @@ fn parse_xgm_header(i: &[u8]) -> IResult<&[u8], XgmHeader> {
             sample_id_table,
             sample_data_bloc_size,
             version,
-            nesc_pal,
+            vdp_mode,
             gd3_tag,
             multi_track_file,
             music_data_bloc_size,
@@ -73,7 +85,7 @@ fn parse_xgm_header(i: &[u8]) -> IResult<&[u8], XgmHeader> {
 }
 
 ///
-/// parse_vgm_meta
+/// Parse XGM meta
 ///
 pub(crate) fn parse_xgm_meta(xgmdata: &[u8]) -> Result<(XgmHeader, Gd3), &'static str> {
     let header = match parse_xgm_header(xgmdata) {
@@ -82,7 +94,7 @@ pub(crate) fn parse_xgm_meta(xgmdata: &[u8]) -> Result<(XgmHeader, Gd3), &'stati
     };
     let gd3 = if header.gd3_tag {
         match parse_gd3(
-            &xgmdata[(0x108 + header.sample_data_bloc_size as u32 + header.music_data_bloc_size)
+            &xgmdata[(0x108 + (header.sample_data_bloc_size * 256) as u32 + header.music_data_bloc_size)
                 as usize..],
         ) {
             Ok((_, gd3)) => gd3,
@@ -107,6 +119,11 @@ mod tests {
     #[test]
     fn test_1() {
         parse("./docs/vgm/sor2.xgm")
+    }
+
+    #[test]
+    fn test_2() {
+        parse("./docs/vgm/sor3.xgm")
     }
 
     fn parse(filepath: &str) {
