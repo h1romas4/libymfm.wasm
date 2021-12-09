@@ -8,7 +8,7 @@ use super::{
 };
 use crate::sound::{DataStreamMode, SoundChipType, SoundSlot};
 use flate2::read::GzDecoder;
-use std::io::Read;
+use std::{collections::HashMap, io::Read};
 
 pub const XGM_NTSC_TICK_RATE: u32 = 60;
 const XGM_PCM_SAMPLING_RATE: u32 = 14000;
@@ -29,6 +29,7 @@ pub struct XgmPlay {
     xgm_data: Vec<u8>,
     xgm_header: Option<XgmHeader>,
     xgm_gd3: Option<Gd3>,
+    xgm_pcm_priority: HashMap<usize, u8>,
     remain_tick_count: usize,
 }
 
@@ -48,6 +49,7 @@ impl XgmPlay {
             xgm_data: Vec::new(),
             xgm_header: None,
             xgm_gd3: None,
+            xgm_pcm_priority: HashMap::new(),
             remain_tick_count: 0,
         };
         // clone vgm_file and soundchip init
@@ -165,14 +167,21 @@ impl XgmPlay {
         // 4 PCM channels (8 bits signed at 14 Khz)
         self.sound_slot
             .set_data_stream_mode(SoundChipType::YM2612, 0, DataStreamMode::PCMMerge);
-        self.sound_slot.set_data_stream_priority_limit(
-            SoundChipType::YM2612,
-            0,
-            XGM_PCM_MAX_CHANNEL,
-        );
+        for channel in 0..XGM_PCM_MAX_CHANNEL as usize {
+            self.sound_slot
+                .add_data_stream(SoundChipType::YM2612, 0, channel, 0, 0x2a);
+            self.sound_slot.set_data_stream_frequency(
+                SoundChipType::YM2612,
+                0,
+                channel,
+                XGM_PCM_SAMPLING_RATE,
+            );
+            self.xgm_pcm_priority.insert(channel, 0);
+        }
+
         // parse sample table
         for (xgm_sample_id, (address, size)) in header.sample_id_table.iter().enumerate() {
-            // sapmle id starts with 1
+            // sapmle id starts with 1 (sample id 0 is stop stream)
             let data_stream_id = xgm_sample_id + 1;
             let start_address: usize =
                 *address as usize * 256 + xgmmeta::XGM_SAMPLE_DATA_BLOC_ADDRESS;
@@ -259,24 +268,25 @@ impl XgmPlay {
             }
             0x50..=0x5f => {
                 // PCM play command
-                let _priority = command & 0xc;
+                let priority = command & 0xc;
                 let channel = (command & 0x3) as usize;
                 let sample_id = self.get_xgm_u8() as usize;
-                // TODO: split data block and data stream
-                self.sound_slot
-                    .add_data_stream(SoundChipType::YM2612, 0, channel, 0, 0x2a);
-                self.sound_slot.set_data_stream_frequency(
-                    SoundChipType::YM2612,
-                    0,
-                    channel,
-                    XGM_PCM_SAMPLING_RATE,
-                );
-                self.sound_slot.attach_data_block_to_stream(
-                    SoundChipType::YM2612,
-                    0,
-                    channel,
-                    sample_id,
-                );
+                println!("{} {} {}", priority, channel, sample_id);
+                let channel_priority =
+                    self.xgm_pcm_priority.get_mut(&channel).unwrap(/* support 4ch(0x3) */);
+                if sample_id != 0 && *channel_priority <= priority {
+                    self.sound_slot.start_data_stream_fast(
+                        SoundChipType::YM2612,
+                        0,
+                        channel,
+                        sample_id,
+                    );
+                    *channel_priority = priority;
+                } else if sample_id == 0 {
+                    self.sound_slot
+                        .stop_data_stream(SoundChipType::YM2612, 0, channel);
+                    *channel_priority = 0;
+                }
             }
             0x7e => {
                 let loop_offset = self.get_xgm_u32();

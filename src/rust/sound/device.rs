@@ -22,7 +22,6 @@ pub struct SoundDevice {
     sound_stream: Box<dyn SoundStream>,
     data_stream_mode: DataStreamMode,
     data_stream: HashMap<usize, DataStream>,
-    data_stream_priority_limit: u32,
 }
 
 impl SoundDevice {
@@ -32,7 +31,6 @@ impl SoundDevice {
             sound_stream,
             data_stream_mode: DataStreamMode::Parallel,
             data_stream: HashMap::new(),
-            data_stream_priority_limit: 0,
         }
     }
 
@@ -50,11 +48,11 @@ impl SoundDevice {
             is_tick = self.sound_stream.is_tick();
             is_tick != Tick::No
         } {
-            // data stream write to sound chip
+            // write data stream to sound chip
             let mut merge_data: Option<u32> = None;
             let mut merge_reg = None;
-            for (_, (_, data_stream)) in self.data_stream.iter_mut().enumerate() {
-                if let Some((data_block_id, data_block_pos, _write_port, write_reg, priority)) =
+            for (_, data_stream) in self.data_stream.iter_mut() {
+                if let Some((data_block_id, data_block_pos, _write_port, write_reg)) =
                     data_stream.tick()
                 {
                     if let Some(data_block) = data_block.get(&data_block_id) {
@@ -70,13 +68,9 @@ impl SoundDevice {
                                 )
                             }
                             DataStreamMode::PCMMerge => {
-                                // stream merge as pcm data
-                                if let Some(priority) = priority {
-                                    if self.data_stream_priority_limit < priority {
-                                        merge_data = Some(data + merge_data.unwrap_or_default());
-                                    }
-                                    merge_reg = Some(write_reg);
-                                }
+                                // merge stream as pcm data
+                                merge_data = Some(data + merge_data.unwrap_or_default());
+                                merge_reg = Some(write_reg);
                             }
                         }
                     }
@@ -129,22 +123,6 @@ impl SoundDevice {
     ///
     pub fn set_data_stream_mode(&mut self, data_stream_mode: DataStreamMode) {
         self.data_stream_mode = data_stream_mode;
-    }
-
-    ///
-    /// Set data stream priority limit
-    ///
-    pub fn set_data_stream_priority_limit(&mut self, data_stream_priority_limit: u32) {
-        self.data_stream_priority_limit = data_stream_priority_limit;
-    }
-
-    ///
-    /// Set data stream priority
-    ///
-    pub fn set_data_stream_priority(&mut self, data_stream_id: usize, priority: Option<u32>) {
-        if let Some(data_stream) = self.data_stream.get_mut(&data_stream_id) {
-            data_stream.set_priority(priority);
-        }
     }
 
     ///

@@ -335,35 +335,6 @@ impl SoundSlot {
     }
 
     ///
-    /// Set data stream priority limit
-    ///
-    pub fn set_data_stream_priority_limit(
-        &mut self,
-        sound_chip_type: SoundChipType,
-        sound_chip_index: usize,
-        data_stream_priority_limit: u32,
-    ) {
-        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
-            sound_device.set_data_stream_priority_limit(data_stream_priority_limit);
-        }
-    }
-
-    ///
-    /// Set data stream priority
-    ///
-    pub fn set_data_stream_priority(
-        &mut self,
-        sound_chip_type: SoundChipType,
-        sound_chip_index: usize,
-        data_stream_id: usize,
-        priority: Option<u32>,
-    ) {
-        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
-            sound_device.set_data_stream_priority(data_stream_id, priority);
-        }
-    }
-
-    ///
     /// Set data stream frequency
     ///
     pub fn set_data_stream_frequency(
