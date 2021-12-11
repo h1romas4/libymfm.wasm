@@ -38,7 +38,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 Firefox or Chromium is recommended. Currently, Safari does not support SharedArrayBuffer because it is not available.
 
 - Web Worker/Worklet architecture
-- WASI build on browser
+- WASI library on Web browser
 
 Source code:
 
