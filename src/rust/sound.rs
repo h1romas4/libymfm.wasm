@@ -1,5 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+//! The interface to the sound chip, called the SoundSlot, is defined.
 mod slot;
 mod device;
 mod sound_chip;

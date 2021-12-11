@@ -1,5 +1,6 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+//! There are defined sound chip drivers for several music formats.
 mod meta;
 mod vgmplay;
 mod xgmplay;
