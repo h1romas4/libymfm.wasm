@@ -259,10 +259,6 @@ Essentially, wasm-bindgen is incompatible with wasm32-wasi.
 >
 > `panicked at 'unknown instruction LocalTee`
 
-wasm-bindgen outputs a TextEncoder TextDecoder function that cannot be used in a Worklet.
-
-> [Unblock AudioWorklets: Find an alternative to TextEncoder / TextDecoder #2367](https://github.com/rustwasm/wasm-bindgen/issues/2367)
-
 ## License
 
 BSD 3-Clause License
