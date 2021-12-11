@@ -7,10 +7,7 @@ use crate::sound::{DataStreamMode, SoundChipType, SoundSlot};
 use flate2::read::GzDecoder;
 use std::{collections::HashMap, io::Read};
 
-#[allow(dead_code)]
-pub const XGM_NTSC_TICK_RATE: u32 = 60;
-#[allow(dead_code)]
-pub const XGM_PAL_TICK_RATE: u32 = 50;
+pub const XGM_DEFAULT_TICK_RATE: u32 = 60;
 
 const XGM_PCM_SAMPLING_RATE: u32 = 14000;
 const XGM_PCM_MAX_CHANNEL: u32 = 4;
