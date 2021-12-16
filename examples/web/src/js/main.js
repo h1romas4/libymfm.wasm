@@ -247,7 +247,7 @@ const next = function() {
 }
 
 /**
- * Play Music
+ * Play Music (and Initialize AudioContext)
  *
  * @param {ArrayBuffer} xgmfile
  * @param {string} type(vgm|xgm)
@@ -260,11 +260,23 @@ const play = function(xgmfile, type, altMeta) {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: samplingRate });
         if(!player.prepare(audioContext, () => {
             player.init();
+            create(xgmfile, type, altMeta);
         })) {
             systemError();
-            return;
         }
+    } else {
+        create(xgmfile, type, altMeta);
     }
+};
+
+/**
+ * Create player instance, visualizer and play
+ *
+ * @param {ArrayBuffer} xgmfile
+ * @param {string} type(vgm|xgm)
+ * @param {*} altMeta
+ */
+const create = (xgmfile, type, altMeta) => {
     player.create(xgmfile, type, (gd3) => {
         if(altMeta == null) {
             musicMeta = createGd3meta(gd3);
@@ -276,7 +288,7 @@ const play = function(xgmfile, type, altMeta) {
         draw();
         player.play(next);
     });
-};
+}
 
 /**
  * Create GD3 meta
