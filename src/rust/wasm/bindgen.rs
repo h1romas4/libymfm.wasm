@@ -204,7 +204,7 @@ impl XgmPlay {
     pub fn init(&mut self) -> bool {
         let xgmplay = driver::XgmPlay::new(
             SoundSlot::new(
-                driver::XGM_DEFAULT_TICK_RATE,
+                /* default */ driver::XGM_NTSC_TICK_RATE,
                 self.output_sampling_rate,
                 self.output_sample_chunk_size,
             ),
