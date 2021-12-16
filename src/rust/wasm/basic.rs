@@ -128,7 +128,7 @@ pub extern "C" fn xgm_create(
 ) -> bool {
     let xgmplay = XgmPlay::new(
         SoundSlot::new(
-            driver::XGM_DEFAULT_TICK_RATE,
+            driver::XGM_NTSC_TICK_RATE,
             output_sampling_rate,
             output_sample_chunk_size as usize,
         ),
