@@ -7,10 +7,7 @@ use crate::sound::{DataStreamMode, SoundChipType, SoundSlot};
 use flate2::read::GzDecoder;
 use std::{collections::HashMap, io::Read};
 
-#[allow(dead_code)]
-pub const XGM_NTSC_TICK_RATE: u32 = 60;
-#[allow(dead_code)]
-pub const XGM_PAL_TICK_RATE: u32 = 50;
+pub const XGM_DEFAULT_TICK_RATE: u32 = 60;
 
 const XGM_PCM_SAMPLING_RATE: u32 = 14000;
 const XGM_PCM_MAX_CHANNEL: u32 = 4;
@@ -51,7 +48,7 @@ impl XgmPlay {
             xgm_pcm_priority: HashMap::new(),
             remain_tick_count: 0,
         };
-        // clone vgm_file and soundchip init
+        // clone xgm_file and soundchip init
         xgmplay.init(xgm_file)?;
 
         Ok(xgmplay)
@@ -79,9 +76,9 @@ impl XgmPlay {
     }
 
     ///
-    /// Get VGM meta.
+    /// Get XGM meta.
     ///
-    pub fn get_vgm_meta(&self) -> (&XgmHeader, &Gd3) {
+    pub fn get_xgm_meta(&self) -> (&XgmHeader, &Gd3) {
         (
             self.xgm_header.as_ref().unwrap(/* There always is */),
             self.xgm_gd3.as_ref().unwrap(/* There always is */),
@@ -89,14 +86,14 @@ impl XgmPlay {
     }
 
     ///
-    /// Get VGM header JSON.
+    /// Get XGM header JSON.
     ///
     pub fn get_xgm_header_json(&self) -> String {
         self.xgm_header.as_ref().unwrap(/* There always is */).get_json()
     }
 
     ///
-    /// Get VGM header GD3 JSON.
+    /// Get XGM header GD3 JSON.
     ///
     pub fn get_xgm_gd3_json(&self) -> String {
         self.xgm_gd3.as_ref().unwrap(/* There always is */).get_json()
@@ -137,7 +134,7 @@ impl XgmPlay {
         // try xgz extract to xgm_data
         self.extract(xgm_file);
 
-        // parse vgm header
+        // parse xgm header
         match xgmmeta::parse_xgm_meta(&self.xgm_data) {
             Ok((header, gd3)) => {
                 self.xgm_header = Some(header);
