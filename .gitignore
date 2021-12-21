@@ -16,3 +16,4 @@ __pycache__
 !docs/vgm/ym2612.vgm
 !public/vgm/ym2612.vgm
 !examples/python/vgm/ym2612.vgm
+!examples/web/static/vgm/ym2612.vgm
