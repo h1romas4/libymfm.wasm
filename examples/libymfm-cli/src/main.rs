@@ -62,14 +62,13 @@ fn main() {
 
     // filename
     let file_name = matches.value_of("filename").unwrap();
-    let file = match File::open(file_name) {
+    let mut file = match File::open(file_name) {
         Ok(file) => file,
         Err(error) => {
             eprintln!("There was a problem opening the file: {:?}", error);
             process::exit(1);
         }
     };
-    let file_type = Path::new(file_name).extension().and_then(OsStr::to_str);
 
     // output file
     let output_file: Option<File>;
@@ -89,32 +88,38 @@ fn main() {
         output_file = None;
     }
 
+    // read file
+    let mut buffer = Vec::new();
+    let _ = file.read_to_end(&mut buffer).unwrap();
+
+    // get file type
+    let file_type = Path::new(file_name).extension().and_then(OsStr::to_str);
+
     match file_type {
-        Some("vgm") | Some("vgz") => play_vgm(file, output_file, sampling_rate, loop_count),
-        Some("xgm") | Some("xgz") => play_xgm(file, output_file, sampling_rate, loop_count),
+        Some("vgm") | Some("vgz") => {
+            let mut vgmplay = VgmPlay::new(
+                SoundSlot::new(VGM_TICK_RATE, sampling_rate, MAX_SAMPLE_SIZE),
+                buffer.as_slice(),
+            ).expect("vgm file is not valid error.");
+            play(&mut vgmplay, output_file, loop_count);
+        },
+        Some("xgm") | Some("xgz") => {
+            let mut xgmplay = XgmPlay::new(
+                SoundSlot::new(XGM_NTSC_TICK_RATE, sampling_rate, MAX_SAMPLE_SIZE),
+                buffer.as_slice(),
+            ).expect("xgm file is not valid error.");
+            play(&mut xgmplay, output_file, loop_count);
+        },
         Some(_) | None => eprintln!("Known extention type: {:?}", file_type),
     }
 }
 
-fn play_vgm(mut file: File, mut output_file: Option<File>, sampling_rate: u32, loop_count: usize) {
-    let mut buffer = Vec::new();
-    let _ = file.read_to_end(&mut buffer).unwrap();
-
-    let mut vgmplay = VgmPlay::new(
-        SoundSlot::new(VGM_TICK_RATE, sampling_rate, MAX_SAMPLE_SIZE),
-        buffer.as_slice(),
-    ).expect("vgm file is not valid error.");
-
-    // init & sample
-    let sampling_l = vgmplay.get_sampling_l_ref();
-    let sampling_r = vgmplay.get_sampling_r_ref();
-
-    // play
-    // ffplay -f f32le -ar 44100 -ac 2 output.pcm
-    #[allow(clippy::absurd_extreme_comparisons)]
+fn play(player: &mut impl Player, mut output_file: Option<File>, loop_count: usize) {
     loop {
-        let loop_now = vgmplay.play(true);
+        let loop_now = player.play(true);
         for i in 0..MAX_SAMPLE_SIZE {
+            let sampling_l = player.get_sampling_l_ref();
+            let sampling_r = player.get_sampling_r_ref();
             unsafe {
                 let slice_l = std::slice::from_raw_parts(sampling_l.add(i) as *const u8, 4);
                 let slice_r = std::slice::from_raw_parts(sampling_r.add(i) as *const u8, 4);
@@ -133,39 +138,45 @@ fn play_vgm(mut file: File, mut output_file: Option<File>, sampling_rate: u32, l
     }
 }
 
-fn play_xgm(mut file: File, mut output_file: Option<File>, sampling_rate: u32, loop_count: usize) {
-    let mut buffer = Vec::new();
-    let _ = file.read_to_end(&mut buffer).unwrap();
+trait Player {
+    fn new(sound_slot: SoundSlot, file: &[u8]) -> Result<Self, &'static str> where Self: std::marker::Sized;
+    fn get_sampling_l_ref(&self) -> *const f32;
+    fn get_sampling_r_ref(&self) -> *const f32;
+    fn play(&mut self, repeat: bool) -> usize;
+}
 
-    let mut xgmplay = XgmPlay::new(
-        SoundSlot::new(XGM_NTSC_TICK_RATE, sampling_rate, MAX_SAMPLE_SIZE),
-        buffer.as_slice(),
-    ).expect("xgm file is not valid error.");
+impl Player for VgmPlay {
+    fn new(sound_slot: SoundSlot, file: &[u8]) -> Result<Self, &'static str> {
+        VgmPlay::new(sound_slot, file)
+    }
 
-    // init & sample
-    let sampling_l = xgmplay.get_sampling_l_ref();
-    let sampling_r = xgmplay.get_sampling_r_ref();
+    fn get_sampling_l_ref(&self) -> *const f32 {
+        self.get_sampling_l_ref()
+    }
 
-    // play
-    // ffplay -f f32le -ar 44100 -ac 2 output.pcm
-    #[allow(clippy::absurd_extreme_comparisons)]
-    loop {
-        let loop_now = xgmplay.play(true);
-        for i in 0..MAX_SAMPLE_SIZE {
-            unsafe {
-                let slice_l = std::slice::from_raw_parts(sampling_l.add(i) as *const u8, 4);
-                let slice_r = std::slice::from_raw_parts(sampling_r.add(i) as *const u8, 4);
-                if let Some(ref mut output_file) = output_file {
-                    output_file.write_all(slice_l).expect("file write error");
-                    output_file.write_all(slice_r).expect("file write error");
-                } else {
-                    io::stdout().write_all(slice_l).expect("stdout error");
-                    io::stdout().write_all(slice_r).expect("stdout error");
-                }
-            }
-        }
-        if loop_now >= loop_count {
-            break;
-        }
+    fn get_sampling_r_ref(&self) -> *const f32 {
+        self.get_sampling_r_ref()
+    }
+
+    fn play(&mut self, repeat: bool) -> usize {
+        self.play(repeat)
+    }
+}
+
+impl Player for XgmPlay {
+    fn new(sound_slot: SoundSlot, file: &[u8]) -> Result<Self, &'static str> {
+        XgmPlay::new(sound_slot, file)
+    }
+
+    fn get_sampling_l_ref(&self) -> *const f32 {
+        self.get_sampling_l_ref()
+    }
+
+    fn get_sampling_r_ref(&self) -> *const f32 {
+        self.get_sampling_r_ref()
+    }
+
+    fn play(&mut self, repeat: bool) -> usize {
+        self.play(repeat)
     }
 }
