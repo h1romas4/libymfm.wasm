@@ -286,6 +286,7 @@ BSD 3-Clause License
     - [x] Support all data stream (now only support YM2612 and OKIM6285)
 - [x] Non-vgm driver support
     - [x] XGM
+        - [ ] There is still a bug with multi-channel PCM.
 - [x] Multilingual Interface
     - [x] CLI
     - [x] Web/JavaScript
