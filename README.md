@@ -305,6 +305,7 @@ BSD 3-Clause License
     - [x] OKIM6285
     - [ ] Next to be determined
 - [ ] Examples source
+    - [ ] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well.  
     - [ ] Web Frontend: Support YM2608 ADPCM ROM (wasmer-js WASI fopen)
     - [x] Web Frontend: AudioWorklet
     - [x] Web Frontend: Web Worker AudioWorklet and SharedArrayBuffer (The Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers cannot be set in github pages, so they cannot be deployed)
