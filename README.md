@@ -159,7 +159,7 @@ make -j4
 Install wasm-bindgen
 
 ```
-cargo install wasm-bindgen-cli
+cargo install wasm-bindgen-cli --version 0.2.78
 ```
 
 Rust build and wasm-bindgen
@@ -286,6 +286,7 @@ BSD 3-Clause License
     - [x] Support all data stream (now only support YM2612 and OKIM6285)
 - [x] Non-vgm driver support
     - [x] XGM
+        - [ ] There is still a bug with multi-channel PCM.
 - [x] Multilingual Interface
     - [x] CLI
     - [x] Web/JavaScript
@@ -304,6 +305,7 @@ BSD 3-Clause License
     - [x] OKIM6285
     - [ ] Next to be determined
 - [ ] Examples source
+    - [ ] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well.
     - [ ] Web Frontend: Support YM2608 ADPCM ROM (wasmer-js WASI fopen)
     - [x] Web Frontend: AudioWorklet
     - [x] Web Frontend: Web Worker AudioWorklet and SharedArrayBuffer (The Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers cannot be set in github pages, so they cannot be deployed)
