@@ -156,7 +156,7 @@ make -j4
 
 ### Web Browser Interface (`examples/web`)
 
-Install wasm-bindgen
+Install wasm-bindgen require (`--version 0.2.78`)
 
 ```
 cargo install wasm-bindgen-cli --version 0.2.78
