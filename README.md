@@ -132,7 +132,7 @@ export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroo
 
 ```
 $ echo ${WASI_SDK_PATH}
-/home/hiromasa/devel/toolchain/wasi-sdk-14.0
+/home/hiromasa/devel/toolchain/wasi-sdk-15.0
 $ ls -alF ${WASI_SDK_PATH}
 drwxr-xr-x 2 hiromasa hiromasa 4096 12月  3  2020 bin/
 drwxr-xr-x 3 hiromasa hiromasa 4096 12月  3  2020 lib/
@@ -141,7 +141,7 @@ $ ${WASI_SDK_PATH}/bin/clang -v
 clang version 13.0.0 (https://github.com/llvm/llvm-project fd1d8c2f04dde23bee0fb3a7d069a9b1046da979)
 Target: wasm32-unknown-wasi
 Thread model: posix
-InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-14.0/bin
+InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-15.0/bin
 ```
 
 cmake / make
