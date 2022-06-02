@@ -138,7 +138,7 @@ drwxr-xr-x 2 hiromasa hiromasa 4096 12月  3  2020 bin/
 drwxr-xr-x 3 hiromasa hiromasa 4096 12月  3  2020 lib/
 drwxr-xr-x 6 hiromasa hiromasa 4096 12月  3  2020 share/
 $ ${WASI_SDK_PATH}/bin/clang -v
-clang version 13.0.0 (https://github.com/llvm/llvm-project fd1d8c2f04dde23bee0fb3a7d069a9b1046da979)
+clang version 14.0.3 (https://github.com/llvm/llvm-project 1f9140064dfbfb0bbda8e51306ea51080b2f7aac)
 Target: wasm32-unknown-wasi
 Thread model: posix
 InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-15.0/bin
