@@ -117,10 +117,10 @@ rustup install nightly
 ```
 [package]
 edition = "2021"
-rust-version = "1.56"
+rust-version = "1.61"
 ```
 
-Setup [wasi-sdk-14](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-14)
+Setup [wasi-sdk-15](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-15)
 
 `.bashrc`
 
@@ -245,6 +245,10 @@ cargo test ym2612_1 -- --nocapture
 ```
 
 ### Build Note
+
+warning: unknown feature specified for `-Ctarget-feature`: `bulk-memory`
+
+- [Add valid features (like bulk-memory and mutable-globals) to prevent cargo warnings](https://internals.rust-lang.org/t/add-valid-features-like-bulk-memory-and-mutable-globals-to-prevent-cargo-warnings/16654)
 
 WASI Library
 

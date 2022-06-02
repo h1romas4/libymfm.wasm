@@ -8,9 +8,6 @@ use super::{
 };
 use std::collections::HashMap;
 
-///
-/// FFI interface
-///
 #[link(name = "ymfm")]
 extern "C" {
     fn ymfm_add_chip(chip_num: u16, clock: u32) -> u32;
