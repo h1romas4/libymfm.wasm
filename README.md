@@ -125,7 +125,7 @@ Setup [wasi-sdk-15](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sd
 `.bashrc`
 
 ```
-export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-14.0
+export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-15.0
 export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
 export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
 ```
