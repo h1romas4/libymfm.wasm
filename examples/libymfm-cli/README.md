@@ -33,6 +33,7 @@ rustflags = [
 Build
 
 ```
+cd examples/libymfm-cli
 cargo +nightly build --target=wasm32-wasi --release
 ```
 
@@ -42,7 +43,7 @@ Options
 
 ```
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.9.0
+libymfm-cli 0.9.1
 Hiromasa Tanaka <h1romas4@gmail.com>
 libymfm CLI
 
