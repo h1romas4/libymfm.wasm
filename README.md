@@ -117,31 +117,31 @@ rustup install nightly
 ```
 [package]
 edition = "2021"
-rust-version = "1.56"
+rust-version = "1.61"
 ```
 
-Setup [wasi-sdk-14](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-14)
+Setup [wasi-sdk-15](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-15)
 
 `.bashrc`
 
 ```
-export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-14.0
+export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-15.0
 export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
 export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
 ```
 
 ```
 $ echo ${WASI_SDK_PATH}
-/home/hiromasa/devel/toolchain/wasi-sdk-14.0
+/home/hiromasa/devel/toolchain/wasi-sdk-15.0
 $ ls -alF ${WASI_SDK_PATH}
 drwxr-xr-x 2 hiromasa hiromasa 4096 12月  3  2020 bin/
 drwxr-xr-x 3 hiromasa hiromasa 4096 12月  3  2020 lib/
 drwxr-xr-x 6 hiromasa hiromasa 4096 12月  3  2020 share/
 $ ${WASI_SDK_PATH}/bin/clang -v
-clang version 13.0.0 (https://github.com/llvm/llvm-project fd1d8c2f04dde23bee0fb3a7d069a9b1046da979)
+clang version 14.0.3 (https://github.com/llvm/llvm-project 1f9140064dfbfb0bbda8e51306ea51080b2f7aac)
 Target: wasm32-unknown-wasi
 Thread model: posix
-InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-14.0/bin
+InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-15.0/bin
 ```
 
 cmake / make
@@ -245,6 +245,10 @@ cargo test ym2612_1 -- --nocapture
 ```
 
 ### Build Note
+
+warning: unknown feature specified for `-Ctarget-feature`: `bulk-memory`
+
+- [Add valid features (like bulk-memory and mutable-globals) to prevent cargo warnings](https://internals.rust-lang.org/t/add-valid-features-like-bulk-memory-and-mutable-globals-to-prevent-cargo-warnings/16654)
 
 WASI Library
 
