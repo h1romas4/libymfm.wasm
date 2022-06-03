@@ -19,7 +19,7 @@ jobs:
         rustup install nightly
         rustup default nightly
         rustup target add wasm32-wasi
-        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-15/wasi-sdk-16.0-linux.tar.gz
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/wasi-sdk-16.0-linux.tar.gz
         tar zxvf wasi-sdk-16.0-linux.tar.gz
     - name: Build libymfm
       run: |
