@@ -55,13 +55,13 @@ Source code:
 ## WASI Commnad Line Interface
 
 - Install [Wasmer](https://wasmer.io/) runtime
-- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.9.1) from pre-build release
+- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.9.2) from pre-build release
 
 Options
 
 ```
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.9.1
+libymfm-cli 0.9.2
 Hiromasa Tanaka <h1romas4@gmail.com>
 libymfm CLI
 
@@ -120,25 +120,25 @@ edition = "2021"
 rust-version = "1.61"
 ```
 
-Setup [wasi-sdk-15](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-15)
+Setup [wasi-sdk-16](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-16)
 
 `.bashrc`
 
 ```
-export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-15.0
+export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-16.0
 export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
 export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
 ```
 
 ```
 $ echo ${WASI_SDK_PATH}
-/home/hiromasa/devel/toolchain/wasi-sdk-15.0
+/home/hiromasa/devel/toolchain/wasi-sdk-16.0
 $ ls -alF ${WASI_SDK_PATH}
 drwxr-xr-x 2 hiromasa hiromasa 4096 12月  3  2020 bin/
 drwxr-xr-x 3 hiromasa hiromasa 4096 12月  3  2020 lib/
 drwxr-xr-x 6 hiromasa hiromasa 4096 12月  3  2020 share/
 $ ${WASI_SDK_PATH}/bin/clang -v
-clang version 14.0.3 (https://github.com/llvm/llvm-project 1f9140064dfbfb0bbda8e51306ea51080b2f7aac)
+clang version 14.0.4 (https://github.com/llvm/llvm-project 29f1039a7285a5c3a9c353d054140bf2556d4c4d)
 Target: wasm32-unknown-wasi
 Thread model: posix
 InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-15.0/bin
