@@ -8,6 +8,13 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 >
 > BSD-licensed Yamaha FM sound cores (OPM, OPN, OPL, and others)
 
+We provide high-level and low-level WebAssembly interfaces to sound chips.
+
+The high-level interface provides the vgm/xgm sequencer, while the low-level interface provides direct access to the sound chip.
+Both can get PCM binary at a specified sampling rate and number of frames.
+
+The WebAssembly interface can be called from many computer languages by using Wasmer.
+
 ## Supported Sound Chips
 
 |chip|from|note|
@@ -24,10 +31,10 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |YM3812|ymfm||
 |YMF262|ymfm||
 |YMF278B|ymfm||
-|SN76489|mame|Rust ports|
-|SEGAPCM|mame|Rust ports|
-|PWM|mame|Rust ports|
-|OKIM6285|mame|Rust ports|
+|SN76489|MAME|Rust ports|
+|SEGAPCM|MAME|Rust ports|
+|PWM|MAME|Rust ports|
+|OKIM6285|MAME|Rust ports|
 
 ## Web Browser Interface
 
