@@ -247,6 +247,12 @@ Pacth `src/rust/lib.rs`
 Buile or test on native
 
 ```
+mkdir build && cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/x86-64.cmake ..
+make -j4
+```
+
+```
 cargo build --release
 cargo test ym2612_1 -- --nocapture
 ```
