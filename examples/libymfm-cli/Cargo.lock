@@ -162,7 +162,7 @@ dependencies = [
 
 [[package]]
 name = "libymfm-cli"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "clap",
  "libymfm",

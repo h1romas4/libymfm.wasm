@@ -8,6 +8,13 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 >
 > BSD-licensed Yamaha FM sound cores (OPM, OPN, OPL, and others)
 
+We provide high-level and low-level WebAssembly interfaces to sound chips.
+
+The high-level interface provides the vgm/xgm sequencer, while the low-level interface provides direct access to the sound chip.
+Both can get PCM binary at a specified sampling rate and number of frames.
+
+The WebAssembly interface can be called from many computer languages by using Wasmer.
+
 ## Supported Sound Chips
 
 |chip|from|note|
@@ -24,10 +31,10 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 |YM3812|ymfm||
 |YMF262|ymfm||
 |YMF278B|ymfm||
-|SN76489|mame|Rust ports|
-|SEGAPCM|mame|Rust ports|
-|PWM|mame|Rust ports|
-|OKIM6285|mame|Rust ports|
+|SN76489|MAME|Rust ports|
+|SEGAPCM|MAME|Rust ports|
+|PWM|MAME|Rust ports|
+|OKIM6285|MAME|Rust ports|
 
 ## Web Browser Interface
 
@@ -55,13 +62,13 @@ Source code:
 ## WASI Commnad Line Interface
 
 - Install [Wasmer](https://wasmer.io/) runtime
-- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.9.0) from pre-build release
+- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.9.2) from pre-build release
 
 Options
 
 ```
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.9.0
+libymfm-cli 0.9.2
 Hiromasa Tanaka <h1romas4@gmail.com>
 libymfm CLI
 
@@ -120,25 +127,25 @@ edition = "2021"
 rust-version = "1.61"
 ```
 
-Setup [wasi-sdk-15](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-15)
+Setup [wasi-sdk-16](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-16)
 
 `.bashrc`
 
 ```
-export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-15.0
+export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-16.0
 export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
 export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
 ```
 
 ```
 $ echo ${WASI_SDK_PATH}
-/home/hiromasa/devel/toolchain/wasi-sdk-15.0
+/home/hiromasa/devel/toolchain/wasi-sdk-16.0
 $ ls -alF ${WASI_SDK_PATH}
 drwxr-xr-x 2 hiromasa hiromasa 4096 12月  3  2020 bin/
 drwxr-xr-x 3 hiromasa hiromasa 4096 12月  3  2020 lib/
 drwxr-xr-x 6 hiromasa hiromasa 4096 12月  3  2020 share/
 $ ${WASI_SDK_PATH}/bin/clang -v
-clang version 14.0.3 (https://github.com/llvm/llvm-project 1f9140064dfbfb0bbda8e51306ea51080b2f7aac)
+clang version 14.0.4 (https://github.com/llvm/llvm-project 29f1039a7285a5c3a9c353d054140bf2556d4c4d)
 Target: wasm32-unknown-wasi
 Thread model: posix
 InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-15.0/bin
@@ -238,6 +245,12 @@ Pacth `src/rust/lib.rs`
 ```
 
 Buile or test on native
+
+```
+mkdir build && cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/x86-64.cmake ..
+make -j4
+```
 
 ```
 cargo build --release
