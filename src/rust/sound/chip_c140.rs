@@ -70,8 +70,6 @@ const MAX_VOICE: usize = 24;
 #[allow(non_snake_case)]
 pub struct C140 {
     sample_rate: i32,
-    mixer_buffer_left: Option<Vec<i16>>,
-    mixer_buffer_right: Option<Vec<i16>>,
     baserate: i32,
     reg: [u8; 0x200],
     pcmtbl: [i16; 256],
@@ -123,8 +121,6 @@ impl C140 {
     fn new() -> Self {
         C140 {
             sample_rate: 0,
-            mixer_buffer_left: None,
-            mixer_buffer_right: None,
             baserate: 0,
             reg: [0; 0x200],
             pcmtbl: [0; 256],
@@ -168,10 +164,6 @@ impl C140 {
         // self.mixer_buffer_left = Some(vec![0; self.sample_rate as usize]);
         // self.mixer_buffer_right = Some(vec![0; self.sample_rate as usize]);
 
-        /* for libymfm (1 tick) */
-        self.mixer_buffer_left = Some(vec![0; 1]);
-        self.mixer_buffer_right = Some(vec![0; 1]);
-
         self.sample_rate
     }
 
@@ -186,16 +178,16 @@ impl C140 {
 
         let pbase: f32 = self.baserate as f32 * 2.0_f32 / self.sample_rate as f32;
 
-        let mut lmix: &mut Vec<i16>;
-        let mut rmix: &mut Vec<i16>;
+        let mut lmix: i16;
+        let mut rmix: i16;
 
         // let samples: i32 = self.sample_rate;
         /* for libymfm (1 tick) */
         let samples: i32 = 1;
 
         /* zap the contents of the mixer buffer */
-        self.mixer_buffer_left.as_mut().unwrap().fill(0);
-        self.mixer_buffer_right.as_mut().unwrap().fill(0);
+        lmix = 0;
+        rmix = 0;
 
         //--- audio update
         for i in 0..24 {
@@ -220,10 +212,6 @@ impl C140 {
                 let lvol: i32 = unsafe { (((*vreg).volume_left) as i32 * 32) / MAX_VOICE as i32 }; //32ch -> 24ch
                 let rvol: i32 = unsafe { (((*vreg).volume_right) as i32 * 32) / MAX_VOICE as i32 };
 
-                /* Set mixer outputs base pointers */
-                lmix = self.mixer_buffer_left.as_mut().unwrap();
-                rmix = self.mixer_buffer_right.as_mut().unwrap();
-
                 /* Retrieve sample start/end and calculate size */
                 let st = v.sample_start;
                 let ed = v.sample_end;
@@ -240,7 +228,7 @@ impl C140 {
                 let mut dltdt = v.dltdt;
 
                 /* linear or compressed 8bit signed PCM */
-                for j in 0..samples {
+                for _ in 0..samples {
                     offset += delta;
                     let cnt = (offset >> 16) & 0x7fff;
                     offset &= 0xffff;
@@ -259,7 +247,7 @@ impl C140 {
                     if cnt != 0 {
                         let sample: u16 = read_word_rombank(&self.rombank, (sample_data + pos) as usize) & 0xfff0; // 12bit
                         prevdt = lastdt;
-                        lastdt = ((if Self::ch_mulaw(v) { self.pcmtbl[((sample >> 8) & 0xff) as usize] } else { sample as i16 }) >> 4) as i32;
+                        lastdt = (if Self::ch_mulaw(v) { self.pcmtbl[((sample >> 8) & 0xff) as usize] } else { sample as i16 }) as i32 >> 4;
                         dltdt = lastdt - prevdt;
                     }
 
@@ -267,8 +255,8 @@ impl C140 {
                     dt = ((dltdt * offset) >> 16) + prevdt;
 
                     /* Write the data to the sample buffers */
-                    lmix[j as usize] += ((dt * lvol) >> (5 + 4)) as i16;
-                    rmix[j as usize] += ((dt * rvol) >> (5 + 4)) as i16;
+                    lmix += ((dt * lvol) >> (5 + 4)) as i16;
+                    rmix += ((dt * rvol) >> (5 + 4)) as i16;
                 }
 
                 /* Save positional data for next callback */
@@ -281,14 +269,10 @@ impl C140 {
         }
 
         /* render to MAME's stream buffer */
-        lmix = self.mixer_buffer_left.as_mut().unwrap();
-        rmix = self.mixer_buffer_right.as_mut().unwrap();
         for i in 0..samples as usize {
             // TODO:
-            // dest1.put_int_clamp(i, *lmix++, 32768 / 8);
-            // dest2.put_int_clamp(i, *rmix++, 32768 / 8);
-            buffer_l[i] = convert_sample_i2f(i32::from(lmix[i]) << 4);
-            buffer_r[i] = convert_sample_i2f(i32::from(rmix[i]) << 4);
+            buffer_l[i] = convert_sample_i2f(lmix as i32 * 4);
+            buffer_r[i] = convert_sample_i2f(rmix as i32 * 4);
         }
     }
 
@@ -313,15 +297,15 @@ impl C140 {
                     v.bank = unsafe { (*vreg).bank as i32 };
                     v.mode = data as i32;
 
-                    let sample_loop: i32 =
-                        unsafe { (i32::from((*vreg).loop_msb) << 8) + (*vreg).loop_lsb as i32 };
-                    let start: i32 =
-                        unsafe { (i32::from((*vreg).start_msb) << 8) + (*vreg).start_lsb as i32 };
-                    let end: i32 =
-                        unsafe { (i32::from((*vreg).end_msb) << 8) + (*vreg).end_lsb as i32 };
-                    v.sample_loop = sample_loop;
-                    v.sample_start = start;
-                    v.sample_end = end;
+                    let sample_loop: u32 =
+                        unsafe { (u32::from((*vreg).loop_msb) << 8) + (*vreg).loop_lsb as u32 };
+                    let start: u32 =
+                        unsafe { (u32::from((*vreg).start_msb) << 8) + (*vreg).start_lsb as u32 };
+                    let end: u32 =
+                        unsafe { (u32::from((*vreg).end_msb) << 8) + (*vreg).end_lsb as u32 };
+                    v.sample_loop = sample_loop as i32;
+                    v.sample_start = start as i32;
+                    v.sample_end = end as i32;
                 } else {
                     v.key = 0;
                 }
@@ -343,22 +327,7 @@ impl C140 {
     }
 
     #[inline]
-    fn ch_noise(v: &C140Voice) -> bool {
-        ((v.mode >> 2) & 0x1) == 0x1
-    }
-
-    #[inline]
     fn ch_mulaw(v: &C140Voice) -> bool {
-        ((v.mode >> 0) & 0x1) == 0x1
-    }
-
-    #[inline]
-    fn ch_inv_sign(v: &C140Voice) -> bool {
-        ((v.mode >> 6) & 0x1) == 0x1
-    }
-
-    #[inline]
-    fn ch_inv_lout(v: &C140Voice) -> bool {
         ((v.mode >> 3) & 0x1) == 0x1
     }
 }
