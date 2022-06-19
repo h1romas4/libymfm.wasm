@@ -974,6 +974,16 @@ mod tests {
         play("./docs/vgm/c140-1.vgz")
     }
 
+    #[test]
+    fn c140_2() {
+        play("./docs/vgm/c140-2.vgz")
+    }
+
+    #[test]
+    fn c140_3() {
+        play("./docs/vgm/c140-3.vgz")
+    }
+
     fn play(filepath: &str) {
         println!("Play start! {}", filepath);
 
