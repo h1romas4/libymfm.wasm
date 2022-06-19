@@ -5,6 +5,7 @@ use std::cmp::Ordering;
 use std::collections::{HashMap, VecDeque};
 use std::rc::Rc;
 
+use super::chip_c140::C140;
 use super::chip_okim6258::OKIM6258;
 use super::chip_pwm::PWM;
 use super::chip_segapcm::SEGAPCM;
@@ -12,7 +13,7 @@ use super::chip_sn76496::SN76496;
 use super::chip_ymfm::YmFm;
 use super::data_stream::{DataBlock, DataStream};
 use super::device::{DataStreamMode, SoundDevice};
-use super::rom::{RomIndex, RomSet};
+use super::rom::{RomBusType, RomIndex, RomSet};
 use super::sound_chip::SoundChip;
 use super::stream::{
     convert_sample_f2i, LinearUpSamplingStream, NativeStream, NearestDownSampleStream,
@@ -111,6 +112,11 @@ impl SoundSlot {
                     segapcm
                 }
                 SoundChipType::OKIM6258 => Box::new(OKIM6258::new(SoundChipType::OKIM6258)),
+                SoundChipType::C140 => {
+                    let mut c140 = Box::new(C140::new(SoundChipType::C140));
+                    self.add_rom_bank(vec![RomIndex::C140_ROM], &mut *c140);
+                    c140
+                }
             };
 
             // initialize sound chip
@@ -252,7 +258,7 @@ impl SoundSlot {
     }
 
     ///
-    /// Add ROM for sound chip.
+    /// Add ROM to sound chip.
     ///
     pub fn add_rom(
         &mut self,
@@ -269,23 +275,28 @@ impl SoundSlot {
                 .borrow_mut()
                 .add_rom(memory, start_address, end_address);
             // notify sound chip
-            let sound_device_name = match rom_index {
-                RomIndex::YM2608_DELTA_T => Some(SoundChipType::YM2608),
-                RomIndex::YM2610_ADPCM => Some(SoundChipType::YM2610),
-                RomIndex::YM2610_DELTA_T => Some(SoundChipType::YM2610),
-                RomIndex::YMF278B_ROM => Some(SoundChipType::YMF278B),
-                RomIndex::YMF278B_RAM => Some(SoundChipType::YMF278B),
-                RomIndex::Y8950_ROM => Some(SoundChipType::Y8950),
-                RomIndex::SEGAPCM_ROM => Some(SoundChipType::SEGAPCM),
-                RomIndex::NOT_SUPPOTED => None,
-            };
-            if let Some(sound_device_name) = sound_device_name {
-                if let Some(sound_device) = self.sound_device.get_mut(&sound_device_name) {
+            let sound_chip_type = self.get_sound_chip_type_by_rom_index(rom_index);
+            if let Some(sound_chip_type) = sound_chip_type {
+                if let Some(sound_device) = self.sound_device.get_mut(&sound_chip_type) {
                     for sound_device in sound_device {
                         sound_device.notify_add_rom(rom_index, index_no);
                     }
                 };
             }
+        }
+    }
+
+    ///
+    /// Set ROM Bus type
+    ///
+    pub fn set_rom_bus_type(&mut self, rom_index: RomIndex, rom_bus_type: Option<RomBusType>) {
+        if self.sound_rom_set.contains_key(&rom_index) {
+            self
+                .sound_rom_set
+                .get(&rom_index)
+                .unwrap()
+                .borrow_mut()
+                .set_bus_type(rom_bus_type);
         }
     }
 
@@ -434,6 +445,23 @@ impl SoundSlot {
             sound_chip.set_rom_bank(rom_index, Some(romset.clone()));
             // hold romset in slot
             self.sound_rom_set.insert(rom_index, romset);
+        }
+    }
+
+    ///
+    /// Obtains the SoundChipType corresponding to RomIndex.
+    ///
+    fn get_sound_chip_type_by_rom_index(&self, rom_index: RomIndex) -> Option<SoundChipType> {
+        match rom_index {
+            RomIndex::YM2608_DELTA_T => Some(SoundChipType::YM2608),
+            RomIndex::YM2610_ADPCM => Some(SoundChipType::YM2610),
+            RomIndex::YM2610_DELTA_T => Some(SoundChipType::YM2610),
+            RomIndex::YMF278B_ROM => Some(SoundChipType::YMF278B),
+            RomIndex::YMF278B_RAM => Some(SoundChipType::YMF278B),
+            RomIndex::Y8950_ROM => Some(SoundChipType::Y8950),
+            RomIndex::SEGAPCM_ROM => Some(SoundChipType::SEGAPCM),
+            RomIndex::C140_ROM => Some(SoundChipType::C140),
+            RomIndex::NOT_SUPPOTED => None,
         }
     }
 

@@ -419,7 +419,7 @@ impl SoundStream for OverSampleStream {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum Tick {
     One,
     More,

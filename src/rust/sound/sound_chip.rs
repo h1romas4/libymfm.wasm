@@ -27,6 +27,7 @@ pub enum SoundChipType {
     PWM,
     SEGAPCM,
     OKIM6258,
+    C140,
 }
 
 ///
