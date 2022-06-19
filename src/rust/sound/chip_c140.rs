@@ -89,9 +89,9 @@ struct C140Voice {
     prevdt: i32,
     dltdt: i32,
     //--reg
-    rvol: i32,
-    lvol: i32,
-    frequency: i32,
+    // rvol: i32,
+    // lvol: i32,
+    // frequency: i32,
     bank: i32,
     mode: i32,
 
