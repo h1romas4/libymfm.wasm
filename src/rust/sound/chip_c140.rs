@@ -133,27 +133,20 @@ impl C140 {
 
     pub fn device_start(&mut self) {
         // generate mulaw table (Verified from Wii Virtual Console Arcade Knuckle Heads)
-        // same as c352.cpp
-        let mut j: i16 = 0;
-        for i in 0..128 {
-            self.pcmtbl[i] = j << 5;
-            if i < 16 {
-                j += 1;
-            } else if i < 24 {
-                j += 2;
-            } else if i < 48 {
-                j += 4;
-            } else if i < 100 {
-                j += 8;
-            } else {
-                j += 16;
-            }
-        }
-        for i in 0..128 {
-            self.pcmtbl[i + 128] = (!self.pcmtbl[i] as u16 & 0xffe0) as i16;
-        }
+        for i in 0..256 {
+            let j: i8 = i as i8;
+            let s1: i8 = j & 7;
+            let s2: i8 = (j >> 3).abs() & 31;
 
-        self.lfsr = 0x1234;
+            let mut pcmtbl: i64;
+            pcmtbl = ((0x80 << s1) as u16 & 0xff00) as i64;
+            pcmtbl += (i16::from(s2) << (if s1 != 0 { s1 + 3 } else { 4 })) as i64;
+
+            if j < 0 {
+                pcmtbl = -pcmtbl;
+            }
+            self.pcmtbl[i] = pcmtbl as i16;
+        }
     }
 
     pub fn device_clock_changed(&mut self, clock: i32) -> i32 {
@@ -197,7 +190,7 @@ impl C140 {
 
             if v.key != 0 {
                 let frequency: u16 = unsafe {
-                    ((((*vreg).frequency_msb) as u16) << 8) as u16 | ((*vreg).frequency_lsb) as u16
+                    ((((*vreg).frequency_msb) as u16) << 8) | ((*vreg).frequency_lsb) as u16
                 };
 
                 /* Abort voice if no frequency value set */
@@ -247,7 +240,11 @@ impl C140 {
                     if cnt != 0 {
                         let sample: u16 = read_word_rombank(&self.rombank, (sample_data + pos) as usize) & 0xfff0; // 12bit
                         prevdt = lastdt;
-                        lastdt = (if Self::ch_mulaw(v) { self.pcmtbl[((sample >> 8) & 0xff) as usize] } else { sample as i16 }) as i32 >> 4;
+                        lastdt = ((if Self::ch_mulaw(v) {
+                            self.pcmtbl[((sample >> 8) & 0xff) as usize]
+                        } else {
+                            sample as i16
+                        }) >> 4) as i32;
                         dltdt = lastdt - prevdt;
                     }
 
