@@ -74,7 +74,6 @@ pub struct C140 {
     reg: [u8; 0x200],
     pcmtbl: [i16; 256],
     voi: [C140Voice; MAX_VOICE],
-    lfsr: u16,
     // int1_timer
     rombank: RomBank,
 }
@@ -126,7 +125,6 @@ impl C140 {
             pcmtbl: [0; 256],
             voi: [C140Voice::default(); MAX_VOICE],
             // int1_timer
-            lfsr: 0,
             rombank: None,
         }
     }
