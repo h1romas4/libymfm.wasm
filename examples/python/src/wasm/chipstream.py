@@ -24,6 +24,7 @@ class SoundChipType(Enum):
     PWM = 14
     SEGAPCM = 15
     OKIM6258 = 16
+    C140 = 17
 
 class ChipStream:
     def __init__(self):
