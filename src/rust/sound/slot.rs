@@ -138,7 +138,7 @@ impl SoundSlot {
                         )),
                     },
                     _ => match sound_chip_type {
-                        SoundChipType::OKIM6258 => Box::new(SampleHoldUpSamplingStream::new(
+                        SoundChipType::OKIM6258 | SoundChipType::C140 => Box::new(SampleHoldUpSamplingStream::new(
                             sound_chip_sampling_rate,
                             self.output_sampling_rate,
                         )),
