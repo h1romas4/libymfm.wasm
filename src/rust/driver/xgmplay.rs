@@ -238,10 +238,9 @@ impl XgmPlay {
     }
 
     fn parse_vgm(&mut self, repeat: bool) -> u16 {
-        let command: u8;
         let mut wait: u16 = 0;
 
-        command = self.get_xgm_u8();
+        let command = self.get_xgm_u8();
         match command {
             0x00 => {
                 // frame wait (1/60 of second in NTSC, 1/50 of second in PAL)

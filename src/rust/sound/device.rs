@@ -8,7 +8,7 @@ use super::{
 };
 use std::collections::HashMap;
 
-#[derive(std::cmp::PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum DataStreamMode {
     Parallel,
     MergeS8le,

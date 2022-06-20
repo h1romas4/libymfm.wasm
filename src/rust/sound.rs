@@ -12,8 +12,10 @@ mod chip_sn76496;
 mod chip_pwm;
 mod chip_segapcm;
 mod chip_okim6258;
+mod chip_c140;
 
 pub use crate::sound::sound_chip::SoundChipType as SoundChipType;
 pub use crate::sound::slot::SoundSlot as SoundSlot;
 pub use crate::sound::rom::RomIndex as RomIndex;
+pub use crate::sound::rom::RomBusType as RomBusType;
 pub use crate::sound::device::DataStreamMode as DataStreamMode;

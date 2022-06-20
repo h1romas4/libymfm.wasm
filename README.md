@@ -35,6 +35,7 @@ The WebAssembly interface can be called from many computer languages by using Wa
 |SEGAPCM|MAME|Rust ports|
 |PWM|MAME|Rust ports|
 |OKIM6285|MAME|Rust ports|
+|C140 (exclude C149)|MAME|Rust ports|
 
 ## Web Browser Interface
 
@@ -258,10 +259,6 @@ cargo test ym2612_1 -- --nocapture
 ```
 
 ### Build Note
-
-warning: unknown feature specified for `-Ctarget-feature`: `bulk-memory`
-
-- [Add valid features (like bulk-memory and mutable-globals) to prevent cargo warnings](https://internals.rust-lang.org/t/add-valid-features-like-bulk-memory-and-mutable-globals-to-prevent-cargo-warnings/16654)
 
 WASI Library
 

@@ -14,7 +14,16 @@ pub enum RomIndex {
     YMF278B_ROM = 0x84,
     YMF278B_RAM = 0x87,
     Y8950_ROM = 0x88,
+    C140_ROM = 0x8d,
     NOT_SUPPOTED = 0xff,
+}
+
+#[allow(non_camel_case_types)]
+#[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
+pub enum RomBusType {
+    C140_TYPE_SYSTEM2,
+    C140_TYPE_SYSTEM21,
+    C140_TYPE_ASIC219,
 }
 
 ///
@@ -38,14 +47,17 @@ impl Rom {
 ///
 /// Rom set
 ///
-#[derive(Default)]
 pub struct RomSet {
     rom: Vec<Rom>,
+    bus_type: Option<RomBusType>,
 }
 
 impl RomSet {
     pub fn new() -> RomSet {
-        RomSet { rom: Vec::new() }
+        RomSet {
+            rom: Vec::new(),
+            bus_type: None,
+        }
     }
 
     ///
@@ -66,13 +78,30 @@ impl RomSet {
     ///
     /// Read the data from the ROM address.
     ///
-    pub fn read(&self, address: usize) -> u8 {
-        for r in self.rom.iter() {
-            if r.start_address <= address && r.end_address >= address {
-                return r.memory[address - r.start_address];
+    pub fn read_byte(&self, address: usize) -> u8 {
+        self.read(address)
+    }
+
+    ///
+    /// Read the data from the ROM address.
+    ///
+    pub fn read_word(&self, address: usize) -> u16 {
+        // address decode
+        match self.bus_type {
+            Some(RomBusType::C140_TYPE_SYSTEM2) => {
+                let offset = ((address & 0x200000) >> 2) | (address & 0x7ffff);
+                // high 8 bit only
+                u16::from(self.read(offset)) << 8
+            }
+            Some(RomBusType::C140_TYPE_SYSTEM21) => {
+                let offset = ((address & 0x300000) >> 1) | (address & 0x7ffff);
+                u16::from(self.read(offset)) << 8
+            }
+            Some(RomBusType::C140_TYPE_ASIC219) => 0, // c140 not used in this mode
+            None => {
+                (u16::from(self.read(address * 2 + 1)) << 8) | u16::from(self.read(address * 2))
             }
         }
-        0
     }
 
     ///
@@ -81,13 +110,37 @@ impl RomSet {
     pub fn ger_rom_ref(&self, index_no: usize) -> (*const u8, usize, usize) {
         self.rom[index_no].get_memory_ref()
     }
+
+    ///
+    /// Set ROM Bus type
+    ///
+    pub fn set_bus_type(&mut self, bus_type: Option<RomBusType>) {
+        self.bus_type = bus_type;
+    }
+
+    #[inline]
+    fn read(&self, address: usize) -> u8 {
+        for r in self.rom.iter() {
+            if r.start_address <= address && r.end_address >= address {
+                return r.memory[address - r.start_address];
+            }
+        }
+        0
+    }
 }
 
 ///
 /// Read RomBank by address utility
 ///
-pub fn read_rombank(rombank: &RomBank, address: usize) -> u8 {
-    rombank.as_ref().unwrap().borrow().read(address)
+pub fn read_byte_rombank(rombank: &RomBank, address: usize) -> u8 {
+    rombank.as_ref().unwrap().borrow().read_byte(address)
+}
+
+///
+/// Read RomBank by address utility
+///
+pub fn read_word_rombank(rombank: &RomBank, address: usize) -> u16 {
+    rombank.as_ref().unwrap().borrow().read_word(address)
 }
 
 ///

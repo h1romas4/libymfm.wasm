@@ -8,7 +8,7 @@ use crate::driver::gd3meta::Gd3;
 use crate::driver::meta::Jsonlize;
 use crate::driver::vgmmeta;
 use crate::driver::vgmmeta::VgmHeader;
-use crate::sound::{RomIndex, SoundChipType, SoundSlot};
+use crate::sound::{RomIndex, RomBusType, SoundChipType, SoundSlot};
 
 pub const VGM_TICK_RATE: u32 = 44100;
 
@@ -289,6 +289,23 @@ impl VgmPlay {
                 );
             }
         }
+        if header.clock_c140 != 0 {
+            self.sound_slot.add_sound_device(
+                SoundChipType::C140,
+                self.number_of_chip(header.clock_c140),
+                header.clock_c140 & 0x3fffffff,
+            );
+            let rom_bus_type = match header.c140_chip_type {
+                0x00 => Some(RomBusType::C140_TYPE_SYSTEM2),
+                0x01 => Some(RomBusType::C140_TYPE_SYSTEM21),
+                0x02 => Some(RomBusType::C140_TYPE_ASIC219),
+                _ => None,
+            };
+            self.sound_slot.set_rom_bus_type(
+                RomIndex::C140_ROM,
+                rom_bus_type,
+            );
+        }
 
         Ok(())
     }
@@ -326,10 +343,9 @@ impl VgmPlay {
     }
 
     fn parse_vgm(&mut self, repeat: bool) -> u16 {
-        let command: u8;
         let mut wait: u16 = 0;
 
-        command = self.get_vgm_u8();
+        let command = self.get_vgm_u8();
         match command {
             0x50 => {
                 let dat = self.get_vgm_u8();
@@ -716,6 +732,26 @@ impl VgmPlay {
                 self.sound_slot
                     .write(SoundChipType::SEGAPCM, 0, u32::from(offset), dat.into());
             }
+            0xd4 => {
+                // 0xd4: pp aa dd: C140, write value dd to register ppaa
+                let offset = u16::from(self.get_vgm_u8()) << 8 | u16::from(self.get_vgm_u8());
+                let dat = self.get_vgm_u8();
+                if offset & 0x8000 != 0 {
+                    self.sound_slot.write(
+                        SoundChipType::C140,
+                        1,
+                        (offset & 0x7fff) as u32,
+                        dat.into(),
+                    );
+                } else {
+                    self.sound_slot.write(
+                        SoundChipType::C140,
+                        0,
+                        (offset & 0x7fff) as u32,
+                        dat.into(),
+                    );
+                }
+            }
             0xe0 => {
                 // YM2612 data block 0
                 let pcm_pos = self.get_vgm_u32() as usize;
@@ -746,7 +782,7 @@ impl VgmPlay {
                 self.get_vgm_u8();
                 self.get_vgm_u8();
             }
-            0xc9..=0xcf | 0xd7..=0xdf | 0xc1..=0xc8 | 0xd1..=0xd6 => {
+            0xc9..=0xcf | 0xd7..=0xdf | 0xc1..=0xc8 | 0xd1..=0xd3 | 0xd5..=0xd6 => {
                 // 0xc1: bbaa dd: RF5C68, write value dd to memory offset aabb
                 // 0xc2: bbaa dd: RF5C164, write value dd to memory offset aabb
                 // 0xc3: cc bbaa: MultiPCM, write set bank offset aabb to channel cc
@@ -758,7 +794,6 @@ impl VgmPlay {
                 // 0xd1: pp aa dd: YMF271, port pp, write value dd to register aa
                 // 0xd2: pp aa dd: SCC1, port pp, write value dd to register aa
                 // 0xd3: pp aa dd: K054539, write value dd to register ppaa
-                // 0xd4: pp aa dd: C140, write value dd to register ppaa
                 // 0xd5: pp aa dd: ES5503, write value dd to register ppaa
                 // 0xd6: pp aa dd: ES5506, write value aadd to register pp
                 self.get_vgm_u16();
@@ -785,6 +820,7 @@ impl VgmPlay {
             0x84 => RomIndex::YMF278B_ROM,
             0x87 => RomIndex::YMF278B_RAM,
             0x88 => RomIndex::Y8950_ROM,
+            0x8d => RomIndex::C140_ROM,
             _ => RomIndex::NOT_SUPPOTED,
         }
     }
@@ -933,6 +969,21 @@ mod tests {
         play("./docs/vgm/okim6258-5-ng.vgz")
     }
 
+    #[test]
+    fn c140_1() {
+        play("./docs/vgm/c140-1.vgz")
+    }
+
+    #[test]
+    fn c140_2() {
+        play("./docs/vgm/c140-2.vgz")
+    }
+
+    #[test]
+    fn c140_3() {
+        play("./docs/vgm/c140-3.vgz")
+    }
+
     fn play(filepath: &str) {
         println!("Play start! {}", filepath);
 
@@ -946,6 +997,7 @@ mod tests {
 
         let mut pcm = File::create("output.pcm").expect("file open error.");
         // play
+        // ffplay -f f32le -ar 44100 -ac 2 output.pcm
         // ffplay -f f32le -ar 96000 -ac 2 output.pcm
         // ffmpeg -f f32le -ar 96000 -ac 2 -i output.pcm output-96000.wav
         #[allow(clippy::absurd_extreme_comparisons)]
