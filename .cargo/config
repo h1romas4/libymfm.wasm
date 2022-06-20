@@ -1,6 +1,5 @@
 [target.wasm32-wasi]
 rustflags = [
-  "-Ctarget-feature=+bulk-memory",
   "-Z", "wasi-exec-model=reactor",
   "-lc++",
   "-lc++abi",

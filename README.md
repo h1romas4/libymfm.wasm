@@ -259,10 +259,6 @@ cargo test ym2612_1 -- --nocapture
 
 ### Build Note
 
-warning: unknown feature specified for `-Ctarget-feature`: `bulk-memory`
-
-- [Add valid features (like bulk-memory and mutable-globals) to prevent cargo warnings](https://internals.rust-lang.org/t/add-valid-features-like-bulk-memory-and-mutable-globals-to-prevent-cargo-warnings/16654)
-
 WASI Library
 
 - [Add a -Zwasi-exec-model codegen option for emitting WASI reactors #79997](https://github.com/rust-lang/rust/pull/79997)
