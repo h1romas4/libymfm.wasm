@@ -13,7 +13,7 @@
  */
 use crate::sound::SoundChipType;
 use super::{
-    rom::{read_rombank, RomBank},
+    rom::{read_byte_rombank, RomBank},
     sound_chip::SoundChip,
     stream::{convert_sample_i2f, SoundStream},
     RomIndex,
@@ -102,7 +102,7 @@ impl SEGAPCM {
                         }
                     }
                     /* fetch the sample */
-                    let v = read_rombank(&self.rombank, offset as usize + (addr >> 8) as usize);
+                    let v = read_byte_rombank(&self.rombank, offset as usize + (addr >> 8) as usize);
                     let v: i32 = i32::from(v) - 0x80;
                     /* apply panning and advance */
                     buffer_l[buffer_pos + i] += convert_sample_i2f(v * (regs[2] & 0x7f) as i32);
