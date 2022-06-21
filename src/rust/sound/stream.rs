@@ -14,7 +14,7 @@ pub trait SoundStream {
     fn is_tick(&mut self) -> Tick;
     fn push(&mut self, sampling_l: f32, sampling_r: f32);
     fn drain(&mut self) -> (f32, f32);
-    fn change_sapmling_rate(&mut self, sampling_rate: u32);
+    fn change_sampling_rate(&mut self, sampling_rate: u32);
     fn get_sampling_rate(&self) -> u32;
     fn set_output_channel(&mut self, output_channel: OutputChannel);
 }
@@ -50,7 +50,7 @@ impl SoundStream for NativeStream {
         (self.now_input_sampling_l, self.now_input_sampling_r)
     }
 
-    fn change_sapmling_rate(&mut self, _sampling_rate: u32) {
+    fn change_sampling_rate(&mut self, _sampling_rate: u32) {
         panic!("I can't do that.")
     }
 
@@ -124,7 +124,7 @@ impl SoundStream for NearestDownSampleStream {
         (self.output_sampling_l, self.output_sampling_r)
     }
 
-    fn change_sapmling_rate(&mut self, _sampling_rate: u32) {
+    fn change_sampling_rate(&mut self, _sampling_rate: u32) {
         todo!()
     }
 
@@ -261,7 +261,7 @@ impl SoundStream for LinearUpSamplingStream {
         }
     }
 
-    fn change_sapmling_rate(&mut self, sampling_rate: u32) {
+    fn change_sampling_rate(&mut self, sampling_rate: u32) {
         self.input_sampling_rate = sampling_rate;
         self.output_sampling_pos = 0_f64;
         self.output_sampling_step = Self::calc_output_sampling_step(
@@ -339,7 +339,7 @@ impl SoundStream for SampleHoldUpSamplingStream {
         }
     }
 
-    fn change_sapmling_rate(&mut self, sampling_rate: u32) {
+    fn change_sampling_rate(&mut self, sampling_rate: u32) {
         self.input_sampling_rate = sampling_rate;
         self.output_sampling_pos = 0_f64;
         self.output_sampling_step = Self::calc_output_sampling_step(
@@ -406,7 +406,7 @@ impl SoundStream for OverSampleStream {
         (self.output_sampling_l, self.output_sampling_r)
     }
 
-    fn change_sapmling_rate(&mut self, _sampling_rate: u32) {
+    fn change_sampling_rate(&mut self, _sampling_rate: u32) {
         todo!()
     }
 
