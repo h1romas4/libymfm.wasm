@@ -175,11 +175,8 @@ impl XgmPlay {
 
         // set up YM2612 data stream
         // 4 PCM channels (8 bits signed at 14 Khz)
-        self.sound_slot.set_data_stream_mode(
-            SoundChipType::YM2612,
-            0,
-            DataStreamMode::MergeS8le,
-        );
+        self.sound_slot
+            .set_data_stream_mode(SoundChipType::YM2612, 0, DataStreamMode::MergeS8le);
         for channel in 0..XGM_PCM_MAX_CHANNEL as usize {
             self.sound_slot
                 .add_data_stream(SoundChipType::YM2612, 0, channel, 0, 0x2a);
@@ -295,6 +292,14 @@ impl XgmPlay {
                     self.xgm_pcm_priority.get_mut(&channel).unwrap(/* support 4ch(0x3) */);
                 let channel_now_play =
                     self.xgm_pcm_now_play.get_mut(&channel).unwrap(/* support 4ch(0x3) */);
+                // update now play state
+                if *channel_now_play
+                    && self
+                        .sound_slot
+                        .is_stop_data_stream(SoundChipType::YM2612, 0, channel)
+                {
+                    *channel_now_play = false;
+                }
                 if !*channel_now_play || *channel_priority <= priority {
                     if sample_id != 0 && sample_id <= self.xgm_sample_id_max {
                         self.sound_slot.start_data_stream_fast(

@@ -106,4 +106,11 @@ impl DataStream {
     pub fn stop_data_stream(&mut self) {
         self.data_block_length = 0;
     }
+
+    ///
+    /// Return data stream play state
+    ///
+    pub fn is_stop_data_stream(&self) -> bool {
+        self.data_block_length == 0
+    }
 }

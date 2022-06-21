@@ -148,6 +148,16 @@ impl SoundDevice {
     }
 
     ///
+    /// Return data stream play state
+    ///
+    pub fn is_stop_data_stream(&mut self, data_stream_id: usize) -> bool {
+        if let Some(data_stream) = self.data_stream.get_mut(&data_stream_id) {
+            return data_stream.is_stop_data_stream();
+        }
+        true
+    }
+
+    ///
     /// Write data stream
     ///
     fn write_data_stream(
