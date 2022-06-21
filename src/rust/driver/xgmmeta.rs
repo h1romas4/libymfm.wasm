@@ -45,7 +45,7 @@ fn parse_xgm_header(i: &[u8]) -> IResult<&[u8], XgmHeader> {
     let vdp_mode = if flags & 0b00000001 == 0 { VDPMode::NTSC } else { VDPMode::PAL };
     let gd3_tag = flags & 0b00000010 != 0;
     let multi_track_file = flags & 0b00000100 != 0;
-    let (i, /* sample data bloc */ _) = take(sample_data_bloc_size * 256)(i)?;
+    let (i, /* sample data bloc */ _) = take(sample_data_bloc_size as u32 * 256)(i)?;
     let (i, music_data_bloc_size) = le_u32(i)?;
 
     // extract sampling id table
@@ -94,7 +94,7 @@ pub(crate) fn parse_xgm_meta(xgmdata: &[u8]) -> Result<(XgmHeader, Gd3), &'stati
     };
     let gd3 = if header.gd3_tag {
         match parse_gd3(
-            &xgmdata[(0x108 + (header.sample_data_bloc_size * 256) as u32 + header.music_data_bloc_size)
+            &xgmdata[(0x108 + (header.sample_data_bloc_size as u32 * 256) + header.music_data_bloc_size)
                 as usize..],
         ) {
             Ok((_, gd3)) => gd3,

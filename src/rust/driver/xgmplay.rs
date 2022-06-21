@@ -345,6 +345,11 @@ mod tests {
         play("./docs/vgm/bare03.xgm")
     }
 
+    #[test]
+    fn xgm_4() {
+        play("./docs/vgm/xgm-1-ng.xgm")
+    }
+
     fn play(filepath: &str) {
         println!("Play start! {}", filepath);
 
