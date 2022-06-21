@@ -50,7 +50,7 @@ impl DataStream {
         let mut result = None;
         if self.data_block_length > 0 {
             result = if self.data_stream_sampling_pos >= 1_f32 {
-                self.data_stream_sampling_pos = 0_f32; /* -= -1_f32 */
+                self.data_stream_sampling_pos -= 1_f32;
                 self.data_block_length -= 1;
                 let result = Some((
                     self.data_block_id.unwrap(/* TODO: */),
@@ -94,6 +94,8 @@ impl DataStream {
     ) {
         if let Some(data_block_start_offset) = data_block_start_offset {
             self.data_block_start_offset = data_block_start_offset;
+        } else {
+            self.data_block_start_offset = 0;
         }
         self.data_block_pos = 0;
         self.data_block_length = data_block_length;
@@ -105,5 +107,12 @@ impl DataStream {
     ///
     pub fn stop_data_stream(&mut self) {
         self.data_block_length = 0;
+    }
+
+    ///
+    /// Return data stream play state
+    ///
+    pub fn is_stop_data_stream(&self) -> bool {
+        self.data_block_length == 0
     }
 }

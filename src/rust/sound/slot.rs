@@ -435,6 +435,21 @@ impl SoundSlot {
     }
 
     ///
+    /// Return data stream play state
+    ///
+    pub fn is_stop_data_stream(
+        &mut self,
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
+        data_stream_id: usize,
+    ) -> bool {
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
+            return sound_device.is_stop_data_stream(data_stream_id);
+        }
+        true
+    }
+
+    ///
     /// Add rom bank
     ///
     fn add_rom_bank<T: SoundChip>(&mut self, rom_index: Vec<RomIndex>, sound_chip: &mut T) {
