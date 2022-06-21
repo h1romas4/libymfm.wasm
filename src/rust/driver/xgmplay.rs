@@ -30,6 +30,8 @@ pub struct XgmPlay {
     xgm_header: Option<XgmHeader>,
     xgm_gd3: Option<Gd3>,
     xgm_pcm_priority: HashMap<usize, u8>,
+    xgm_pcm_now_play: HashMap<usize, bool>,
+    xgm_sample_id_max: usize,
     remain_tick_count: usize,
 }
 
@@ -49,6 +51,8 @@ impl XgmPlay {
             xgm_header: None,
             xgm_gd3: None,
             xgm_pcm_priority: HashMap::new(),
+            xgm_pcm_now_play: HashMap::new(),
+            xgm_sample_id_max: 0,
             remain_tick_count: 0,
         };
         // clone vgm_file and soundchip init
@@ -186,6 +190,7 @@ impl XgmPlay {
                 XGM_PCM_SAMPLING_RATE,
             );
             self.xgm_pcm_priority.insert(channel, 0);
+            self.xgm_pcm_now_play.insert(channel, false);
         }
 
         // parse sample table
@@ -198,6 +203,7 @@ impl XgmPlay {
             // create data stream into sound device
             self.sound_slot
                 .add_data_block(data_stream_id, &self.xgm_data[start_address..end_address]);
+            self.xgm_sample_id_max = data_stream_id;
         }
 
         Ok(())
@@ -287,18 +293,24 @@ impl XgmPlay {
                 let sample_id = self.get_xgm_u8() as usize;
                 let channel_priority =
                     self.xgm_pcm_priority.get_mut(&channel).unwrap(/* support 4ch(0x3) */);
-                if sample_id != 0 && *channel_priority <= priority {
-                    self.sound_slot.start_data_stream_fast(
-                        SoundChipType::YM2612,
-                        0,
-                        channel,
-                        sample_id,
-                    );
-                    *channel_priority = priority;
-                } else if sample_id == 0 {
-                    self.sound_slot
-                        .stop_data_stream(SoundChipType::YM2612, 0, channel);
-                    *channel_priority = 0;
+                let channel_now_play =
+                    self.xgm_pcm_now_play.get_mut(&channel).unwrap(/* support 4ch(0x3) */);
+                if !*channel_now_play || *channel_priority <= priority {
+                    if sample_id != 0 && sample_id <= self.xgm_sample_id_max {
+                        self.sound_slot.start_data_stream_fast(
+                            SoundChipType::YM2612,
+                            0,
+                            channel,
+                            sample_id,
+                        );
+                        *channel_priority = priority;
+                        *channel_now_play = true;
+                    } else {
+                        self.sound_slot
+                            .stop_data_stream(SoundChipType::YM2612, 0, channel);
+                        *channel_priority = 0;
+                        *channel_now_play = false;
+                    }
                 }
             }
             0x7e => {
