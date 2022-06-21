@@ -94,6 +94,8 @@ impl DataStream {
     ) {
         if let Some(data_block_start_offset) = data_block_start_offset {
             self.data_block_start_offset = data_block_start_offset;
+        } else {
+            self.data_block_start_offset = 0;
         }
         self.data_block_pos = 0;
         self.data_block_length = data_block_length;
