@@ -318,6 +318,7 @@ BSD 3-Clause License
     - [x] Fix SEGAPCM
     - [x] OKIM6285
     - [x] C140
+    - [ ] C149
     - [ ] OKIM6295
     - [ ] Next to be determined
 - [ ] Examples source
