@@ -25,9 +25,9 @@ checksum = "b3f9eb837c6a783fbf002e3e5cc7925a3aa6893d6d42f9169517528983777590"
 
 [[package]]
 name = "array-macro"
-version = "1.0.5"
+version = "2.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "06e97b4e522f9e55523001238ac59d13a8603af57f69980de5d8de4bbbe8ada6"
+checksum = "457661fa6716c30b73d7c41400a8a78780d20523b83a9441dabec28e93f27cf4"
 
 [[package]]
 name = "arrayvec"
