@@ -63,13 +63,13 @@ Source code:
 ## WASI Commnad Line Interface
 
 - Install [Wasmer](https://wasmer.io/) runtime
-- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.9.2) from pre-build release
+- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.9.3) from pre-build release
 
 Options
 
 ```
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.9.2
+libymfm-cli 0.9.3
 Hiromasa Tanaka <h1romas4@gmail.com>
 libymfm CLI
 
@@ -318,6 +318,7 @@ BSD 3-Clause License
     - [x] Fix SEGAPCM
     - [x] OKIM6285
     - [x] C140
+    - [ ] C149
     - [ ] OKIM6295
     - [ ] Next to be determined
 - [ ] Examples source

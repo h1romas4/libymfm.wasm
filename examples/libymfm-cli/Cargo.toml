@@ -1,9 +1,9 @@
 [package]
 name = "libymfm-cli"
-version = "0.9.2"
+version = "0.9.3"
 authors = ["Hiromasa Tanaka <h1romas4@gmail.com>"]
 description = "libymfm CLI"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 libymfm = { path = "../../", default-features = false }
