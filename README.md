@@ -300,7 +300,7 @@ BSD 3-Clause License
     - [x] Support all data stream (now only support YM2612 and OKIM6285)
 - [x] Non-vgm driver support
     - [x] XGM
-        - [ ] There is still a bug with multi-channel PCM.
+        - [x] There is still a bug with multi-channel PCM.
 - [x] Multilingual Interface
     - [x] CLI
     - [x] Web/JavaScript
@@ -317,6 +317,8 @@ BSD 3-Clause License
 - [X] Add support sound chip
     - [x] Fix SEGAPCM
     - [x] OKIM6285
+    - [x] C140
+    - [ ] OKIM6295
     - [ ] Next to be determined
 - [ ] Examples source
     - [ ] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well.
