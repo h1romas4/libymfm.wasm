@@ -452,6 +452,24 @@ pub extern "C" fn sound_slot_stop_data_stream(
 }
 
 #[no_mangle]
+pub extern "C" fn sound_slot_is_stop_data_stream(
+    sounde_slot_index: u32,
+    sound_chip_type: u32,
+    sound_chip_index: u32,
+    data_stream_id: u32,
+) -> bool {
+    get_sound_slot_bank()
+        .borrow_mut()
+        .get_mut(sounde_slot_index as usize)
+        .unwrap()
+        .is_stop_data_stream(
+            get_sound_chip_type(sound_chip_type),
+            sound_chip_index as usize,
+            data_stream_id as usize,
+        )
+}
+
+#[no_mangle]
 pub extern "C" fn vgm_get_sampling_l_ref(vgm_index_id: u32) -> *const f32 {
     get_vgm_bank()
         .borrow_mut()
