@@ -50,7 +50,6 @@ impl DataStream {
         let mut result = None;
         if self.data_block_length > 0 {
             result = if self.data_stream_sampling_pos >= 1_f32 {
-                self.data_stream_sampling_pos -= 1_f32;
                 self.data_block_length -= 1;
                 let result = Some((
                     self.data_block_id.unwrap(/* TODO: */),
@@ -63,8 +62,12 @@ impl DataStream {
             } else {
                 None
             };
-            self.data_stream_sampling_pos += self.data_stream_sample_step;
         }
+        // DataStreams with the same generation timing synchronize their clocks.
+        if self.data_stream_sampling_pos >= 1_f32 {
+            self.data_stream_sampling_pos -= 1_f32;
+        }
+        self.data_stream_sampling_pos += self.data_stream_sample_step;
         result
     }
 
@@ -99,7 +102,6 @@ impl DataStream {
         }
         self.data_block_pos = 0;
         self.data_block_length = data_block_length;
-        self.data_stream_sampling_pos = 0_f32;
     }
 
     ///
