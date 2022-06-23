@@ -35,7 +35,7 @@ The WebAssembly interface can be called from many computer languages by using Wa
 |SEGAPCM|MAME|Rust ports|
 |PWM|MAME|Rust ports|
 |OKIM6285|MAME|Rust ports|
-|C140 (exclude C149)|MAME|Rust ports|
+|C140 (exclude C219)|MAME|Rust ports|
 
 ## Web Browser Interface
 
@@ -318,7 +318,7 @@ BSD 3-Clause License
     - [x] Fix SEGAPCM
     - [x] OKIM6285
     - [x] C140
-    - [ ] C149
+    - [ ] C219
     - [ ] OKIM6295
     - [ ] Next to be determined
 - [ ] Examples source
