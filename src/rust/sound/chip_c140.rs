@@ -58,13 +58,14 @@ TODO:
     2020.05.06  cam900       Implement some features from QuattroPlay sources, by superctr
 */
 use super::{
-    rom::{read_word_rombank, RomBank},
+    rom::{read_word, RomBank},
     sound_chip::SoundChip,
-    stream::{SoundStream, convert_sample_i2f},
+    stream::{convert_sample_i2f, SoundStream},
     RomIndex, SoundChipType,
 };
 
 const MAX_VOICE: usize = 24;
+const ASIC_219_BANKS: [i16; 4] = [0x1f7, 0x1f1, 0x1f3, 0x1f5];
 
 #[allow(non_snake_case)]
 pub struct C140 {
@@ -159,11 +160,7 @@ impl C140 {
 
     pub fn rom_bank_updated(&mut self) {}
 
-    pub fn sound_stream_update(
-        &mut self,
-        buffer_l: &mut [f32],
-        buffer_r: &mut [f32],
-    ) {
+    pub fn sound_stream_update(&mut self, buffer_l: &mut [f32], buffer_r: &mut [f32]) {
         let mut dt: i32;
 
         let pbase: f32 = self.baserate as f32 * 2.0_f32 / self.sample_rate as f32;
@@ -208,7 +205,7 @@ impl C140 {
                 let sz = ed - st;
 
                 /* Retrieve base pointer to the sample data */
-                let sample_data = Self::find_sample(st, v.bank, i as i32);
+                let sample_data = Self::find_sample(st, v.bank);
 
                 /* Fetch back previous data pointers */
                 let mut offset = v.ptoffset;
@@ -235,7 +232,8 @@ impl C140 {
                     }
 
                     if cnt != 0 {
-                        let sample: u16 = read_word_rombank(&self.rombank, (sample_data + pos) as usize) & 0xfff0; // 12bit
+                        let sample: u16 =
+                            read_word(&self.rombank, (sample_data + pos) as usize) & 0xfff0; // 12bit
                         prevdt = lastdt;
                         lastdt = ((if Self::ch_mulaw(v) {
                             self.pcmtbl[((sample >> 8) & 0xff) as usize]
@@ -305,13 +303,13 @@ impl C140 {
                 }
             }
         } /* else if offset == 0x1fa {
-             unimplemented!("init1_timer 1");
-        } else if offset == 0x1fe {
-             unimplemented!("init1_timer 2");
-        } */
+               unimplemented!("init1_timer 1");
+          } else if offset == 0x1fe {
+               unimplemented!("init1_timer 2");
+          } */
     }
 
-    fn find_sample(adrs: i32, bank: i32, _voice: i32) -> i32 {
+    fn find_sample(adrs: i32, bank: i32) -> i32 {
         (bank << 16) + adrs
     }
 
@@ -323,6 +321,273 @@ impl C140 {
     #[inline]
     fn ch_mulaw(v: &C140Voice) -> bool {
         ((v.mode >> 3) & 0x1) == 0x1
+    }
+}
+
+pub struct C219 {
+    sample_rate: i32,
+    baserate: i32,
+    reg: [u8; 0x200],
+    pcmtbl: [i16; 256],
+    voi: [C140Voice; MAX_VOICE],
+    lfsr: u16,
+    // int1_timer
+    rombank: RomBank,
+}
+
+impl C219 {
+    fn new() -> Self {
+        C219 {
+            sample_rate: 0,
+            baserate: 0,
+            reg: [0; 0x200],
+            pcmtbl: [0; 256],
+            voi: [C140Voice::default(); MAX_VOICE],
+            lfsr: 0,
+            // int1_timer
+            rombank: None,
+        }
+    }
+
+    pub fn device_start(&mut self) {
+        // generate mulaw table (Verified from Wii Virtual Console Arcade Knuckle Heads)
+        // same as c352.cpp
+        let mut j: i16 = 0;
+        for i in 0..128 {
+            self.pcmtbl[i] = j << 5;
+            if i < 16 {
+                j += 1;
+            } else if i < 24 {
+                j += 2;
+            } else if i < 48 {
+                j += 4;
+            } else if i < 100 {
+                j += 8;
+            } else {
+                j += 16;
+            }
+        }
+        for i in 0..128 {
+            self.pcmtbl[i + 128] = (!self.pcmtbl[i] as u16 & 0xffe0) as i16;
+        }
+
+        self.lfsr = 0x1234;
+    }
+
+    pub fn device_clock_changed(&mut self, clock: i32) -> i32 {
+        self.sample_rate = clock;
+        self.baserate = self.sample_rate;
+
+        /* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
+        // self.mixer_buffer_left = Some(vec![0; self.sample_rate as usize]);
+        // self.mixer_buffer_right = Some(vec![0; self.sample_rate as usize]);
+
+        self.sample_rate
+    }
+
+    pub fn rom_bank_updated(&mut self) {}
+
+    pub fn sound_stream_update(&mut self, buffer_l: &mut [f32], buffer_r: &mut [f32]) {
+        let mut dt: i32;
+
+        let pbase: f32 = self.baserate as f32 * 2.0_f32 / self.sample_rate as f32;
+
+        let mut lmix: i16;
+        let mut rmix: i16;
+
+        // let samples: i32 = self.sample_rate;
+        /* for libymfm (1 tick) */
+        let samples: i32 = 1;
+
+        /* zap the contents of the mixer buffer */
+        lmix = 0;
+        rmix = 0;
+
+        //--- audio update
+        for i in 0..16 {
+            let v: &mut C140Voice = &mut self.voi[i];
+            // const struct voice_registers *vreg = (struct voice_registers *)&m_REG[i * 16];
+            let vreg = &self.reg[i * 16..] as *const [u8] as *const VoiceRegisters;
+
+            if v.key != 0 {
+                let frequency: u16 = unsafe {
+                    ((((*vreg).frequency_msb) as u16) << 8) | ((*vreg).frequency_lsb) as u16
+                };
+
+                /* Abort voice if no frequency value set */
+                if frequency == 0 {
+                    continue;
+                }
+
+                /* Delta =  frequency * ((8MHz/374)*2 / sample rate) */
+                let delta: i32 = (frequency as f32 * pbase) as i32;
+
+                /* Calculate left/right channel volumes */
+                let lvol: i32 = unsafe { (((*vreg).volume_left) as i32 * 32) / MAX_VOICE as i32 }; //32ch -> 24ch
+                let rvol: i32 = unsafe { (((*vreg).volume_right) as i32 * 32) / MAX_VOICE as i32 };
+
+                /* Retrieve sample start/end and calculate size */
+                let st = v.sample_start;
+                let ed = v.sample_end;
+                let sz = ed - st;
+
+                /* Retrieve base pointer to the sample data */
+                let sample_data = Self::find_sample(st, v.bank, i as i32, &self.reg);
+
+                /* Fetch back previous data pointers */
+                let mut offset = v.ptoffset;
+                let mut pos = v.pos;
+                let mut lastdt = v.lastdt;
+                let mut prevdt = v.prevdt;
+                let mut dltdt = v.dltdt;
+
+                /* linear or compressed 8bit signed PCM */
+                for _ in 0..samples {
+                    offset += delta;
+                    let cnt = (offset >> 16) & 0x7fff;
+                    offset &= 0xffff;
+                    pos += cnt;
+                    /* Check for the end of the sample */
+                    if pos >= sz {
+                        /* Check if its a looping sample, either stop or loop */
+                        if Self::ch_looped(v) || Self::ch_noise(v) {
+                            pos = v.sample_loop - st;
+                        } else {
+                            v.key = 0;
+                            break;
+                        }
+                    }
+
+                    let shift: i32 = if Self::ch_noise(v) { 8 } else { 3 };
+
+                    if cnt != 0 {
+                        prevdt = lastdt;
+
+                        if Self::ch_noise(v) {
+                            self.lfsr = ((self.lfsr >> 1) as i16 ^ ((-(self.lfsr as i16 & 1)) as u16 & 0xfff6) as i16) as u16;
+                            lastdt = self.lfsr as i32;
+                        } else {
+                            lastdt = ((read_word(&self.rombank, ((sample_data + pos) >> 1) as usize) & 0xff00) >> 8) as i8 as i32;
+                            // 11 bit mulaw
+                            if Self::ch_mulaw(v) {
+                                lastdt = (self.pcmtbl[(lastdt & 0xff) as usize] as i32) >> 5;
+                            } else {
+                                lastdt <<= 3;
+                            }
+                        }
+
+                        // Sign flip
+                        if Self::ch_inv_sign(v) {
+                            lastdt = -lastdt;
+                        }
+
+                        dltdt = lastdt - prevdt;
+                    }
+
+                    /* Caclulate the sample value */
+                    dt = ((dltdt * offset) >> 16) + prevdt;
+
+                    /* Write the data to the sample buffers */
+                    lmix += ((if Self::ch_inv_lout(v) {
+                        -(dt * lvol)
+                    } else {
+                        dt * lvol
+                    }) >> (5 + shift)) as i16;
+                    rmix += ((dt * rvol) >> (5 + shift)) as i16;
+                }
+
+                /* Save positional data for next callback */
+                v.ptoffset = offset;
+                v.pos = pos;
+                v.lastdt = lastdt;
+                v.prevdt = prevdt;
+                v.dltdt = dltdt;
+            }
+        }
+
+        /* render to MAME's stream buffer */
+        for i in 0..samples as usize {
+            // TODO:
+            buffer_l[i] = convert_sample_i2f(lmix as i32 * 4);
+            buffer_r[i] = convert_sample_i2f(rmix as i32 * 4);
+        }
+    }
+
+    pub fn c219_w(&mut self, offset: usize, data: u8) {
+        let mut offset: usize = offset & 0x1ff;
+
+    	// mirror the bank registers on the 219, fixes bkrtmaq (and probably xday2 based on notes in the HLE)
+        if offset >= 0x1f8 && (offset & 0x1) == 1 {
+            offset = (offset as isize - 8) as usize;
+        }
+
+        self.reg[offset] = data;
+        if offset < 0x100 { // only 16 voices
+            let ch = (offset >> 4) as usize;
+            let v: &mut C140Voice = &mut self.voi[ch];
+
+            if offset & 0xf == 0x5 {
+                if data & 0x80 != 0 {
+                    let vreg = &self.reg[(offset & 0x1f0) as usize..] as *const [u8]
+                        as *const VoiceRegisters;
+                    v.key = 1;
+                    v.ptoffset = 0;
+                    v.pos = 0;
+                    v.lastdt = 0;
+                    v.prevdt = 0;
+                    v.dltdt = 0;
+                    v.bank = unsafe { (*vreg).bank as i32 };
+                    v.mode = data as i32;
+
+                    let sample_loop: u32 =
+                        unsafe { (u32::from((*vreg).loop_msb) << 8) + (*vreg).loop_lsb as u32 };
+                    let start: u32 =
+                        unsafe { (u32::from((*vreg).start_msb) << 8) + (*vreg).start_lsb as u32 };
+                    let end: u32 =
+                        unsafe { (u32::from((*vreg).end_msb) << 8) + (*vreg).end_lsb as u32 };
+                    // on the 219 asic, addresses are in words
+                    v.sample_loop = (sample_loop as i32) << 1;
+                    v.sample_start = (start as i32) << 1;
+                    v.sample_end = (end as i32) << 1;
+                } else {
+                    v.key = 0;
+                }
+            }
+        }
+    	// TODO: No interrupt/timers?
+    }
+
+    fn find_sample(adrs: i32, bank: i32, voice: i32, reg: &[u8]) -> i32 {
+        let adrs = (bank << 16) + adrs;
+
+        // ASIC219's banking is fairly simple
+        ((reg[(ASIC_219_BANKS[(voice / 4) as usize]) as usize] & 0x3) as u32 * 0x20000) as i32
+            + adrs
+    }
+
+    #[inline]
+    fn ch_noise(v: &C140Voice) -> bool {
+        ((v.mode >> 2) & 0x1) == 0x1
+    }
+
+    #[inline]
+    fn ch_inv_lout(v: &C140Voice) -> bool {
+        ((v.mode >> 3) & 0x1) == 0x1
+    }
+
+    #[inline]
+    fn ch_inv_sign(v: &C140Voice) -> bool {
+        ((v.mode >> 6) & 0x1) == 0x1
+    }
+
+    #[inline]
+    fn ch_looped(v: &C140Voice) -> bool {
+        ((v.mode >> 4) & 0x1) == 0x1
+    }
+
+    #[inline]
+    fn ch_mulaw(v: &C140Voice) -> bool {
+        ((v.mode /* >> 0*/) & 0x1) == 0x1
     }
 }
 
@@ -342,6 +607,41 @@ impl SoundChip for C140 {
 
     fn write(&mut self, _: usize, offset: u32, data: u32, _sound_stream: &mut dyn SoundStream) {
         self.c140_w(offset as usize, data as u8);
+    }
+
+    fn tick(&mut self, _: usize, sound_stream: &mut dyn SoundStream) {
+        let mut l: [f32; 1] = [0_f32];
+        let mut r: [f32; 1] = [0_f32];
+        self.sound_stream_update(&mut l, &mut r);
+        sound_stream.push(l[0], r[0]);
+    }
+
+    fn set_rom_bank(&mut self, _ /* C140 has only one RomBank */: RomIndex, rombank: RomBank) {
+        self.rombank = rombank;
+        self.rom_bank_updated();
+    }
+
+    fn notify_add_rom(&mut self, _: RomIndex, _: usize) {
+        self.rom_bank_updated();
+    }
+}
+
+impl SoundChip for C219 {
+    fn new(_sound_device_name: SoundChipType) -> Self {
+        C219::new()
+    }
+
+    fn init(&mut self, clock: u32) -> u32 {
+        self.device_start();
+        self.device_clock_changed(clock as i32) as u32
+    }
+
+    fn reset(&mut self) {
+        todo!("not impliments");
+    }
+
+    fn write(&mut self, _: usize, offset: u32, data: u32, _sound_stream: &mut dyn SoundStream) {
+        self.c219_w(offset as usize, data as u8);
     }
 
     fn tick(&mut self, _: usize, sound_stream: &mut dyn SoundStream) {

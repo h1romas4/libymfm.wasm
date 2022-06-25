@@ -23,7 +23,7 @@ pub enum RomIndex {
 pub enum RomBusType {
     C140_TYPE_SYSTEM2,
     C140_TYPE_SYSTEM21,
-    C140_TYPE_ASIC219,
+    C219_TYPE_ASIC219,
 }
 
 ///
@@ -96,8 +96,10 @@ impl RomSet {
             Some(RomBusType::C140_TYPE_SYSTEM21) => {
                 let offset = ((address & 0x300000) >> 1) | (address & 0x7ffff);
                 u16::from(self.read(offset)) << 8
-            }
-            Some(RomBusType::C140_TYPE_ASIC219) => 0, // c140 not used in this mode
+            },
+            Some(RomBusType::C219_TYPE_ASIC219) => {
+                (u16::from(self.read(address * 2 + 1)) << 8) | u16::from(self.read(address * 2))
+            },
             None => {
                 (u16::from(self.read(address * 2 + 1)) << 8) | u16::from(self.read(address * 2))
             }
@@ -132,14 +134,14 @@ impl RomSet {
 ///
 /// Read RomBank by address utility
 ///
-pub fn read_byte_rombank(rombank: &RomBank, address: usize) -> u8 {
+pub fn read_byte(rombank: &RomBank, address: usize) -> u8 {
     rombank.as_ref().unwrap().borrow().read_byte(address)
 }
 
 ///
 /// Read RomBank by address utility
 ///
-pub fn read_word_rombank(rombank: &RomBank, address: usize) -> u16 {
+pub fn read_word(rombank: &RomBank, address: usize) -> u16 {
     rombank.as_ref().unwrap().borrow().read_word(address)
 }
 

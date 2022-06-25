@@ -5,7 +5,7 @@ use std::cmp::Ordering;
 use std::collections::{HashMap, VecDeque};
 use std::rc::Rc;
 
-use super::chip_c140::C140;
+use super::chip_c140::{C140, C219};
 use super::chip_okim6258::OKIM6258;
 use super::chip_pwm::PWM;
 use super::chip_segapcm::SEGAPCM;
@@ -116,7 +116,12 @@ impl SoundSlot {
                     let mut c140 = Box::new(C140::new(SoundChipType::C140));
                     self.add_rom_bank(vec![RomIndex::C140_ROM], &mut *c140);
                     c140
-                }
+                },
+                SoundChipType::C219 => {
+                    let mut c219 = Box::new(C219::new(SoundChipType::C219));
+                    self.add_rom_bank(vec![RomIndex::C140_ROM], &mut *c219);
+                    c219
+                },
             };
 
             // initialize sound chip

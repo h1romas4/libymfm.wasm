@@ -28,6 +28,7 @@ pub enum SoundChipType {
     SEGAPCM,
     OKIM6258,
     C140,
+    C219,
 }
 
 ///

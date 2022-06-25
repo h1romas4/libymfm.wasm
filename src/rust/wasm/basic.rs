@@ -664,7 +664,7 @@ fn get_rom_bus_type(rom_bus_type: u32) -> Option<RomBusType> {
         0 => None,
         1 => Some(RomBusType::C140_TYPE_SYSTEM2),
         2 => Some(RomBusType::C140_TYPE_SYSTEM21),
-        3 => Some(RomBusType::C140_TYPE_ASIC219),
+        3 => Some(RomBusType::C219_TYPE_ASIC219),
         _ => panic!("not supported rom bus type type"),
     }
 }
