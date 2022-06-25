@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 /**
- * Rust SN76496 emulation
+ * Rust SN76496 ports by
  *  Hiromasa Tanaka <h1romas4@gmail.com>
  *  https://github.com/h1romas4/libymfm.wasm
  *
@@ -13,6 +13,9 @@
 /**
  * Original SN76489 emulation Copyright
  */
+// license:BSD-3-Clause
+// copyright-holders:Nicola Salmoria
+
 /***************************************************************************
 
   sn76496.c

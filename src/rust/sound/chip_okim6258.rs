@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 /**
- * Rust OKI MSM6258 emulation
+ * Rust OKI MSM6258 ports by
  *  Hiromasa Tanaka <h1romas4@gmail.com>
  *  https://github.com/h1romas4/libymfm.wasm
  *
@@ -14,6 +14,9 @@
 /**
  * Original SN76489 emulation Copyright
  */
+// license:BSD-3-Clause
+// copyright-holders:Barry Rodewald
+
 /**********************************************************************************************
  *
  *   OKI MSM6258 ADPCM
