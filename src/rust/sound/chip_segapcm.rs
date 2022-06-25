@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 /**
- * Rust SEGAPCM emulation
+ * Rust SEGAPCM ports by
  *  Hiromasa Tanaka <h1romas4@gmail.com>
  *  https://github.com/h1romas4/libymfm.wasm
  *
@@ -10,6 +10,13 @@
  *  https://github.com/mamedev/mame/blob/master/src/devices/sound/segapcm.cpp
  *  rev. 70743c6fb2602a5c2666c679b618706eabfca2ad
  */
+
+/**
+ * Original SEGAPCM emulation Copyright
+ */
+// license:BSD-3-Clause
+// copyright-holders:Hiromitsu Shioya, Olivier Galibert
+
 use crate::sound::SoundChipType;
 use super::{
     rom::{read_byte, RomBank},

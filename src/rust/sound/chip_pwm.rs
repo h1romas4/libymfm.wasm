@@ -1,6 +1,6 @@
 // license:BSD-3-Clause
 /**
- * Rust PWM emulation
+ * Rust PWM ports by
  *  Hiromasa Tanaka <h1romas4@gmail.com>
  *  https://github.com/h1romas4/libymfm.wasm
  *
@@ -10,6 +10,13 @@
  *  https://github.com/mamedev/mame/blob/master/src/mame/machine/mega32x.cpp
  *  rev. ee1e4f9683a4953cb9d88f9256017fcbc38e3144
  */
+
+/**
+ * Original Megadrive / Genesis 32X emulation Copyright
+ */
+// license:BSD-3-Clause
+// copyright-holders:David Haywood
+
 use super::{
     rom::RomBank,
     sound_chip::SoundChip,
