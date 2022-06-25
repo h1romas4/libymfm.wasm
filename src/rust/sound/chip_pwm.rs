@@ -1,5 +1,4 @@
 // license:BSD-3-Clause
-// copyright-holders:Hiromasa Tanaka
 /**
  * Rust PWM emulation
  *  Hiromasa Tanaka <h1romas4@gmail.com>
