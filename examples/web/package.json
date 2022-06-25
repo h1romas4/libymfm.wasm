@@ -12,7 +12,7 @@
         "@babel/eslint-parser": "^7.15.8",
         "@babel/plugin-transform-runtime": "^7.15.8",
         "@babel/preset-env": "^7.15.8",
-        "@parcel/source-map": "^2.6.2",
+        "@parcel/source-map": "^2.0.5",
         "@parcel/transformer-worklet": "^2.6.2",
         "@wasmer/wasm-transformer": "^0.12.0",
         "events": "^3.3.0",
