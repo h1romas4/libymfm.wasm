@@ -8,7 +8,7 @@ use crate::driver::gd3meta::Gd3;
 use crate::driver::meta::Jsonlize;
 use crate::driver::vgmmeta;
 use crate::driver::vgmmeta::VgmHeader;
-use crate::sound::{RomIndex, RomBusType, SoundChipType, SoundSlot};
+use crate::sound::{RomBusType, RomIndex, SoundChipType, SoundSlot};
 
 pub const VGM_TICK_RATE: u32 = 44100;
 
@@ -290,21 +290,29 @@ impl VgmPlay {
             }
         }
         if header.clock_c140 != 0 {
-            self.sound_slot.add_sound_device(
-                SoundChipType::C140,
-                self.number_of_chip(header.clock_c140),
-                header.clock_c140 & 0x3fffffff,
-            );
             let rom_bus_type = match header.c140_chip_type {
                 0x00 => Some(RomBusType::C140_TYPE_SYSTEM2),
                 0x01 => Some(RomBusType::C140_TYPE_SYSTEM21),
-                0x02 => Some(RomBusType::C140_TYPE_ASIC219),
+                0x02 => Some(RomBusType::C219_TYPE_ASIC219),
                 _ => None,
             };
-            self.sound_slot.set_rom_bus_type(
-                RomIndex::C140_ROM,
-                rom_bus_type,
-            );
+            // select chip type
+            if Some(RomBusType::C219_TYPE_ASIC219) == rom_bus_type {
+                self.sound_slot.add_sound_device(
+                    SoundChipType::C219,
+                    self.number_of_chip(header.clock_c140),
+                    header.clock_c140 & 0x3fffffff,
+                );
+            } else {
+                self.sound_slot.add_sound_device(
+                    SoundChipType::C140,
+                    self.number_of_chip(header.clock_c140),
+                    header.clock_c140 & 0x3fffffff,
+                );
+            }
+            // set rom bus type
+            self.sound_slot
+                .set_rom_bus_type(RomIndex::C140_ROM, rom_bus_type);
         }
 
         Ok(())
@@ -736,20 +744,19 @@ impl VgmPlay {
                 // 0xd4: pp aa dd: C140, write value dd to register ppaa
                 let offset = u16::from(self.get_vgm_u8()) << 8 | u16::from(self.get_vgm_u8());
                 let dat = self.get_vgm_u8();
-                if offset & 0x8000 != 0 {
-                    self.sound_slot.write(
-                        SoundChipType::C140,
-                        1,
-                        (offset & 0x7fff) as u32,
-                        dat.into(),
-                    );
+                // select chip type
+                let sound_chip_type = if self.vgm_header.as_ref().unwrap().c140_chip_type != /* C219_TYPE_ASIC219 */ 0x2
+                {
+                    SoundChipType::C140
                 } else {
-                    self.sound_slot.write(
-                        SoundChipType::C140,
-                        0,
-                        (offset & 0x7fff) as u32,
-                        dat.into(),
-                    );
+                    SoundChipType::C219
+                };
+                if offset & 0x8000 != 0 {
+                    self.sound_slot
+                        .write(sound_chip_type, 1, (offset & 0x7fff) as u32, dat.into());
+                } else {
+                    self.sound_slot
+                        .write(sound_chip_type, 0, (offset & 0x7fff) as u32, dat.into());
                 }
             }
             0xe0 => {
@@ -982,6 +989,11 @@ mod tests {
     #[test]
     fn c140_3() {
         play("./docs/vgm/c140-3.vgz")
+    }
+
+    #[test]
+    fn c219_1() {
+        play("./docs/vgm/c219-1.vgz")
     }
 
     fn play(filepath: &str) {
