@@ -294,6 +294,9 @@ BSD 3-Clause License
 
 ## TODO / Known Issues
 
+- [ ] System
+    - [ ] fix ROM bus architecture.
+    - [ ] add support sound mixer.
 - [x] VGM driver
     - [x] YM2141 clock worng?
     - [x] Is there a problem with the file parser? The beginning of the song may be wrong.

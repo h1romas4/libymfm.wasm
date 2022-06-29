@@ -21,7 +21,7 @@ use super::{
     rom::RomBank,
     sound_chip::SoundChip,
     stream::SoundStream,
-    RomIndex, SoundChipType,
+    RomIndex, SoundChipType, RomBusType,
 };
 
 const PWM_FIFO_SIZE: usize = 3;
@@ -249,7 +249,7 @@ impl PWM {
 }
 
 impl SoundChip for PWM {
-    fn new(_sound_device_name: SoundChipType) -> Self {
+    fn create(_sound_device_name: SoundChipType) -> Self {
         PWM::new()
     }
 
@@ -258,7 +258,7 @@ impl SoundChip for PWM {
     }
 
     fn reset(&mut self) {
-        todo!("WIP");
+        todo!("not impliments");
     }
 
     fn write(&mut self, _: usize, port: u32, data: u32, _: &mut dyn SoundStream) {
@@ -289,6 +289,10 @@ impl SoundChip for PWM {
     }
 
     fn notify_add_rom(&mut self, _: RomIndex, _: usize) {
+        /* nothing to do */
+    }
+
+    fn set_rom_bus(&mut self, _: Option<RomBusType>) {
         /* nothing to do */
     }
 }

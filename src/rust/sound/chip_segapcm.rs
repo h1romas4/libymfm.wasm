@@ -22,7 +22,7 @@ use super::{
     rom::{read_byte, RomBank},
     sound_chip::SoundChip,
     stream::{convert_sample_i2f, SoundStream},
-    RomIndex,
+    RomIndex, RomBusType,
 };
 
 #[allow(clippy::upper_case_acronyms)]
@@ -129,7 +129,7 @@ impl SEGAPCM {
 }
 
 impl SoundChip for SEGAPCM {
-    fn new(_sound_device_name: SoundChipType) -> Self {
+    fn create(_sound_device_name: SoundChipType) -> Self {
         SEGAPCM::from()
     }
 
@@ -157,6 +157,10 @@ impl SoundChip for SEGAPCM {
     }
 
     fn notify_add_rom(&mut self, _: RomIndex, _: usize) {
+        /* nothing to do */
+    }
+
+    fn set_rom_bus(&mut self, _: Option<RomBusType>) {
         /* nothing to do */
     }
 }

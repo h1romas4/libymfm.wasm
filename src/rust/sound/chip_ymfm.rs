@@ -4,7 +4,7 @@ use super::{
     rom::{get_rom_ref, RomBank},
     sound_chip::SoundChip,
     stream::{convert_sample_i2f, SoundStream},
-    RomIndex, SoundChipType,
+    RomIndex, SoundChipType, RomBusType,
 };
 use std::collections::HashMap;
 
@@ -93,7 +93,7 @@ impl Drop for YmFm {
 }
 
 impl SoundChip for YmFm {
-    fn new(sound_device_name: SoundChipType) -> Self {
+    fn create(sound_device_name: SoundChipType) -> Self {
         let chip_type = match sound_device_name {
             SoundChipType::YM2151 => ChipType::CHIP_YM2151,
             SoundChipType::YM2203 => ChipType::CHIP_YM2203,
@@ -121,7 +121,9 @@ impl SoundChip for YmFm {
         self.init(clock)
     }
 
-    fn reset(&mut self) {}
+    fn reset(&mut self) {
+        todo!("not impliments");
+    }
 
     fn write(&mut self, index: usize, offset: u32, data: u32, _: &mut dyn SoundStream) {
         self.write_chip(index, offset, data as u8);
@@ -163,5 +165,9 @@ impl SoundChip for YmFm {
         } else {
             panic!("RomBank not found. {:?}", rom_index);
         }
+    }
+
+    fn set_rom_bus(&mut self, _: Option<RomBusType>) {
+        /* nothing to do */
     }
 }

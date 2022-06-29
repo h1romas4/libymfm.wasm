@@ -3,6 +3,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 pub type RomBank = Option<Rc<RefCell<RomSet>>>;
+pub type RomBus<T> = Option<Rc<RefCell<T>>>;
 
 #[allow(non_camel_case_types)]
 #[derive(PartialEq, Eq, Hash, Clone, Copy, Debug)]
@@ -14,6 +15,7 @@ pub enum RomIndex {
     YMF278B_ROM = 0x84,
     YMF278B_RAM = 0x87,
     Y8950_ROM = 0x88,
+    OKIM6295_ROM = 0x8b,
     C140_ROM = 0x8d,
     NOT_SUPPOTED = 0xff,
 }
@@ -24,6 +26,7 @@ pub enum RomBusType {
     C140_TYPE_SYSTEM2,
     C140_TYPE_SYSTEM21,
     C219_TYPE_ASIC219,
+    OKIM6295,
 }
 
 ///
@@ -45,18 +48,25 @@ impl Rom {
 }
 
 ///
+/// Address decoder
+///
+pub trait Decoder {
+    fn decode(&self, rombank: &RomSet, address: usize) -> u32;
+}
+
+///
 /// Rom set
 ///
 pub struct RomSet {
     rom: Vec<Rom>,
-    bus_type: Option<RomBusType>,
+    rom_bus: Option<Rc<RefCell<dyn Decoder>>>,
 }
 
 impl RomSet {
     pub fn new() -> RomSet {
         RomSet {
             rom: Vec::new(),
-            bus_type: None,
+            rom_bus: None,
         }
     }
 
@@ -75,10 +85,29 @@ impl RomSet {
         self.rom.len() - 1
     }
 
+    #[inline]
+    pub fn read(&self, address: usize) -> u8 {
+        for r in self.rom.iter() {
+            if r.start_address <= address && r.end_address >= address {
+                return r.memory[address - r.start_address];
+            }
+        }
+        0
+    }
+
     ///
     /// Read the data from the ROM address.
     ///
     pub fn read_byte(&self, address: usize) -> u8 {
+        if self.rom_bus.is_some() {
+            return self
+                .rom_bus
+                .as_ref()
+                .unwrap()
+                .as_ref()
+                .borrow()
+                .decode(self, address) as u8;
+        }
         self.read(address)
     }
 
@@ -86,24 +115,16 @@ impl RomSet {
     /// Read the data from the ROM address.
     ///
     pub fn read_word(&self, address: usize) -> u16 {
-        // address decode
-        match self.bus_type {
-            Some(RomBusType::C140_TYPE_SYSTEM2) => {
-                let offset = ((address & 0x200000) >> 2) | (address & 0x7ffff);
-                // high 8 bit only
-                u16::from(self.read(offset)) << 8
-            }
-            Some(RomBusType::C140_TYPE_SYSTEM21) => {
-                let offset = ((address & 0x300000) >> 1) | (address & 0x7ffff);
-                u16::from(self.read(offset)) << 8
-            },
-            Some(RomBusType::C219_TYPE_ASIC219) => {
-                (u16::from(self.read(address * 2 + 1)) << 8) | u16::from(self.read(address * 2))
-            },
-            None => {
-                (u16::from(self.read(address * 2 + 1)) << 8) | u16::from(self.read(address * 2))
-            }
+        if self.rom_bus.is_some() {
+            return self
+                .rom_bus
+                .as_ref()
+                .unwrap()
+                .as_ref()
+                .borrow()
+                .decode(self, address) as u16;
         }
+        (u16::from(self.read(address * 2 + 1)) << 8) | u16::from(self.read(address * 2))
     }
 
     ///
@@ -114,20 +135,10 @@ impl RomSet {
     }
 
     ///
-    /// Set ROM Bus type
+    /// Set ROM Bus
     ///
-    pub fn set_bus_type(&mut self, bus_type: Option<RomBusType>) {
-        self.bus_type = bus_type;
-    }
-
-    #[inline]
-    fn read(&self, address: usize) -> u8 {
-        for r in self.rom.iter() {
-            if r.start_address <= address && r.end_address >= address {
-                return r.memory[address - r.start_address];
-            }
-        }
-        0
+    pub fn set_rom_bus(&mut self, rom_bus: Option<Rc<RefCell<dyn Decoder>>>) {
+        self.rom_bus = rom_bus;
     }
 }
 
@@ -135,19 +146,46 @@ impl RomSet {
 /// Read RomBank by address utility
 ///
 pub fn read_byte(rombank: &RomBank, address: usize) -> u8 {
-    rombank.as_ref().unwrap().borrow().read_byte(address)
+    rombank
+        .as_ref()
+        .unwrap()
+        .as_ref()
+        .borrow()
+        .read_byte(address)
 }
 
 ///
 /// Read RomBank by address utility
 ///
 pub fn read_word(rombank: &RomBank, address: usize) -> u16 {
-    rombank.as_ref().unwrap().borrow().read_word(address)
+    rombank
+        .as_ref()
+        .unwrap()
+        .as_ref()
+        .borrow()
+        .read_word(address)
 }
 
 ///
 /// Get Rom referance utility
 ///
 pub fn get_rom_ref(rombank: &RomBank, index_no: usize) -> (*const u8, usize, usize) {
-    rombank.as_ref().unwrap().borrow().ger_rom_ref(index_no)
+    rombank
+        .as_ref()
+        .unwrap()
+        .as_ref()
+        .borrow()
+        .ger_rom_ref(index_no)
+}
+
+///
+/// Set ROM bus utility
+///
+pub fn set_rom_bus(rombank: &RomBank, rom_bus: Option<Rc<RefCell<dyn Decoder>>>) {
+    rombank
+        .as_ref()
+        .unwrap()
+        .as_ref()
+        .borrow_mut()
+        .set_rom_bus(rom_bus);
 }

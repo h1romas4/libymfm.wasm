@@ -642,6 +642,8 @@ fn get_sound_chip_type(sound_chip_type: u32) -> SoundChipType {
         15 => SoundChipType::SEGAPCM,
         16 => SoundChipType::OKIM6258,
         17 => SoundChipType::C140,
+        18 => SoundChipType::C219,
+        19 => SoundChipType::OKIM6295,
         _ => panic!("not supported sound chip type"),
     }
 }
@@ -655,6 +657,8 @@ fn get_rom_index(rom_index: u32) -> RomIndex {
         4 => RomIndex::YMF278B_RAM,
         5 => RomIndex::Y8950_ROM,
         6 => RomIndex::SEGAPCM_ROM,
+        7 => RomIndex::OKIM6295_ROM,
+        8 => RomIndex::C140_ROM,
         _ => panic!("not support rom index"),
     }
 }
@@ -665,6 +669,7 @@ fn get_rom_bus_type(rom_bus_type: u32) -> Option<RomBusType> {
         1 => Some(RomBusType::C140_TYPE_SYSTEM2),
         2 => Some(RomBusType::C140_TYPE_SYSTEM21),
         3 => Some(RomBusType::C219_TYPE_ASIC219),
+        4 => Some(RomBusType::OKIM6295),
         _ => panic!("not supported rom bus type type"),
     }
 }

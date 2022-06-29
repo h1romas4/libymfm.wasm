@@ -13,6 +13,7 @@ mod chip_pwm;
 mod chip_segapcm;
 mod chip_okim6258;
 mod chip_c140;
+mod chip_okim6295;
 
 pub use crate::sound::sound_chip::SoundChipType as SoundChipType;
 pub use crate::sound::slot::SoundSlot as SoundSlot;

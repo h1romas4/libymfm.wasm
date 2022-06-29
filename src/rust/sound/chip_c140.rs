@@ -60,11 +60,12 @@ TODO:
     2006.01.08  R. Belmont   added support for NA-1/2 "219" derivative
     2020.05.06  cam900       Implement some features from QuattroPlay sources, by superctr
 */
+use std::{cell::RefCell, rc::Rc};
 use super::{
-    rom::{read_word, RomBank},
+    rom::{read_word, Decoder, RomBank, set_rom_bus, RomBus},
     sound_chip::SoundChip,
     stream::{convert_sample_i2f, SoundStream},
-    RomIndex, SoundChipType,
+    RomBusType, RomIndex, SoundChipType,
 };
 
 const MAX_VOICE: usize = 24;
@@ -78,7 +79,8 @@ pub struct C140 {
     pcmtbl: [i16; 256],
     voi: [C140Voice; MAX_VOICE],
     // int1_timer
-    rombank: RomBank,
+    rom_bank: RomBank,
+    rom_decoder: RomBus<C140RomDecoder>,
 }
 
 #[derive(Default, Copy, Clone)]
@@ -128,7 +130,8 @@ impl C140 {
             pcmtbl: [0; 256],
             voi: [C140Voice::default(); MAX_VOICE],
             // int1_timer
-            rombank: None,
+            rom_bank: None,
+            rom_decoder: None,
         }
     }
 
@@ -236,7 +239,7 @@ impl C140 {
 
                     if cnt != 0 {
                         let sample: u16 =
-                            read_word(&self.rombank, (sample_data + pos) as usize) & 0xfff0; // 12bit
+                            read_word(&self.rom_bank, (sample_data + pos) as usize) & 0xfff0; // 12bit
                         prevdt = lastdt;
                         lastdt = ((if Self::ch_mulaw(v) {
                             self.pcmtbl[((sample >> 8) & 0xff) as usize]
@@ -335,7 +338,8 @@ pub struct C219 {
     voi: [C140Voice; MAX_VOICE],
     lfsr: u16,
     // int1_timer
-    rombank: RomBank,
+    rom_bank: RomBank,
+    rom_decoder: RomBus<C140RomDecoder>,
 }
 
 impl C219 {
@@ -348,7 +352,8 @@ impl C219 {
             voi: [C140Voice::default(); MAX_VOICE],
             lfsr: 0,
             // int1_timer
-            rombank: None,
+            rom_bank: None,
+            rom_decoder: None,
         }
     }
 
@@ -467,10 +472,15 @@ impl C219 {
                         prevdt = lastdt;
 
                         if Self::ch_noise(v) {
-                            self.lfsr = ((self.lfsr >> 1) as i16 ^ ((-(self.lfsr as i16 & 1)) as u16 & 0xfff6) as i16) as u16;
+                            self.lfsr = ((self.lfsr >> 1) as i16
+                                ^ ((-(self.lfsr as i16 & 1)) as u16 & 0xfff6) as i16)
+                                as u16;
                             lastdt = self.lfsr as i32;
                         } else {
-                            lastdt = ((read_word(&self.rombank, ((sample_data + pos) >> 1) as usize) & 0xff00) >> 8) as i8 as i32;
+                            lastdt =
+                                ((read_word(&self.rom_bank, ((sample_data + pos) >> 1) as usize)
+                                    & 0xff00)
+                                    >> 8) as i8 as i32;
                             // 11 bit mulaw
                             if Self::ch_mulaw(v) {
                                 lastdt = (self.pcmtbl[(lastdt & 0xff) as usize] as i32) >> 5;
@@ -519,13 +529,14 @@ impl C219 {
     pub fn c219_w(&mut self, offset: usize, data: u8) {
         let mut offset: usize = offset & 0x1ff;
 
-    	// mirror the bank registers on the 219, fixes bkrtmaq (and probably xday2 based on notes in the HLE)
+        // mirror the bank registers on the 219, fixes bkrtmaq (and probably xday2 based on notes in the HLE)
         if offset >= 0x1f8 && (offset & 0x1) == 1 {
             offset = (offset as isize - 8) as usize;
         }
 
         self.reg[offset] = data;
-        if offset < 0x100 { // only 16 voices
+        if offset < 0x100 {
+            // only 16 voices
             let ch = (offset >> 4) as usize;
             let v: &mut C140Voice = &mut self.voi[ch];
 
@@ -557,7 +568,7 @@ impl C219 {
                 }
             }
         }
-    	// TODO: No interrupt/timers?
+        // TODO: No interrupt/timers?
     }
 
     fn find_sample(adrs: i32, bank: i32, voice: i32, reg: &[u8]) -> i32 {
@@ -590,12 +601,45 @@ impl C219 {
 
     #[inline]
     fn ch_mulaw(v: &C140Voice) -> bool {
-        ((v.mode /* >> 0*/) & 0x1) == 0x1
+        ((v.mode/* >> 0*/) & 0x1) == 0x1
+    }
+}
+
+struct C140RomDecoder {
+    rom_bus_type: Option<RomBusType>,
+}
+
+impl C140RomDecoder {
+    fn new() -> Self {
+        Self { rom_bus_type: None }
+    }
+}
+
+impl Decoder for C140RomDecoder {
+    fn decode(&self, rombank: &super::rom::RomSet, address: usize) -> u32 {
+        // address decode
+        let data = match self.rom_bus_type {
+            Some(RomBusType::C140_TYPE_SYSTEM2) => {
+                let offset = ((address & 0x200000) >> 2) | (address & 0x7ffff);
+                // high 8 bit only
+                u16::from(rombank.read(offset)) << 8
+            }
+            Some(RomBusType::C140_TYPE_SYSTEM21) => {
+                let offset = ((address & 0x300000) >> 1) | (address & 0x7ffff);
+                u16::from(rombank.read(offset)) << 8
+            }
+            None | Some(_) => {
+                // C219_TYPE_ASIC219
+                (u16::from(rombank.read(address * 2 + 1)) << 8)
+                    | u16::from(rombank.read(address * 2))
+            }
+        };
+        data as u32
     }
 }
 
 impl SoundChip for C140 {
-    fn new(_sound_device_name: SoundChipType) -> Self {
+    fn create(_sound_device_name: SoundChipType) -> Self {
         C140::new()
     }
 
@@ -620,17 +664,29 @@ impl SoundChip for C140 {
     }
 
     fn set_rom_bank(&mut self, _ /* C140 has only one RomBank */: RomIndex, rombank: RomBank) {
-        self.rombank = rombank;
+        self.rom_bank = rombank;
         self.rom_bank_updated();
     }
 
     fn notify_add_rom(&mut self, _: RomIndex, _: usize) {
         self.rom_bank_updated();
     }
+
+    fn set_rom_bus(&mut self, rom_bus_type: Option<RomBusType>) {
+        // create rom decoder
+        let mut rom_decoder = C140RomDecoder::new();
+        // set bus type
+        rom_decoder.rom_bus_type = rom_bus_type;
+        // share bus to rom
+        let rom_decoder = Rc::new(RefCell::new(rom_decoder));
+        set_rom_bus(&self.rom_bank, Some(rom_decoder.clone()));
+        // type state
+        self.rom_decoder = Some(rom_decoder);
+    }
 }
 
 impl SoundChip for C219 {
-    fn new(_sound_device_name: SoundChipType) -> Self {
+    fn create(_sound_device_name: SoundChipType) -> Self {
         C219::new()
     }
 
@@ -655,11 +711,23 @@ impl SoundChip for C219 {
     }
 
     fn set_rom_bank(&mut self, _ /* C140 has only one RomBank */: RomIndex, rombank: RomBank) {
-        self.rombank = rombank;
+        self.rom_bank = rombank;
         self.rom_bank_updated();
     }
 
     fn notify_add_rom(&mut self, _: RomIndex, _: usize) {
         self.rom_bank_updated();
+    }
+
+    fn set_rom_bus(&mut self, rom_bus_type: Option<RomBusType>) {
+        // create rom decoder
+        let mut rom_decoder = C140RomDecoder::new();
+        // set bus type
+        rom_decoder.rom_bus_type = rom_bus_type;
+        // share bus to rom
+        let rom_decoder = Rc::new(RefCell::new(rom_decoder));
+        set_rom_bus(&self.rom_bank, Some(rom_decoder.clone()));
+        // type state
+        self.rom_decoder = Some(rom_decoder);
     }
 }

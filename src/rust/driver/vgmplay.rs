@@ -314,6 +314,16 @@ impl VgmPlay {
             self.sound_slot
                 .set_rom_bus_type(RomIndex::C140_ROM, rom_bus_type);
         }
+        if header.clock_okim6295 != 0 {
+            self.sound_slot.add_sound_device(
+                SoundChipType::OKIM6295,
+                self.number_of_chip(header.clock_okim6295),
+                header.clock_okim6295 & 0x3fffffff,
+            );
+            // set rom bus type
+            self.sound_slot
+                .set_rom_bus_type(RomIndex::OKIM6295_ROM, Some(RomBusType::OKIM6295));
+        }
 
         Ok(())
     }
@@ -734,6 +744,26 @@ impl VgmPlay {
                     );
                 }
             }
+            0xb8 => {
+                // 0xb8: aa dd: OKIM6295, write value dd to register aa
+                let offset = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
+                if offset & 0x80 != 0 {
+                    self.sound_slot.write(
+                        SoundChipType::OKIM6295,
+                        1,
+                        (offset & 0x7f) as u32,
+                        dat.into(),
+                    );
+                } else {
+                    self.sound_slot.write(
+                        SoundChipType::OKIM6295,
+                        0,
+                        (offset & 0x7f) as u32,
+                        dat.into(),
+                    );
+                }
+            }
             0xc0 => {
                 let offset = self.get_vgm_u16();
                 let dat = self.get_vgm_u8();
@@ -770,7 +800,7 @@ impl VgmPlay {
                 // 0x4f: dd: Game Gear PSG stereo, write dd to port 0x06
                 self.get_vgm_u8();
             }
-            0x40..=0x4e | 0x5d | 0xb0..=0xb6 | 0xb8..=0xbf => {
+            0x40..=0x4e | 0x5d | 0xb0..=0xb6 | 0xb9..=0xbf => {
                 // 0x5d: aa dd: YMZ280B, write value dd to register aa
                 // 0xb0: aa dd: RF5C68, write value dd to register aa
                 // 0xb1: aa dd: RF5C164, write value dd to register aa
@@ -778,7 +808,6 @@ impl VgmPlay {
                 // 0xb4: aa dd: NES APU, write value dd to register aa
                 // 0xb5: aa dd: MultiPCM, write value dd to register aa
                 // 0xb6: aa dd: uPD7759, write value dd to register aa
-                // 0xb8: aa dd: OKIM6295, write value dd to register aa
                 // 0xb9: aa dd: HuC6280, write value dd to register aa
                 // 0xba: aa dd: K053260, write value dd to register aa
                 // 0xbb: aa dd: Pokey, write value dd to register aa
@@ -827,6 +856,7 @@ impl VgmPlay {
             0x84 => RomIndex::YMF278B_ROM,
             0x87 => RomIndex::YMF278B_RAM,
             0x88 => RomIndex::Y8950_ROM,
+            0x8b => RomIndex::OKIM6295_ROM,
             0x8d => RomIndex::C140_ROM,
             _ => RomIndex::NOT_SUPPOTED,
         }
@@ -858,7 +888,7 @@ impl VgmPlay {
             21 => None, // multi_pcm
             22 => None, // upd7759
             23 => Some(SoundChipType::OKIM6258),
-            24 => None, // okim6295
+            24 => Some(SoundChipType::OKIM6295),
             25 => None, // k051649
             26 => None, // k054539
             27 => None, // huc6280
@@ -974,6 +1004,11 @@ mod tests {
     #[test]
     fn okim6258_5() {
         play("./docs/vgm/okim6258-5-ng.vgz")
+    }
+
+    #[test]
+    fn okim6295_1() {
+        play("./docs/vgm/okim6295-1.vgz")
     }
 
     #[test]

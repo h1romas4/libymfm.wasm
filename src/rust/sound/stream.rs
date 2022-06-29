@@ -459,6 +459,10 @@ pub fn convert_sample_f2i(f32_sample: f32) -> i16 {
     float as i16
 }
 
+pub fn convert_int(sample: i32, max: i32) -> f32 {
+    sample as f32 * (1.0_f32 / max as f32)
+}
+
 #[cfg(test)]
 mod tests {
     #[allow(unused_imports)]

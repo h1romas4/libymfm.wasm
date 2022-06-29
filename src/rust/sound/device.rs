@@ -4,7 +4,7 @@ use super::{
     data_stream::{DataBlock, DataStream},
     sound_chip::SoundChip,
     stream::{SoundStream, Tick},
-    RomIndex,
+    RomIndex, RomBusType,
 };
 use std::collections::HashMap;
 
@@ -75,6 +75,13 @@ impl SoundDevice {
     ///
     pub fn notify_add_rom(&mut self, rom_index: RomIndex, index_no: usize) {
         self.sound_chip.notify_add_rom(rom_index, index_no);
+    }
+
+    ///
+    /// Set ROM bus
+    ///
+    pub fn set_rom_bus_type(&mut self, rom_bus_type: Option<RomBusType>) {
+        self.sound_chip.set_rom_bus(rom_bus_type);
     }
 
     ///
