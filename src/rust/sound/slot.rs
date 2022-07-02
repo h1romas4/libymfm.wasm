@@ -104,9 +104,10 @@ impl SoundSlot {
                         (Box::new(SN76496::create(SoundChipType::SN76489)), None)
                     }
                     SoundChipType::PWM => (Box::new(PWM::new()), None),
-                    SoundChipType::SEGAPCM => {
-                        (Box::new(SEGAPCM::create(SoundChipType::SEGAPCM)), None)
-                    }
+                    SoundChipType::SEGAPCM => (
+                        Box::new(SEGAPCM::create(SoundChipType::SEGAPCM)),
+                        Some(vec![RomIndex::SEGAPCM_ROM]),
+                    ),
                     SoundChipType::OKIM6258 => {
                         (Box::new(OKIM6258::create(SoundChipType::OKIM6258)), None)
                     }
