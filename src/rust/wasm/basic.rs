@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use crate::{
     driver::{self, VgmPlay, XgmPlay},
-    sound::{RomIndex, SoundChipType, SoundSlot, RomBusType},
+    sound::{RomBusType, RomIndex, SoundChipType, SoundSlot},
 };
 
 ///
@@ -62,9 +62,7 @@ pub extern "C" fn memory_alloc(memory_index_id: u32, length: u32) {
 
 #[no_mangle]
 pub extern "C" fn memory_get_alloc_len() -> u32 {
-    get_memory_bank()
-        .borrow_mut()
-        .len() as u32
+    get_memory_bank().borrow_mut().len() as u32
 }
 
 #[no_mangle]
@@ -259,6 +257,8 @@ pub extern "C" fn sound_slot_sampling_s16le_ref(sounde_slot_index: u32) -> *cons
 #[no_mangle]
 pub extern "C" fn sound_slot_add_rom(
     sounde_slot_index: u32,
+    sound_chip_type: u32,
+    sound_chip_index: u32,
     rom_index: u32,
     memory_index_id: u32,
     start_address: u32,
@@ -270,6 +270,8 @@ pub extern "C" fn sound_slot_add_rom(
         .get_mut(sounde_slot_index as usize)
         .unwrap()
         .add_rom(
+            get_sound_chip_type(sound_chip_type),
+            sound_chip_index as usize,
             rom_index,
             get_memory_bank()
                 .borrow_mut()
@@ -283,6 +285,8 @@ pub extern "C" fn sound_slot_add_rom(
 #[no_mangle]
 pub extern "C" fn sound_slot_set_rom_bus_type(
     sounde_slot_index: u32,
+    sound_chip_type: u32,
+    sound_chip_index: u32,
     rom_index: u32,
     rom_bus_type: u32,
 ) {
@@ -293,6 +297,8 @@ pub extern "C" fn sound_slot_set_rom_bus_type(
         .get_mut(sounde_slot_index as usize)
         .unwrap()
         .set_rom_bus_type(
+            get_sound_chip_type(sound_chip_type),
+            sound_chip_index as usize,
             rom_index,
             rom_bus_type,
         );

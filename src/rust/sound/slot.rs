@@ -1,9 +1,7 @@
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
-use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::collections::{HashMap, VecDeque};
-use std::rc::Rc;
 
 use super::chip_c140::{C140, C219};
 use super::chip_okim6258::OKIM6258;
@@ -14,7 +12,7 @@ use super::chip_sn76496::SN76496;
 use super::chip_ymfm::YmFm;
 use super::data_stream::{DataBlock, DataStream};
 use super::device::{DataStreamMode, SoundDevice};
-use super::rom::{RomBusType, RomIndex, RomSet};
+use super::rom::{RomBusType, RomIndex};
 use super::sound_chip::SoundChip;
 use super::stream::{
     convert_sample_f2i, LinearUpSamplingStream, NativeStream, NearestDownSampleStream,
@@ -36,7 +34,6 @@ pub struct SoundSlot {
     output_sampling_buffer_l: VecDeque<f32>,
     output_sampling_buffer_r: VecDeque<f32>,
     sound_device: HashMap<SoundChipType, Vec<SoundDevice>>,
-    sound_rom_set: HashMap<RomIndex, Rc<RefCell<RomSet>>>,
     data_block: HashMap<usize, DataBlock>,
 }
 
@@ -58,7 +55,6 @@ impl SoundSlot {
             output_sampling_buffer_l: VecDeque::with_capacity(output_sample_chunk_size * 2),
             output_sampling_buffer_r: VecDeque::with_capacity(output_sample_chunk_size * 2),
             sound_device: HashMap::new(),
-            sound_rom_set: HashMap::new(),
             data_block: HashMap::new(),
         }
     }
@@ -74,61 +70,59 @@ impl SoundSlot {
     ) {
         for _ in 0..number_of {
             // create sound device
-            let mut sound_chip: Box<dyn SoundChip> = match sound_chip_type {
-                SoundChipType::YM2149
-                | SoundChipType::YM2151
-                | SoundChipType::YM2203
-                | SoundChipType::YM2413
-                | SoundChipType::YM2608
-                | SoundChipType::YM2610
-                | SoundChipType::YM2612
-                | SoundChipType::YM3526
-                | SoundChipType::Y8950
-                | SoundChipType::YM3812
-                | SoundChipType::YMF262
-                | SoundChipType::YMF278B => {
-                    let mut ymfm = Box::new(YmFm::create(sound_chip_type));
-                    let rom_index: Option<Vec<RomIndex>> = match sound_chip_type {
-                        SoundChipType::YM2608 => Some(vec![RomIndex::YM2608_DELTA_T]),
-                        SoundChipType::YM2610 => {
-                            Some(vec![RomIndex::YM2610_ADPCM, RomIndex::YM2610_DELTA_T])
-                        }
-                        SoundChipType::Y8950 => Some(vec![RomIndex::Y8950_ROM]),
-                        SoundChipType::YMF278B => {
-                            Some(vec![RomIndex::YMF278B_ROM, RomIndex::YMF278B_RAM])
-                        }
-                        _ => None,
-                    };
-                    if let Some(rom_index) = rom_index {
-                        self.add_rom_bank(rom_index, &mut *ymfm);
+            let (mut sound_chip, rom_index): (Box<dyn SoundChip>, Option<Vec<RomIndex>>) =
+                match sound_chip_type {
+                    SoundChipType::YM2149
+                    | SoundChipType::YM2151
+                    | SoundChipType::YM2203
+                    | SoundChipType::YM2413
+                    | SoundChipType::YM2608
+                    | SoundChipType::YM2610
+                    | SoundChipType::YM2612
+                    | SoundChipType::YM3526
+                    | SoundChipType::Y8950
+                    | SoundChipType::YM3812
+                    | SoundChipType::YMF262
+                    | SoundChipType::YMF278B => {
+                        let rom_index: Option<Vec<RomIndex>> = match sound_chip_type {
+                            SoundChipType::YM2608 => Some(vec![RomIndex::YM2608_DELTA_T]),
+                            SoundChipType::YM2610 => {
+                                Some(vec![RomIndex::YM2610_ADPCM, RomIndex::YM2610_DELTA_T])
+                            }
+                            SoundChipType::Y8950 => Some(vec![RomIndex::Y8950_ROM]),
+                            SoundChipType::YMF278B => {
+                                Some(vec![RomIndex::YMF278B_ROM, RomIndex::YMF278B_RAM])
+                            }
+                            _ => None,
+                        };
+                        (Box::new(YmFm::create(sound_chip_type)), rom_index)
                     }
-                    ymfm
-                }
-                SoundChipType::SEGAPSG => Box::new(SN76496::create(SoundChipType::SEGAPSG)),
-                SoundChipType::SN76489 => Box::new(SN76496::create(SoundChipType::SN76489)),
-                SoundChipType::PWM => Box::new(PWM::new()),
-                SoundChipType::SEGAPCM => {
-                    let mut segapcm = Box::new(SEGAPCM::create(SoundChipType::SEGAPCM));
-                    self.add_rom_bank(vec![RomIndex::SEGAPCM_ROM], &mut *segapcm);
-                    segapcm
-                }
-                SoundChipType::OKIM6258 => Box::new(OKIM6258::create(SoundChipType::OKIM6258)),
-                SoundChipType::C140 => {
-                    let mut c140 = Box::new(C140::create(SoundChipType::C140));
-                    self.add_rom_bank(vec![RomIndex::C140_ROM], &mut *c140);
-                    c140
-                },
-                SoundChipType::C219 => {
-                    let mut c219 = Box::new(C219::create(SoundChipType::C219));
-                    self.add_rom_bank(vec![RomIndex::C140_ROM], &mut *c219);
-                    c219
-                },
-                SoundChipType::OKIM6295 => {
-                    let mut okim6295 = Box::new(OKIM6295::create(SoundChipType::OKIM6295));
-                    self.add_rom_bank(vec![RomIndex::OKIM6295_ROM], &mut *okim6295);
-                    okim6295
-                },
-            };
+                    SoundChipType::SEGAPSG => {
+                        (Box::new(SN76496::create(SoundChipType::SEGAPSG)), None)
+                    }
+                    SoundChipType::SN76489 => {
+                        (Box::new(SN76496::create(SoundChipType::SN76489)), None)
+                    }
+                    SoundChipType::PWM => (Box::new(PWM::new()), None),
+                    SoundChipType::SEGAPCM => {
+                        (Box::new(SEGAPCM::create(SoundChipType::SEGAPCM)), None)
+                    }
+                    SoundChipType::OKIM6258 => {
+                        (Box::new(OKIM6258::create(SoundChipType::OKIM6258)), None)
+                    }
+                    SoundChipType::C140 => (
+                        Box::new(C140::create(SoundChipType::C140)),
+                        Some(vec![RomIndex::C140_ROM]),
+                    ),
+                    SoundChipType::C219 => (
+                        Box::new(C219::create(SoundChipType::C219)),
+                        Some(vec![RomIndex::C140_ROM]),
+                    ),
+                    SoundChipType::OKIM6295 => (
+                        Box::new(OKIM6295::create(SoundChipType::OKIM6295)),
+                        Some(vec![RomIndex::OKIM6295_ROM]),
+                    ),
+                };
 
             // initialize sound chip
             let sound_chip_sampling_rate = sound_chip.init(clock);
@@ -149,10 +143,12 @@ impl SoundSlot {
                         )),
                     },
                     _ => match sound_chip_type {
-                        SoundChipType::OKIM6258 | SoundChipType::C140 => Box::new(SampleHoldUpSamplingStream::new(
-                            sound_chip_sampling_rate,
-                            self.output_sampling_rate,
-                        )),
+                        SoundChipType::OKIM6258 | SoundChipType::C140 | SoundChipType::C219 => {
+                            Box::new(SampleHoldUpSamplingStream::new(
+                                sound_chip_sampling_rate,
+                                self.output_sampling_rate,
+                            ))
+                        }
                         _ => Box::new(LinearUpSamplingStream::new(
                             sound_chip_sampling_rate,
                             self.output_sampling_rate,
@@ -164,7 +160,7 @@ impl SoundSlot {
             self.sound_device
                 .entry(sound_chip_type)
                 .or_insert_with(Vec::new)
-                .push(SoundDevice::new(sound_chip, sound_stream));
+                .push(SoundDevice::new(sound_chip, sound_stream, rom_index));
         }
     }
 
@@ -273,44 +269,30 @@ impl SoundSlot {
     ///
     pub fn add_rom(
         &mut self,
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
         rom_index: RomIndex,
         memory: &[u8],
         start_address: usize,
         end_address: usize,
     ) {
-        if self.sound_rom_set.contains_key(&rom_index) {
-            let index_no = self
-                .sound_rom_set
-                .get(&rom_index)
-                .unwrap()
-                .borrow_mut()
-                .add_rom(memory, start_address, end_address);
-            // notify sound chip
-            let sound_chip_type = self.get_sound_chip_type_by_rom_index(rom_index);
-            if let Some(sound_chip_type) = sound_chip_type {
-                if let Some(sound_device) = self.sound_device.get_mut(&sound_chip_type) {
-                    for sound_device in sound_device {
-                        sound_device.notify_add_rom(rom_index, index_no);
-                    }
-                };
-            }
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
+            sound_device.add_rom(rom_index, memory, start_address, end_address);
         }
     }
 
     ///
     /// Set ROM Bus type
     ///
-    pub fn set_rom_bus_type(&mut self, rom_index: RomIndex, rom_bus_type: Option<RomBusType>) {
-        if self.sound_rom_set.contains_key(&rom_index) {
-            // Create ROM bus
-            let sound_chip_type = self.get_sound_chip_type_by_rom_index(rom_index);
-            if let Some(sound_chip_type) = sound_chip_type {
-                if let Some(sound_device) = self.sound_device.get_mut(&sound_chip_type) {
-                    for sound_device in sound_device {
-                        sound_device.set_rom_bus_type(rom_bus_type);
-                    }
-                };
-            }
+    pub fn set_rom_bus_type(
+        &mut self,
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
+        _rom_index: RomIndex,
+        rom_bus_type: Option<RomBusType>,
+    ) {
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
+            sound_device.set_rom_bus_type(rom_bus_type);
         }
     }
 
@@ -461,38 +443,6 @@ impl SoundSlot {
             return sound_device.is_stop_data_stream(data_stream_id);
         }
         true
-    }
-
-    ///
-    /// Add rom bank
-    ///
-    fn add_rom_bank<T: SoundChip>(&mut self, rom_index: Vec<RomIndex>, sound_chip: &mut T) {
-        for &rom_index in rom_index.iter() {
-            // create new romset
-            let romset = Rc::new(RefCell::new(RomSet::new()));
-            // trancefer romset to soundchip
-            sound_chip.set_rom_bank(rom_index, Some(romset.clone()));
-            // hold romset in slot
-            self.sound_rom_set.insert(rom_index, romset);
-        }
-    }
-
-    ///
-    /// Obtains the SoundChipType corresponding to RomIndex.
-    ///
-    fn get_sound_chip_type_by_rom_index(&self, rom_index: RomIndex) -> Option<SoundChipType> {
-        match rom_index {
-            RomIndex::YM2608_DELTA_T => Some(SoundChipType::YM2608),
-            RomIndex::YM2610_ADPCM => Some(SoundChipType::YM2610),
-            RomIndex::YM2610_DELTA_T => Some(SoundChipType::YM2610),
-            RomIndex::YMF278B_ROM => Some(SoundChipType::YMF278B),
-            RomIndex::YMF278B_RAM => Some(SoundChipType::YMF278B),
-            RomIndex::Y8950_ROM => Some(SoundChipType::Y8950),
-            RomIndex::SEGAPCM_ROM => Some(SoundChipType::SEGAPCM),
-            RomIndex::C140_ROM => Some(SoundChipType::C140),
-            RomIndex::OKIM6295_ROM => Some(SoundChipType::OKIM6295),
-            RomIndex::NOT_SUPPOTED => None,
-        }
     }
 
     ///

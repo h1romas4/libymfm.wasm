@@ -36,6 +36,7 @@ The WebAssembly interface can be called from many computer languages by using Wa
 |PWM|MAME|Rust ports|
 |OKIM6285|MAME|Rust ports|
 |C140/C219|MAME|Rust ports|
+|OKIM6295|MAME|Rust ports|
 
 ## Web Browser Interface
 
@@ -277,7 +278,7 @@ Essentially, wasm-bindgen is incompatible with wasm32-wasi.
 
 BSD 3-Clause License
 
-## Thanks
+## Special Thanks
 
 - [ymfm](https://github.com/aaronsgiles/ymfm)
 - [MAME](https://github.com/mamedev/mame)
@@ -286,13 +287,12 @@ BSD 3-Clause License
 
 - [ ] System
     - [ ] Fix ROM bus architecture.
-    - [ ] Support multi ROM and data blocks by sound chips.
     - [ ] Add support sound mixer.
 - [x] VGM driver
     - [x] YM2141 clock worng?
     - [x] Is there a problem with the file parser? The beginning of the song may be wrong.
     - [x] Support all data stream (now only support YM2612 and OKIM6285)
-    - [ ] Support dual chip data blocks.
+    - [x] Support dual chip ROM blocks.
 - [x] Non-vgm driver support
     - [x] XGM
         - [x] There is still a bug with multi-channel PCM.
@@ -314,7 +314,7 @@ BSD 3-Clause License
     - [x] OKIM6285
     - [x] C140
     - [x] C219
-    - [ ] OKIM6295
+    - [x] OKIM6295
     - [ ] Next to be determined
 - [ ] Examples source
     - [ ] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well.
@@ -323,6 +323,3 @@ BSD 3-Clause License
     - [x] Web Frontend: Web Worker AudioWorklet and SharedArrayBuffer (The Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers cannot be set in github pages, so they cannot be deployed)
     - [x] Web Frontend: Add buffering mode
     - [x] CLI: Support loop
-- [x] To BSD license
-    - [x] SN76489
-    - [x] PWM
