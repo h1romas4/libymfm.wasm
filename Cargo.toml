@@ -1,6 +1,6 @@
 [package]
 name = "libymfm"
-version = "0.9.0"
+version = "0.10.1"
 authors = ["Hiromasa Tanaka <h1romas4@gmail.com>"]
 edition = "2021"
 rust-version = "1.61"

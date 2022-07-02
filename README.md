@@ -34,7 +34,7 @@ The WebAssembly interface can be called from many computer languages by using Wa
 |SN76489|MAME|Rust ports|
 |SEGAPCM|MAME|Rust ports|
 |PWM|MAME|Rust ports|
-|OKIM6285|MAME|Rust ports|
+|OKIM6258|MAME|Rust ports|
 |C140/C219|MAME|Rust ports|
 |OKIM6295|MAME|Rust ports|
 
@@ -64,13 +64,13 @@ Source code:
 ## WASI Commnad Line Interface
 
 - Install [Wasmer](https://wasmer.io/) runtime
-- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.9.3) from pre-build release
+- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.10.1) from pre-build release
 
 Options
 
 ```
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.9.3
+libymfm-cli 0.10.1
 Hiromasa Tanaka <h1romas4@gmail.com>
 libymfm CLI
 
