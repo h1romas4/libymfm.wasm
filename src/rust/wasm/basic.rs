@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use crate::{
     driver::{self, VgmPlay, XgmPlay},
-    sound::{RomIndex, SoundChipType, SoundSlot, RomBusType},
+    sound::{RomBusType, RomIndex, SoundChipType, SoundSlot},
 };
 
 ///
@@ -62,9 +62,7 @@ pub extern "C" fn memory_alloc(memory_index_id: u32, length: u32) {
 
 #[no_mangle]
 pub extern "C" fn memory_get_alloc_len() -> u32 {
-    get_memory_bank()
-        .borrow_mut()
-        .len() as u32
+    get_memory_bank().borrow_mut().len() as u32
 }
 
 #[no_mangle]
@@ -259,6 +257,8 @@ pub extern "C" fn sound_slot_sampling_s16le_ref(sounde_slot_index: u32) -> *cons
 #[no_mangle]
 pub extern "C" fn sound_slot_add_rom(
     sounde_slot_index: u32,
+    sound_chip_type: u32,
+    sound_chip_index: u32,
     rom_index: u32,
     memory_index_id: u32,
     start_address: u32,
@@ -270,6 +270,8 @@ pub extern "C" fn sound_slot_add_rom(
         .get_mut(sounde_slot_index as usize)
         .unwrap()
         .add_rom(
+            get_sound_chip_type(sound_chip_type),
+            sound_chip_index as usize,
             rom_index,
             get_memory_bank()
                 .borrow_mut()
@@ -283,6 +285,8 @@ pub extern "C" fn sound_slot_add_rom(
 #[no_mangle]
 pub extern "C" fn sound_slot_set_rom_bus_type(
     sounde_slot_index: u32,
+    sound_chip_type: u32,
+    sound_chip_index: u32,
     rom_index: u32,
     rom_bus_type: u32,
 ) {
@@ -293,6 +297,8 @@ pub extern "C" fn sound_slot_set_rom_bus_type(
         .get_mut(sounde_slot_index as usize)
         .unwrap()
         .set_rom_bus_type(
+            get_sound_chip_type(sound_chip_type),
+            sound_chip_index as usize,
             rom_index,
             rom_bus_type,
         );
@@ -642,6 +648,8 @@ fn get_sound_chip_type(sound_chip_type: u32) -> SoundChipType {
         15 => SoundChipType::SEGAPCM,
         16 => SoundChipType::OKIM6258,
         17 => SoundChipType::C140,
+        18 => SoundChipType::C219,
+        19 => SoundChipType::OKIM6295,
         _ => panic!("not supported sound chip type"),
     }
 }
@@ -655,6 +663,8 @@ fn get_rom_index(rom_index: u32) -> RomIndex {
         4 => RomIndex::YMF278B_RAM,
         5 => RomIndex::Y8950_ROM,
         6 => RomIndex::SEGAPCM_ROM,
+        7 => RomIndex::OKIM6295_ROM,
+        8 => RomIndex::C140_ROM,
         _ => panic!("not support rom index"),
     }
 }
@@ -665,6 +675,7 @@ fn get_rom_bus_type(rom_bus_type: u32) -> Option<RomBusType> {
         1 => Some(RomBusType::C140_TYPE_SYSTEM2),
         2 => Some(RomBusType::C140_TYPE_SYSTEM21),
         3 => Some(RomBusType::C219_TYPE_ASIC219),
+        4 => Some(RomBusType::OKIM6295),
         _ => panic!("not supported rom bus type type"),
     }
 }

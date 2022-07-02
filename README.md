@@ -36,6 +36,7 @@ The WebAssembly interface can be called from many computer languages by using Wa
 |PWM|MAME|Rust ports|
 |OKIM6285|MAME|Rust ports|
 |C140/C219|MAME|Rust ports|
+|OKIM6295|MAME|Rust ports|
 
 ## Web Browser Interface
 
@@ -273,31 +274,25 @@ Essentially, wasm-bindgen is incompatible with wasm32-wasi.
 >
 > `panicked at 'unknown instruction LocalTee`
 
-To link Rust 1.55 with C/C++ using wasm32-wasi, you need LLD for LLVM 12.
-
-> [WASI: Cannot open paths with nightly >= 2021-03-11 when linked with LLD 11.1 #85840](https://github.com/rust-lang/rust/issues/85840)
->
-> `failed to find a pre-opened file descriptor`
-
-wasm-bindgen outputs a TextEncoder TextDecoder function that cannot be used in a Worklet.
-
-> [Unblock AudioWorklets: Find an alternative to TextEncoder / TextDecoder #2367](https://github.com/rustwasm/wasm-bindgen/issues/2367)
-
 ## License
 
 BSD 3-Clause License
 
-## Thanks
+## Special Thanks
 
 - [ymfm](https://github.com/aaronsgiles/ymfm)
 - [MAME](https://github.com/mamedev/mame)
 
 ## TODO / Known Issues
 
+- [ ] System
+    - [ ] Fix ROM bus architecture.
+    - [ ] Add support sound mixer.
 - [x] VGM driver
     - [x] YM2141 clock worng?
     - [x] Is there a problem with the file parser? The beginning of the song may be wrong.
     - [x] Support all data stream (now only support YM2612 and OKIM6285)
+    - [x] Support dual chip ROM blocks.
 - [x] Non-vgm driver support
     - [x] XGM
         - [x] There is still a bug with multi-channel PCM.
@@ -319,7 +314,7 @@ BSD 3-Clause License
     - [x] OKIM6285
     - [x] C140
     - [x] C219
-    - [ ] OKIM6295
+    - [x] OKIM6295
     - [ ] Next to be determined
 - [ ] Examples source
     - [ ] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well.
@@ -328,6 +323,3 @@ BSD 3-Clause License
     - [x] Web Frontend: Web Worker AudioWorklet and SharedArrayBuffer (The Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers cannot be set in github pages, so they cannot be deployed)
     - [x] Web Frontend: Add buffering mode
     - [x] CLI: Support loop
-- [x] To BSD license
-    - [x] SN76489
-    - [x] PWM

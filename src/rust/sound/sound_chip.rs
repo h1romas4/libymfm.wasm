@@ -1,3 +1,4 @@
+use super::RomBusType;
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
 use super::rom::RomBank;
@@ -29,13 +30,14 @@ pub enum SoundChipType {
     OKIM6258,
     C140,
     C219,
+    OKIM6295,
 }
 
 ///
 /// Sound Chip Interface
 ///
 pub trait SoundChip {
-    fn new(sound_device_name: SoundChipType) -> Self
+    fn create(sound_device_name: SoundChipType) -> Self
     where
         Self: Sized;
     fn init(&mut self, clock: u32) -> u32;
@@ -44,4 +46,5 @@ pub trait SoundChip {
     fn tick(&mut self, index: usize, sound_stream: &mut dyn SoundStream);
     fn set_rom_bank(&mut self, rom_index: RomIndex, rom_bank: RomBank);
     fn notify_add_rom(&mut self, rom_index: RomIndex, index_no: usize);
+    fn set_rom_bus(&mut self, rom_bus_type: Option<RomBusType>);
 }

@@ -30,7 +30,7 @@ use super::{
     rom::RomBank,
     sound_chip::SoundChip,
     stream::{convert_sample_i2f, OutputChannel, SoundStream},
-    RomIndex,
+    RomIndex, RomBusType,
 };
 use crate::sound::SoundChipType;
 
@@ -253,7 +253,7 @@ impl OKIM6258 {
 }
 
 impl SoundChip for OKIM6258 {
-    fn new(_sound_device_name: SoundChipType) -> Self {
+    fn create(_sound_device_name: SoundChipType) -> Self {
         OKIM6258::default()
     }
 
@@ -306,6 +306,10 @@ impl SoundChip for OKIM6258 {
     }
 
     fn notify_add_rom(&mut self, _: RomIndex, _: usize) {
+        /* nothing to do */
+    }
+
+    fn set_rom_bus(&mut self, _: Option<RomBusType>) {
         /* nothing to do */
     }
 }

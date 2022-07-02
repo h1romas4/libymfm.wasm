@@ -158,7 +158,7 @@ use super::{
     rom::RomBank,
     sound_chip::SoundChip,
     stream::{convert_sample_i2f, SoundStream},
-    RomIndex, SoundChipType,
+    RomIndex, SoundChipType, RomBusType,
 };
 
 const MAX_OUTPUT: i32 = 0x7fff;
@@ -493,7 +493,7 @@ impl SN76496 {
 }
 
 impl SoundChip for SN76496 {
-    fn new(sound_device_name: SoundChipType) -> Self {
+    fn create(sound_device_name: SoundChipType) -> Self {
         match sound_device_name {
             SoundChipType::SEGAPSG => {
                 SN76496::new(0x8000, 0x01, 0x08, true, false, 8, false, false)
@@ -529,6 +529,10 @@ impl SoundChip for SN76496 {
     }
 
     fn notify_add_rom(&mut self, _: RomIndex, _: usize) {
+        /* nothing to do */
+    }
+
+    fn set_rom_bus(&mut self, _: Option<RomBusType>) {
         /* nothing to do */
     }
 }

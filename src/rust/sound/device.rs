@@ -2,11 +2,12 @@
 // copyright-holders:Hiromasa Tanaka
 use super::{
     data_stream::{DataBlock, DataStream},
-    sound_chip::SoundChip,
+    rom::RomSet,
+    sound_chip::{SoundChip},
     stream::{SoundStream, Tick},
-    RomIndex,
+    RomBusType, RomIndex,
 };
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(PartialEq, Eq)]
 pub enum DataStreamMode {
@@ -20,15 +21,33 @@ pub enum DataStreamMode {
 pub struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
     sound_stream: Box<dyn SoundStream>,
+    sound_rom_set: HashMap<RomIndex, Rc<RefCell<RomSet>>>,
     data_stream_mode: DataStreamMode,
     data_stream: HashMap<usize, DataStream>,
 }
 
 impl SoundDevice {
-    pub fn new(sound_chip: Box<dyn SoundChip>, sound_stream: Box<dyn SoundStream>) -> Self {
-        SoundDevice {
+    pub fn new(
+        sound_chip: Box<dyn SoundChip>,
+        sound_stream: Box<dyn SoundStream>,
+        rom_index: Option<Vec<RomIndex>>,
+    ) -> Self {
+        let mut sound_rom_set: HashMap<RomIndex, Rc<RefCell<RomSet>>> = HashMap::new();
+        let mut sound_chip = sound_chip;
+        if let Some(rom_index) = rom_index {
+            for &rom_index in rom_index.iter() {
+                // create new romset
+                let romset = Rc::new(RefCell::new(RomSet::new()));
+                // trancefer romset to soundchip
+                sound_chip.set_rom_bank(rom_index, Some(romset.clone()));
+                // hold romset in sound device
+                sound_rom_set.insert(rom_index, romset);
+            }
+        }
+        Self {
             sound_chip,
             sound_stream,
+            sound_rom_set,
             data_stream_mode: DataStreamMode::Parallel,
             data_stream: HashMap::new(),
         }
@@ -71,10 +90,32 @@ impl SoundDevice {
     }
 
     ///
-    /// Notify add rom to sound chip.
+    /// Add ROM to sound chip.
     ///
-    pub fn notify_add_rom(&mut self, rom_index: RomIndex, index_no: usize) {
-        self.sound_chip.notify_add_rom(rom_index, index_no);
+    pub fn add_rom(
+        &mut self,
+        rom_index: RomIndex,
+        memory: &[u8],
+        start_address: usize,
+        end_address: usize,
+    ) {
+        if self.sound_rom_set.contains_key(&rom_index) {
+            let index_no = self
+                .sound_rom_set
+                .get(&rom_index)
+                .unwrap()
+                .borrow_mut()
+                .add_rom(memory, start_address, end_address);
+            // notify sound chip
+            self.sound_chip.notify_add_rom(rom_index, index_no);
+        }
+    }
+
+    ///
+    /// Set ROM bus
+    ///
+    pub fn set_rom_bus_type(&mut self, rom_bus_type: Option<RomBusType>) {
+        self.sound_chip.set_rom_bus(rom_bus_type);
     }
 
     ///

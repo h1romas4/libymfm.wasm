@@ -303,16 +303,41 @@ impl VgmPlay {
                     self.number_of_chip(header.clock_c140),
                     header.clock_c140 & 0x3fffffff,
                 );
+                // set rom bus type
+                self.sound_slot.set_rom_bus_type(
+                    SoundChipType::C219,
+                    self.number_of_chip(header.clock_c140) - 1,
+                    RomIndex::C140_ROM,
+                    rom_bus_type,
+                );
             } else {
                 self.sound_slot.add_sound_device(
                     SoundChipType::C140,
                     self.number_of_chip(header.clock_c140),
                     header.clock_c140 & 0x3fffffff,
                 );
+                // set rom bus type
+                self.sound_slot.set_rom_bus_type(
+                    SoundChipType::C140,
+                    self.number_of_chip(header.clock_c140) - 1,
+                    RomIndex::C140_ROM,
+                    rom_bus_type,
+                );
             }
+        }
+        if header.clock_okim6295 != 0 {
+            self.sound_slot.add_sound_device(
+                SoundChipType::OKIM6295,
+                self.number_of_chip(header.clock_okim6295),
+                header.clock_okim6295 & 0x3fffffff,
+            );
             // set rom bus type
-            self.sound_slot
-                .set_rom_bus_type(RomIndex::C140_ROM, rom_bus_type);
+            self.sound_slot.set_rom_bus_type(
+                SoundChipType::OKIM6295,
+                self.number_of_chip(header.clock_okim6295) - 1,
+                RomIndex::OKIM6295_ROM,
+                Some(RomBusType::OKIM6295),
+            );
         }
 
         Ok(())
@@ -529,7 +554,11 @@ impl VgmPlay {
                 // 0x66 compatibility command to make older players stop parsing the stream
                 self.get_vgm_u8();
                 let data_type = self.get_vgm_u8();
-                let data_length = self.get_vgm_u32() as usize;
+                let mut data_length = self.get_vgm_u32() as usize;
+                // dual sound chip
+                let sound_chip_index = if data_length & 0x80000000 != 0 { 1 } else { 0 };
+                data_length &= 0x7fffffff;
+                // data position
                 let data_block_pos = self.vgm_pos;
                 self.vgm_pos += data_length as usize;
                 // handle data block
@@ -558,13 +587,18 @@ impl VgmPlay {
                         data_size = 1;
                     }
                     let start_address = start_address as usize;
-                    let rom_index: RomIndex = Self::get_rom_index(data_type);
-                    self.sound_slot.add_rom(
-                        rom_index,
-                        &self.vgm_data[(data_block_pos + 8)..(data_block_pos + 8) + data_size],
-                        start_address,
-                        start_address + data_size - 1,
-                    );
+                    let (rom_index, sound_chip_type): (RomIndex, Option<SoundChipType>) =
+                        self.get_rom_index(data_type);
+                    if rom_index != RomIndex::NOT_SUPPOTED {
+                        self.sound_slot.add_rom(
+                            sound_chip_type.unwrap(),
+                            sound_chip_index,
+                            rom_index,
+                            &self.vgm_data[(data_block_pos + 8)..(data_block_pos + 8) + data_size],
+                            start_address,
+                            start_address + data_size - 1,
+                        );
+                    }
                 }
             }
             0x70..=0x7f => {
@@ -734,6 +768,26 @@ impl VgmPlay {
                     );
                 }
             }
+            0xb8 => {
+                // 0xb8: aa dd: OKIM6295, write value dd to register aa
+                let offset = self.get_vgm_u8();
+                let dat = self.get_vgm_u8();
+                if offset & 0x80 != 0 {
+                    self.sound_slot.write(
+                        SoundChipType::OKIM6295,
+                        1,
+                        (offset & 0x7f) as u32,
+                        dat.into(),
+                    );
+                } else {
+                    self.sound_slot.write(
+                        SoundChipType::OKIM6295,
+                        0,
+                        (offset & 0x7f) as u32,
+                        dat.into(),
+                    );
+                }
+            }
             0xc0 => {
                 let offset = self.get_vgm_u16();
                 let dat = self.get_vgm_u8();
@@ -770,7 +824,7 @@ impl VgmPlay {
                 // 0x4f: dd: Game Gear PSG stereo, write dd to port 0x06
                 self.get_vgm_u8();
             }
-            0x40..=0x4e | 0x5d | 0xb0..=0xb6 | 0xb8..=0xbf => {
+            0x40..=0x4e | 0x5d | 0xb0..=0xb6 | 0xb9..=0xbf => {
                 // 0x5d: aa dd: YMZ280B, write value dd to register aa
                 // 0xb0: aa dd: RF5C68, write value dd to register aa
                 // 0xb1: aa dd: RF5C164, write value dd to register aa
@@ -778,7 +832,6 @@ impl VgmPlay {
                 // 0xb4: aa dd: NES APU, write value dd to register aa
                 // 0xb5: aa dd: MultiPCM, write value dd to register aa
                 // 0xb6: aa dd: uPD7759, write value dd to register aa
-                // 0xb8: aa dd: OKIM6295, write value dd to register aa
                 // 0xb9: aa dd: HuC6280, write value dd to register aa
                 // 0xba: aa dd: K053260, write value dd to register aa
                 // 0xbb: aa dd: Pokey, write value dd to register aa
@@ -818,17 +871,25 @@ impl VgmPlay {
         wait
     }
 
-    fn get_rom_index(data_type: u8) -> RomIndex {
+    fn get_rom_index(&self, data_type: u8) -> (RomIndex, Option<SoundChipType>) {
         match data_type {
-            0x80 => RomIndex::SEGAPCM_ROM,
-            0x81 => RomIndex::YM2608_DELTA_T,
-            0x82 => RomIndex::YM2610_ADPCM,
-            0x83 => RomIndex::YM2610_DELTA_T,
-            0x84 => RomIndex::YMF278B_ROM,
-            0x87 => RomIndex::YMF278B_RAM,
-            0x88 => RomIndex::Y8950_ROM,
-            0x8d => RomIndex::C140_ROM,
-            _ => RomIndex::NOT_SUPPOTED,
+            0x80 => (RomIndex::SEGAPCM_ROM, Some(SoundChipType::SEGAPCM)),
+            0x81 => (RomIndex::YM2608_DELTA_T, Some(SoundChipType::YM2608)),
+            0x82 => (RomIndex::YM2610_ADPCM, Some(SoundChipType::YM2610)),
+            0x83 => (RomIndex::YM2610_DELTA_T, Some(SoundChipType::YM2610)),
+            0x84 => (RomIndex::YMF278B_ROM, Some(SoundChipType::YMF278B)),
+            0x87 => (RomIndex::YMF278B_RAM, Some(SoundChipType::YMF278B)),
+            0x88 => (RomIndex::Y8950_ROM, Some(SoundChipType::Y8950)),
+            0x8b => (RomIndex::OKIM6295_ROM, Some(SoundChipType::OKIM6295)),
+            0x8d => (
+                RomIndex::C140_ROM,
+                if self.vgm_header.as_ref().unwrap().c140_chip_type == /* C219_TYPE_ASIC219 */ 0x2 {
+                    Some(SoundChipType::C219)
+                } else {
+                    Some(SoundChipType::C140)
+                },
+            ),
+            _ => (RomIndex::NOT_SUPPOTED, None),
         }
     }
 
@@ -858,7 +919,7 @@ impl VgmPlay {
             21 => None, // multi_pcm
             22 => None, // upd7759
             23 => Some(SoundChipType::OKIM6258),
-            24 => None, // okim6295
+            24 => Some(SoundChipType::OKIM6295),
             25 => None, // k051649
             26 => None, // k054539
             27 => None, // huc6280
@@ -974,6 +1035,16 @@ mod tests {
     #[test]
     fn okim6258_5() {
         play("./docs/vgm/okim6258-5-ng.vgz")
+    }
+
+    #[test]
+    fn okim6295_1() {
+        play("./docs/vgm/okim6295-1.vgz")
+    }
+
+    #[test]
+    fn okim6295_2() {
+        play("./docs/vgm/okim6295-multi-ng.vgz")
     }
 
     #[test]
