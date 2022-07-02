@@ -303,16 +303,27 @@ impl VgmPlay {
                     self.number_of_chip(header.clock_c140),
                     header.clock_c140 & 0x3fffffff,
                 );
+                // set rom bus type
+                self.sound_slot.set_rom_bus_type(
+                    SoundChipType::C219,
+                    self.number_of_chip(header.clock_c140) - 1,
+                    RomIndex::C140_ROM,
+                    rom_bus_type,
+                );
             } else {
                 self.sound_slot.add_sound_device(
                     SoundChipType::C140,
                     self.number_of_chip(header.clock_c140),
                     header.clock_c140 & 0x3fffffff,
                 );
+                // set rom bus type
+                self.sound_slot.set_rom_bus_type(
+                    SoundChipType::C140,
+                    self.number_of_chip(header.clock_c140) - 1,
+                    RomIndex::C140_ROM,
+                    rom_bus_type,
+                );
             }
-            // set rom bus type
-            self.sound_slot
-                .set_rom_bus_type(RomIndex::C140_ROM, rom_bus_type);
         }
         if header.clock_okim6295 != 0 {
             self.sound_slot.add_sound_device(
@@ -321,8 +332,12 @@ impl VgmPlay {
                 header.clock_okim6295 & 0x3fffffff,
             );
             // set rom bus type
-            self.sound_slot
-                .set_rom_bus_type(RomIndex::OKIM6295_ROM, Some(RomBusType::OKIM6295));
+            self.sound_slot.set_rom_bus_type(
+                SoundChipType::OKIM6295,
+                self.number_of_chip(header.clock_okim6295) - 1,
+                RomIndex::OKIM6295_ROM,
+                Some(RomBusType::OKIM6295),
+            );
         }
 
         Ok(())
@@ -568,13 +583,18 @@ impl VgmPlay {
                         data_size = 1;
                     }
                     let start_address = start_address as usize;
-                    let rom_index: RomIndex = Self::get_rom_index(data_type);
-                    self.sound_slot.add_rom(
-                        rom_index,
-                        &self.vgm_data[(data_block_pos + 8)..(data_block_pos + 8) + data_size],
-                        start_address,
-                        start_address + data_size - 1,
-                    );
+                    let (rom_index, sound_chip_type): (RomIndex, Option<SoundChipType>) =
+                        self.get_rom_index(data_type);
+                    if rom_index != RomIndex::NOT_SUPPOTED {
+                        self.sound_slot.add_rom(
+                            sound_chip_type.unwrap(),
+                            if data_length & 0x80000000 != 0 { 1 } else { 0 },
+                            rom_index,
+                            &self.vgm_data[(data_block_pos + 8)..(data_block_pos + 8) + data_size],
+                            start_address,
+                            start_address + data_size - 1,
+                        );
+                    }
                 }
             }
             0x70..=0x7f => {
@@ -847,18 +867,25 @@ impl VgmPlay {
         wait
     }
 
-    fn get_rom_index(data_type: u8) -> RomIndex {
+    fn get_rom_index(&self, data_type: u8) -> (RomIndex, Option<SoundChipType>) {
         match data_type {
-            0x80 => RomIndex::SEGAPCM_ROM,
-            0x81 => RomIndex::YM2608_DELTA_T,
-            0x82 => RomIndex::YM2610_ADPCM,
-            0x83 => RomIndex::YM2610_DELTA_T,
-            0x84 => RomIndex::YMF278B_ROM,
-            0x87 => RomIndex::YMF278B_RAM,
-            0x88 => RomIndex::Y8950_ROM,
-            0x8b => RomIndex::OKIM6295_ROM,
-            0x8d => RomIndex::C140_ROM,
-            _ => RomIndex::NOT_SUPPOTED,
+            0x80 => (RomIndex::SEGAPCM_ROM, Some(SoundChipType::SEGAPCM)),
+            0x81 => (RomIndex::YM2608_DELTA_T, Some(SoundChipType::YM2608)),
+            0x82 => (RomIndex::YM2610_ADPCM, Some(SoundChipType::YM2610)),
+            0x83 => (RomIndex::YM2610_DELTA_T, Some(SoundChipType::YM2610)),
+            0x84 => (RomIndex::YMF278B_ROM, Some(SoundChipType::YMF278B)),
+            0x87 => (RomIndex::YMF278B_RAM, Some(SoundChipType::YMF278B)),
+            0x88 => (RomIndex::Y8950_ROM, Some(SoundChipType::Y8950)),
+            0x8b => (RomIndex::OKIM6295_ROM, Some(SoundChipType::OKIM6295)),
+            0x8d => (
+                RomIndex::C140_ROM,
+                if self.vgm_header.as_ref().unwrap().c140_chip_type == /* C219_TYPE_ASIC219 */ 0x2 {
+                    Some(SoundChipType::C219)
+                } else {
+                    Some(SoundChipType::C140)
+                },
+            ),
+            _ => (RomIndex::NOT_SUPPOTED, None),
         }
     }
 
@@ -1009,6 +1036,11 @@ mod tests {
     #[test]
     fn okim6295_1() {
         play("./docs/vgm/okim6295-1.vgz")
+    }
+
+    #[test]
+    fn okim6295_2() {
+        play("./docs/vgm/okim6295-multi-ng.vgz")
     }
 
     #[test]
