@@ -128,7 +128,7 @@ const start = () => {
     canvasContext.fillStyle = COLOR_MD_GREEN;
     canvasContext.font = '14px sans-serif';
     fillTextCenterd("YM2149 | YM2151 | YM2203 | YM2413 | YM2608 | YM2610(B) | YM2612 | YM3526 | Y8950 | YM3812 | YMF262 | YMF278B", CANVAS_HEIGHT / 2 - 32 * 4 + 16);
-    fillTextCenterd("SN76489(MD) | PWM(32X) | SEGAPCM | OKIM6285(X68K) | C140(C219) | OKIM6295", CANVAS_HEIGHT / 2 - 32 * 3 + 4);
+    fillTextCenterd("SN76489(MD) | PWM(32X) | SEGAPCM | OKIM6258(X68K) | C140(C219) | OKIM6295", CANVAS_HEIGHT / 2 - 32 * 3 + 4);
     canvasContext.font = '20px sans-serif';
     fillTextCenterd("🎶 DRAG AND DROP VGM(vgm/vgz) || XGM(xgm/xgz) HEAR", CANVAS_HEIGHT / 2 - 32 * 1);
     canvasContext.font = '15px sans-serif';

@@ -34,7 +34,7 @@ The WebAssembly interface can be called from many computer languages by using Wa
 |SN76489|MAME|Rust ports|
 |SEGAPCM|MAME|Rust ports|
 |PWM|MAME|Rust ports|
-|OKIM6285|MAME|Rust ports|
+|OKIM6258|MAME|Rust ports|
 |C140/C219|MAME|Rust ports|
 |OKIM6295|MAME|Rust ports|
 
