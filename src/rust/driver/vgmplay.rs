@@ -554,7 +554,11 @@ impl VgmPlay {
                 // 0x66 compatibility command to make older players stop parsing the stream
                 self.get_vgm_u8();
                 let data_type = self.get_vgm_u8();
-                let data_length = self.get_vgm_u32() as usize;
+                let mut data_length = self.get_vgm_u32() as usize;
+                // dual sound chip
+                let sound_chip_index = if data_length & 0x80000000 != 0 { 1 } else { 0 };
+                data_length &= 0x7fffffff;
+                // data position
                 let data_block_pos = self.vgm_pos;
                 self.vgm_pos += data_length as usize;
                 // handle data block
@@ -588,7 +592,7 @@ impl VgmPlay {
                     if rom_index != RomIndex::NOT_SUPPOTED {
                         self.sound_slot.add_rom(
                             sound_chip_type.unwrap(),
-                            if data_length & 0x80000000 != 0 { 1 } else { 0 },
+                            sound_chip_index,
                             rom_index,
                             &self.vgm_data[(data_block_pos + 8)..(data_block_pos + 8) + data_size],
                             start_address,
