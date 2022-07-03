@@ -304,12 +304,14 @@ impl VgmPlay {
                     header.clock_c140 & 0x3fffffff,
                 );
                 // set rom bus type
-                self.sound_slot.set_rom_bus_type(
-                    SoundChipType::C219,
-                    self.number_of_chip(header.clock_c140) - 1,
-                    RomIndex::C140_ROM,
-                    rom_bus_type,
-                );
+                for sound_chip_index in 0..self.number_of_chip(header.clock_c140) {
+                    self.sound_slot.set_rom_bus_type(
+                        SoundChipType::C219,
+                        sound_chip_index,
+                        RomIndex::C140_ROM,
+                        rom_bus_type,
+                    );
+                }
             } else {
                 self.sound_slot.add_sound_device(
                     SoundChipType::C140,
@@ -317,12 +319,14 @@ impl VgmPlay {
                     header.clock_c140 & 0x3fffffff,
                 );
                 // set rom bus type
-                self.sound_slot.set_rom_bus_type(
-                    SoundChipType::C140,
-                    self.number_of_chip(header.clock_c140) - 1,
-                    RomIndex::C140_ROM,
-                    rom_bus_type,
-                );
+                for sound_chip_index in 0..self.number_of_chip(header.clock_c140) {
+                    self.sound_slot.set_rom_bus_type(
+                        SoundChipType::C140,
+                        sound_chip_index,
+                        RomIndex::C140_ROM,
+                        rom_bus_type,
+                    );
+                }
             }
         }
         if header.clock_okim6295 != 0 {
@@ -332,12 +336,14 @@ impl VgmPlay {
                 header.clock_okim6295 & 0x3fffffff,
             );
             // set rom bus type
-            self.sound_slot.set_rom_bus_type(
-                SoundChipType::OKIM6295,
-                self.number_of_chip(header.clock_okim6295) - 1,
-                RomIndex::OKIM6295_ROM,
-                Some(RomBusType::OKIM6295),
-            );
+            for sound_chip_index in 0..self.number_of_chip(header.clock_c140) {
+                self.sound_slot.set_rom_bus_type(
+                    SoundChipType::OKIM6295,
+                    sound_chip_index,
+                    RomIndex::OKIM6295_ROM,
+                    Some(RomBusType::OKIM6295),
+                );
+            }
         }
 
         Ok(())
