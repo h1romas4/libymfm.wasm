@@ -368,7 +368,9 @@ impl VgmPlay {
     }
 
     fn number_of_chip(&self, clock: u32) -> usize {
-        if clock & 0x40000000 != 0 {
+        // Dual chip support is activated by setting bit 30 (0x40000000) in the chip's clock value.
+        // Since data with a flag at 0x80000000 existed, it is judged at 0xc0000000.
+        if clock & 0xc0000000 != 0 {
             2
         } else {
             1
@@ -1041,6 +1043,11 @@ mod tests {
     #[test]
     fn okim6295_2() {
         play("./docs/vgm/okim6295-multi-ng.vgz")
+    }
+
+    #[test]
+    fn okim6295_3() {
+        play("./docs/vgm/okim6295-nmk112-ng.vgz")
     }
 
     #[test]
