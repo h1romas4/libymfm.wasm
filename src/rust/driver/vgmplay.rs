@@ -799,12 +799,7 @@ impl VgmPlay {
                 let offset = u16::from(self.get_vgm_u8()) << 8 | u16::from(self.get_vgm_u8());
                 let dat = self.get_vgm_u8();
                 // select chip type
-                let sound_chip_type = if self.vgm_header.as_ref().unwrap().c140_chip_type != /* C219_TYPE_ASIC219 */ 0x2
-                {
-                    SoundChipType::C140
-                } else {
-                    SoundChipType::C219
-                };
+                let sound_chip_type = self.get_c140_chip_type();
                 if offset & 0x8000 != 0 {
                     self.sound_slot
                         .write(sound_chip_type, 1, (offset & 0x7fff) as u32, dat.into());
@@ -871,6 +866,14 @@ impl VgmPlay {
         wait
     }
 
+    fn get_c140_chip_type(&self) -> SoundChipType {
+        if self.vgm_header.as_ref().unwrap().c140_chip_type == /* C219_TYPE_ASIC219 */ 0x2 {
+            SoundChipType::C219
+        } else {
+            SoundChipType::C140
+        }
+    }
+
     fn get_rom_index(&self, data_type: u8) -> (RomIndex, Option<SoundChipType>) {
         match data_type {
             0x80 => (RomIndex::SEGAPCM_ROM, Some(SoundChipType::SEGAPCM)),
@@ -881,14 +884,7 @@ impl VgmPlay {
             0x87 => (RomIndex::YMF278B_RAM, Some(SoundChipType::YMF278B)),
             0x88 => (RomIndex::Y8950_ROM, Some(SoundChipType::Y8950)),
             0x8b => (RomIndex::OKIM6295_ROM, Some(SoundChipType::OKIM6295)),
-            0x8d => (
-                RomIndex::C140_ROM,
-                if self.vgm_header.as_ref().unwrap().c140_chip_type == /* C219_TYPE_ASIC219 */ 0x2 {
-                    Some(SoundChipType::C219)
-                } else {
-                    Some(SoundChipType::C140)
-                },
-            ),
+            0x8d => (RomIndex::C140_ROM, Some(self.get_c140_chip_type())),
             _ => (RomIndex::NOT_SUPPOTED, None),
         }
     }
