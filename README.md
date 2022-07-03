@@ -44,10 +44,9 @@ The WebAssembly interface can be called from many computer languages by using Wa
 
 [![](https://github.com/h1romas4/libymfm.wasm/raw/main/public/images/ogp.png)](https://chipstream.netlify.app/)
 
-Firefox or Chromium is recommended. Currently, Safari does not support SharedArrayBuffer because it is not available.
+Firefox or Chromium is recommended.
 
-- Web Worker/Worklet architecture
-- WASI build on browser
+*Currently, Safari now supports SharedArrayBuffer, but it does not work well. It appears that `Atomics.notify` is not working properly. (help!)*
 
 Source code:
 
