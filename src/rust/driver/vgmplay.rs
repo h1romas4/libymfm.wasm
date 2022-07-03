@@ -304,12 +304,14 @@ impl VgmPlay {
                     header.clock_c140 & 0x3fffffff,
                 );
                 // set rom bus type
-                self.sound_slot.set_rom_bus_type(
-                    SoundChipType::C219,
-                    self.number_of_chip(header.clock_c140) - 1,
-                    RomIndex::C140_ROM,
-                    rom_bus_type,
-                );
+                for sound_chip_index in 0..self.number_of_chip(header.clock_c140) {
+                    self.sound_slot.set_rom_bus_type(
+                        SoundChipType::C219,
+                        sound_chip_index,
+                        RomIndex::C140_ROM,
+                        rom_bus_type,
+                    );
+                }
             } else {
                 self.sound_slot.add_sound_device(
                     SoundChipType::C140,
@@ -317,12 +319,14 @@ impl VgmPlay {
                     header.clock_c140 & 0x3fffffff,
                 );
                 // set rom bus type
-                self.sound_slot.set_rom_bus_type(
-                    SoundChipType::C140,
-                    self.number_of_chip(header.clock_c140) - 1,
-                    RomIndex::C140_ROM,
-                    rom_bus_type,
-                );
+                for sound_chip_index in 0..self.number_of_chip(header.clock_c140) {
+                    self.sound_slot.set_rom_bus_type(
+                        SoundChipType::C140,
+                        sound_chip_index,
+                        RomIndex::C140_ROM,
+                        rom_bus_type,
+                    );
+                }
             }
         }
         if header.clock_okim6295 != 0 {
@@ -332,12 +336,14 @@ impl VgmPlay {
                 header.clock_okim6295 & 0x3fffffff,
             );
             // set rom bus type
-            self.sound_slot.set_rom_bus_type(
-                SoundChipType::OKIM6295,
-                self.number_of_chip(header.clock_okim6295) - 1,
-                RomIndex::OKIM6295_ROM,
-                Some(RomBusType::OKIM6295),
-            );
+            for sound_chip_index in 0..self.number_of_chip(header.clock_c140) {
+                self.sound_slot.set_rom_bus_type(
+                    SoundChipType::OKIM6295,
+                    sound_chip_index,
+                    RomIndex::OKIM6295_ROM,
+                    Some(RomBusType::OKIM6295),
+                );
+            }
         }
 
         Ok(())
@@ -368,7 +374,9 @@ impl VgmPlay {
     }
 
     fn number_of_chip(&self, clock: u32) -> usize {
-        if clock & 0x40000000 != 0 {
+        // Dual chip support is activated by setting bit 30 (0x40000000) in the chip's clock value.
+        // Since data with a flag at 0x80000000 existed, it is judged at 0xc0000000.
+        if clock & 0xc0000000 != 0 {
             2
         } else {
             1
@@ -799,12 +807,7 @@ impl VgmPlay {
                 let offset = u16::from(self.get_vgm_u8()) << 8 | u16::from(self.get_vgm_u8());
                 let dat = self.get_vgm_u8();
                 // select chip type
-                let sound_chip_type = if self.vgm_header.as_ref().unwrap().c140_chip_type != /* C219_TYPE_ASIC219 */ 0x2
-                {
-                    SoundChipType::C140
-                } else {
-                    SoundChipType::C219
-                };
+                let sound_chip_type = self.get_c140_chip_type();
                 if offset & 0x8000 != 0 {
                     self.sound_slot
                         .write(sound_chip_type, 1, (offset & 0x7fff) as u32, dat.into());
@@ -871,6 +874,14 @@ impl VgmPlay {
         wait
     }
 
+    fn get_c140_chip_type(&self) -> SoundChipType {
+        if self.vgm_header.as_ref().unwrap().c140_chip_type == /* C219_TYPE_ASIC219 */ 0x2 {
+            SoundChipType::C219
+        } else {
+            SoundChipType::C140
+        }
+    }
+
     fn get_rom_index(&self, data_type: u8) -> (RomIndex, Option<SoundChipType>) {
         match data_type {
             0x80 => (RomIndex::SEGAPCM_ROM, Some(SoundChipType::SEGAPCM)),
@@ -881,14 +892,7 @@ impl VgmPlay {
             0x87 => (RomIndex::YMF278B_RAM, Some(SoundChipType::YMF278B)),
             0x88 => (RomIndex::Y8950_ROM, Some(SoundChipType::Y8950)),
             0x8b => (RomIndex::OKIM6295_ROM, Some(SoundChipType::OKIM6295)),
-            0x8d => (
-                RomIndex::C140_ROM,
-                if self.vgm_header.as_ref().unwrap().c140_chip_type == /* C219_TYPE_ASIC219 */ 0x2 {
-                    Some(SoundChipType::C219)
-                } else {
-                    Some(SoundChipType::C140)
-                },
-            ),
+            0x8d => (RomIndex::C140_ROM, Some(self.get_c140_chip_type())),
             _ => (RomIndex::NOT_SUPPOTED, None),
         }
     }
@@ -1045,6 +1049,11 @@ mod tests {
     #[test]
     fn okim6295_2() {
         play("./docs/vgm/okim6295-multi-ng.vgz")
+    }
+
+    #[test]
+    fn okim6295_3() {
+        play("./docs/vgm/okim6295-nmk112-ng.vgz")
     }
 
     #[test]
