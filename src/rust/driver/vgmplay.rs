@@ -627,8 +627,6 @@ impl VgmPlay {
             }
             0x90 => {
                 // Setup Stream Control
-                // 0x90 ss tt pp cc
-                // 0x90 00 02 00 2a
                 let data_stream_id = self.get_vgm_u8() as usize;
                 let chip_type = self.get_vgm_u8();
                 let write_port = self.get_vgm_u8() as u32;
@@ -650,8 +648,6 @@ impl VgmPlay {
             }
             0x91 => {
                 // Set Stream Data
-                // 0x91 ss dd ll bb
-                // 0x91 00 00 01 2a
                 let data_stream_id = self.get_vgm_u8() as usize;
                 let data_block_id = self.get_vgm_u8() as usize;
                 let /* TODO: */ _step_base = self.get_vgm_u8();
@@ -670,8 +666,6 @@ impl VgmPlay {
             }
             0x92 => {
                 // Set Stream Frequency
-                // 0x92 ss ff ff ff ff
-                // 0x92 00 40 1f 00 00 (8KHz)
                 let data_stream_id = self.get_vgm_u8() as usize;
                 let frequency = self.get_vgm_u32();
                 if let Some((sound_chip_type, sound_chip_index)) =
@@ -687,8 +681,6 @@ impl VgmPlay {
             }
             0x93 => {
                 // Start Stream
-                // 0x93 ss aa aa aa aa mm ll ll ll ll
-                // 0x93 00 aa aa aa aa 01 ll ll ll ll
                 let data_stream_id = self.get_vgm_u8() as usize;
                 let data_stream_start_offset = self.get_vgm_u32() as usize;
                 let /* TODO */ _length_mode = self.get_vgm_u8();
@@ -708,7 +700,6 @@ impl VgmPlay {
             }
             0x94 => {
                 // Stop Stream
-                // 0x94 ss
                 let data_stream_id = self.get_vgm_u8() as usize;
                 // stop stream (set pcm_stream_length to 0)
                 if let Some((sound_chip_type, sound_chip_index)) =
@@ -723,7 +714,6 @@ impl VgmPlay {
             }
             0x95 => {
                 // Start Stream (fast call)
-                // 0x95 ss bb bb ff
                 let data_stream_id = self.get_vgm_u8() as usize;
                 let data_block_id = self.get_vgm_u16() as usize;
                 let /* TODO */ _flags = self.get_vgm_u8();
@@ -747,7 +737,6 @@ impl VgmPlay {
                     .write(SoundChipType::YM2149, 0, reg as u32, dat.into());
             }
             0xb2 => {
-                // 0xB2 ad dd
                 // PWM, write value ddd to register a (d is MSB, dd is LSB)
                 let raw1 = self.get_vgm_u8();
                 let raw2 = self.get_vgm_u8();
@@ -757,7 +746,7 @@ impl VgmPlay {
                     .write(SoundChipType::PWM, 0, channel as u32, dat.into());
             }
             0xb7 => {
-                // 0xb7: aa dd: OKIM6258, write value dd to register aa
+                // OKIM6258, write value dd to register aa
                 let offset = self.get_vgm_u8();
                 let dat = self.get_vgm_u8();
                 if offset & 0x80 != 0 {
@@ -777,7 +766,7 @@ impl VgmPlay {
                 }
             }
             0xb8 => {
-                // 0xb8: aa dd: OKIM6295, write value dd to register aa
+                // OKIM6295, write value dd to register aa
                 let offset = self.get_vgm_u8();
                 let dat = self.get_vgm_u8();
                 if offset & 0x80 != 0 {
@@ -803,7 +792,7 @@ impl VgmPlay {
                     .write(SoundChipType::SEGAPCM, 0, u32::from(offset), dat.into());
             }
             0xd4 => {
-                // 0xd4: pp aa dd: C140, write value dd to register ppaa
+                // C140, write value dd to register ppaa
                 let offset = u16::from(self.get_vgm_u8()) << 8 | u16::from(self.get_vgm_u8());
                 let dat = self.get_vgm_u8();
                 // select chip type
