@@ -44,10 +44,9 @@ The WebAssembly interface can be called from many computer languages by using Wa
 
 [![](https://github.com/h1romas4/libymfm.wasm/raw/main/public/images/ogp.png)](https://chipstream.netlify.app/)
 
-Firefox or Chromium is recommended. Currently, Safari does not support SharedArrayBuffer because it is not available.
+Firefox or Chromium is recommended.
 
-- Web Worker/Worklet architecture
-- WASI build on browser
+*Currently, Safari now supports SharedArrayBuffer, but it does not work well. It appears that `Atomics.notify` is not working properly. (help!)*
 
 Source code:
 
@@ -64,13 +63,13 @@ Source code:
 ## WASI Commnad Line Interface
 
 - Install [Wasmer](https://wasmer.io/) runtime
-- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.10.1) from pre-build release
+- Download [libymfm-cli.wasm](https://github.com/h1romas4/libymfm.wasm/releases/tag/v0.10.2) from pre-build release
 
 Options
 
 ```
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.10.1
+libymfm-cli 0.10.2
 Hiromasa Tanaka <h1romas4@gmail.com>
 libymfm CLI
 
