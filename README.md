@@ -38,6 +38,15 @@ The WebAssembly interface can be called from many computer languages by using Wa
 |C140/C219|MAME|Rust ports|
 |OKIM6295|MAME|Rust ports|
 
+## License
+
+BSD 3-Clause License
+
+## Special Thanks
+
+- [ymfm](https://github.com/aaronsgiles/ymfm)
+- [MAME](https://github.com/mamedev/mame)
+
 ## Web Browser Interface
 
 [WebAssembly VGM Player](https://chipstream.netlify.app/)
@@ -273,28 +282,20 @@ Essentially, wasm-bindgen is incompatible with wasm32-wasi.
 >
 > `panicked at 'unknown instruction LocalTee`
 
-## License
-
-BSD 3-Clause License
-
-## Special Thanks
-
-- [ymfm](https://github.com/aaronsgiles/ymfm)
-- [MAME](https://github.com/mamedev/mame)
-
 ## TODO / Known Issues
 
 - [ ] System
     - [ ] Fix ROM bus architecture.
     - [ ] Add support sound mixer.
+    - [ ] Remove the dependency on wasm-bindgen to have only extern "C" interface.
 - [x] VGM driver
     - [x] YM2141 clock worng?
     - [x] Is there a problem with the file parser? The beginning of the song may be wrong.
     - [x] Support all data stream (now only support YM2612 and OKIM6285)
     - [x] Support dual chip ROM blocks.
-- [x] Non-vgm driver support
-    - [x] XGM
-        - [x] There is still a bug with multi-channel PCM.
+    - [ ] Implement more of the unimplemented.
+- [x] XGM driver
+    - [x] There is still a bug with multi-channel PCM.
 - [x] Multilingual Interface
     - [x] CLI
     - [x] Web/JavaScript
@@ -318,6 +319,8 @@ BSD 3-Clause License
 - [ ] Examples source
     - [ ] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well.
     - [ ] Web Frontend: Support YM2608 ADPCM ROM (wasmer-js WASI fopen)
+    - [ ] Web Frontend: Remove the wasm-bindgen dependency. Provide a TypeScript-based API wrapper.
+    - [ ] Web Frontend: Support SharedArrayBuffer in Safari.(*help!*)
     - [x] Web Frontend: AudioWorklet
     - [x] Web Frontend: Web Worker AudioWorklet and SharedArrayBuffer (The Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers cannot be set in github pages, so they cannot be deployed)
     - [x] Web Frontend: Add buffering mode
