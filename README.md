@@ -38,14 +38,14 @@ The WebAssembly interface can be called from many computer languages by using Wa
 |C140/C219|MAME|Rust ports|
 |OKIM6295|MAME|Rust ports|
 
-## License
-
-BSD 3-Clause License
-
-## Special Thanks
+### Special Thanks
 
 - [ymfm](https://github.com/aaronsgiles/ymfm)
 - [MAME](https://github.com/mamedev/mame)
+
+## License
+
+BSD 3-Clause License
 
 ## Web Browser Interface
 
@@ -317,10 +317,9 @@ Essentially, wasm-bindgen is incompatible with wasm32-wasi.
     - [x] OKIM6295
     - [ ] Next to be determined
 - [ ] Examples source
-    - [ ] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well.
+    - [ ] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well.(*help!*)
     - [ ] Web Frontend: Support YM2608 ADPCM ROM (wasmer-js WASI fopen)
     - [ ] Web Frontend: Remove the wasm-bindgen dependency. Provide a TypeScript-based API wrapper.
-    - [ ] Web Frontend: Support SharedArrayBuffer in Safari.(*help!*)
     - [x] Web Frontend: AudioWorklet
     - [x] Web Frontend: Web Worker AudioWorklet and SharedArrayBuffer (The Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers cannot be set in github pages, so they cannot be deployed)
     - [x] Web Frontend: Add buffering mode
