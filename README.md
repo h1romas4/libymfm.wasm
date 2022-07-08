@@ -55,7 +55,7 @@ BSD 3-Clause License
 
 Firefox or Chromium is recommended.
 
-*Currently, Safari now supports SharedArrayBuffer, but it does not work well. It appears that `Atomics.notify` is not working properly. (help!)*
+*Currently, Safari now supports SharedArrayBuffer, but it does not work well. It appears that `Atomics.notify` is not working properly. [SharedArrayBuffer posted to AudioWorkletProcessor is not actually shared with the main thread](https://bugs.webkit.org/show_bug.cgi?id=237144)*
 
 Source code:
 
@@ -317,7 +317,7 @@ Essentially, wasm-bindgen is incompatible with wasm32-wasi.
     - [x] OKIM6295
     - [ ] Next to be determined
 - [ ] Examples source
-    - [ ] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well.(*help!*)
+    - [ ] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well. [SharedArrayBuffer posted to AudioWorkletProcessor is not actually shared with the main thread](https://bugs.webkit.org/show_bug.cgi?id=237144)
     - [ ] Web Frontend: Support YM2608 ADPCM ROM (wasmer-js WASI fopen)
     - [ ] Web Frontend: Remove the wasm-bindgen dependency. Provide a TypeScript-based API wrapper.
     - [x] Web Frontend: AudioWorklet
