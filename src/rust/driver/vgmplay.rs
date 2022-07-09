@@ -30,6 +30,7 @@ pub struct VgmPlay {
     ym2612_pcm_pos: usize,
     ym2612_pcm_offset: usize,
     remain_tick_count: usize,
+    hack_sega32x_channel: i32,
 }
 
 #[allow(dead_code)]
@@ -53,6 +54,7 @@ impl VgmPlay {
             ym2612_pcm_pos: 0,
             ym2612_pcm_offset: 0,
             remain_tick_count: 0,
+            hack_sega32x_channel: 0,
         };
         // clone vgm_file and soundchip init
         vgmplay.init(vgm_file)?;
@@ -738,12 +740,28 @@ impl VgmPlay {
             }
             0xb2 => {
                 // PWM, write value ddd to register a (d is MSB, dd is LSB)
-                let raw1 = self.get_vgm_u8();
-                let raw2 = self.get_vgm_u8();
-                let channel = (raw1 & 0xf0) >> 4_u8;
-                let dat: u16 = (raw1 as u16 & 0x0f) << 8 | raw2 as u16;
+                let offset = self.get_vgm_u8();
+                let data = self.get_vgm_u8();
+                // hack (bad rip detected, enabling sega32x channels)
+                if self.hack_sega32x_channel >= 0 {
+                    if offset & 0xf0 == 0 {
+                        if data != 0 {
+                            self.hack_sega32x_channel = -1;
+                        }
+                    } else {
+                        self.hack_sega32x_channel += 1;
+                        if self.hack_sega32x_channel == 32 {
+                            self.sound_slot
+                                .write(SoundChipType::PWM, 0, 0, 5);
+                            self.hack_sega32x_channel = -2;
+                        }
+                    }
+                }
+                // write
+                let channel = (offset & 0xf0) >> 4_u8;
+                let data: u16 = (offset as u16 & 0x0f) << 8 | data as u16;
                 self.sound_slot
-                    .write(SoundChipType::PWM, 0, channel as u32, dat.into());
+                    .write(SoundChipType::PWM, 0, channel as u32, data.into());
             }
             0xb7 => {
                 // OKIM6258, write value dd to register aa
@@ -955,6 +973,11 @@ mod tests {
     #[test]
     fn pwm_1() {
         play("./docs/vgm/pwm.vgz")
+    }
+
+    #[test]
+    fn pwm_2() {
+        play("./docs/vgm/pwm-ng.vgz")
     }
 
     #[test]
