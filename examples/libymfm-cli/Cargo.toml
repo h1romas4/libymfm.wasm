@@ -1,6 +1,6 @@
 [package]
 name = "libymfm-cli"
-version = "0.11.0"
+version = "0.12.0"
 authors = ["Hiromasa Tanaka <h1romas4@gmail.com>"]
 description = "libymfm CLI"
 edition = "2021"
