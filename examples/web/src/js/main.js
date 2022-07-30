@@ -28,6 +28,7 @@ let player;
  * @type {AudioContext}
  */
 let audioContext = null;
+let isAudioContextOpen = false;
 
 /**
  * VGM member
@@ -179,6 +180,33 @@ const title = () => {
 }
 
 /**
+ * Ready to play screen
+ */
+ const ready = () => {
+    title();
+    canvasContext.font = '28px sans-serif';
+    canvasContext.fillStyle = COLOR_MD_GREEN;
+    fillTextCenterd("OK! CLICK or TAP to start playback!", CANVAS_HEIGHT / 2 + 32 * 6);
+
+    // Playback icon
+    canvasContext.arc(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH / 8, 0 * Math.PI / 180, 360 * Math.PI / 180, false);
+    canvasContext.fillStyle = COLOR_MD_RED;
+    canvasContext.fill();
+    canvasContext.beginPath();
+    canvasContext.moveTo(CANVAS_WIDTH / 2 - 50 + 10, CANVAS_HEIGHT / 2 - 50);
+    canvasContext.lineTo(CANVAS_WIDTH / 2 - 50 + 10, CANVAS_HEIGHT / 2 + 50);
+    canvasContext.lineTo(CANVAS_WIDTH / 2 + 50 + 10, CANVAS_HEIGHT / 2);
+    canvasContext.closePath();
+    canvasContext.strokeStyle = "#ffffff";
+    canvasContext.stroke();
+    canvasContext.fillStyle = "#ffffff"
+    canvasContext.fill();
+
+    isAudioContextOpen = true;
+    canvas.addEventListener('click', next, false);
+}
+
+/**
  * Sample music
  */
 const sample = async () => {
@@ -235,7 +263,11 @@ const onDrop = (ev) => {
                     playlist.push({ filename: key, xgmdata: filelist[key] });
                 });
                 totalPlaylistCount = playlist.length;
-                next();
+                if(!isAudioContextOpen) {
+                    ready();
+                } else {
+                    next();
+                }
             }
         };
         reader.readAsArrayBuffer(file);
@@ -247,7 +279,10 @@ const onDrop = (ev) => {
  * Play next playlist
  */
 const next = function() {
+    canvas.removeEventListener('click', next, false);
+
     if(playlist.length <= 0) return;
+
     const target = playlist.shift();
     let type = 'vgm';
     if(/\.xg[m|z]$/.test(target.filename)) {
