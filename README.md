@@ -113,7 +113,7 @@ Source code:
 
 > [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/libymfm-cli](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/libymfm-cli)
 
-## Python Binding Example
+## Python Binding
 
 VGM Play Example:
 
