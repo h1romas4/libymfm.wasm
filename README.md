@@ -115,6 +115,11 @@ Source code:
 
 ## Python Binding
 
+```bash
+cd examples/python
+pip install -r requirements.txt
+```
+
 VGM Play Example:
 
 ```python
