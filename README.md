@@ -61,14 +61,6 @@ Source code:
 
 > [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/web)
 
-## Python Example
-
-![](https://github.com/h1romas4/libymfm.wasm/raw/main/docs/images/pyxel.png)
-
-Source code:
-
-> [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/python](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/python)
-
 ## WASI Commnad Line Interface
 
 - Install [Wasmer](https://wasmer.io/) runtime
@@ -120,6 +112,58 @@ $ wasmer run libymfm-cli.wasm --mapdir /:./docs/vgm -- /ym2612.vgm -r 96000 | ff
 Source code:
 
 > [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/libymfm-cli](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/libymfm-cli)
+
+## Python Binding Example
+
+VGM Play Example:
+
+```python
+#
+# VGM Play Example
+#
+import pygame
+from wasm.chipstream import ChipStream
+
+# VGM instance index
+VGM_INDEX = 0
+# Output sampling rate settings
+SAMPLING_RATE = 44100
+SAMPLING_CHUNK_SIZE = 4096
+
+# Sound device init (signed 16bit)
+pygame.mixer.pre_init(frequency=SAMPLING_RATE, size=-16, channels=2, buffer=SAMPLING_CHUNK_SIZE)
+pygame.init()
+
+# Create Wasm instance
+chip_stream = ChipStream()
+
+# Setup VGM
+header, gd3 = chip_stream.create_vgm_instance(VGM_INDEX, "./vgm/ym2612.vgm", SAMPLING_RATE, SAMPLING_CHUNK_SIZE)
+# Print VGM meta
+print(header)
+print(gd3)
+
+# Play
+while chip_stream.vgm_play(VGM_INDEX) == 0:
+    # Get sampling referance
+    s16le = chip_stream.vgm_get_sampling_ref(VGM_INDEX)
+    # Sounds
+    sample = pygame.mixer.Sound(buffer=s16le)
+    pygame.mixer.Sound.play(sample)
+    # Wait pygame mixer
+    while pygame.mixer.get_busy() == True:
+        pass
+
+# PyGame quit
+pygame.quit()
+
+# Drop instance
+chip_stream.drop_vgm_instance(VGM_INDEX)
+```
+
+Other Examples:
+
+> [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/python](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/python)
 
 ## Build
 
