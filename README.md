@@ -115,9 +115,22 @@ Source code:
 
 ## Python Binding
 
+Install dependencies
+
 ```bash
 cd examples/python
 pip install -r requirements.txt
+```
+
+Run examples
+
+```
+# Simple VGM Player
+python src/sample_vgmplay.py
+# Pyxel impliments example
+python src/sample_pyxel.py
+# Sound chip direct access example
+python src/sample_direct.py
 ```
 
 VGM Play Example: [sample_vgmplay.py](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/python/src/sample_vgmplay.py)
