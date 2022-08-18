@@ -195,7 +195,7 @@ export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
 export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
 ```
 
-Veryfy:
+Verify:
 
 ```
 $ echo ${WASI_SDK_PATH}
