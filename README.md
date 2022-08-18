@@ -55,7 +55,7 @@ BSD 3-Clause License
 
 Firefox or Chromium is recommended.
 
-*Currently, Safari now supports SharedArrayBuffer, but it does not work well. It appears that `Atomics.notify` is not working properly. [SharedArrayBuffer posted to AudioWorkletProcessor is not actually shared with the main thread](https://bugs.webkit.org/show_bug.cgi?id=237144)*
+*Currently, Safari now supports SharedArrayBuffer, but it does not work well. It appears that `Atomics.notify` is not working properly. This bug will be fixed in Safari 16. [SharedArrayBuffer posted to AudioWorkletProcessor is not actually shared with the main thread](https://bugs.webkit.org/show_bug.cgi?id=237144)*
 
 Source code:
 
