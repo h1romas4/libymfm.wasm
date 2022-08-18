@@ -172,21 +172,20 @@ Other Examples:
 
 ## Build
 
+### Setup Rust toolchaine
+
 Build require Rust 2021 edition and +nightly.
 
 ```
 rustup install nightly
+rustup target add wasm32-wasi
 ```
 
-`Cargo.toml`
-
-```
-[package]
-edition = "2021"
-rust-version = "1.61"
-```
+### Setup wasi-sdk
 
 Setup [wasi-sdk-16](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-16)
+
+Setup enviroment values:
 
 `.bashrc`
 
@@ -195,6 +194,8 @@ export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-16.0
 export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
 export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
 ```
+
+Veryfy:
 
 ```
 $ echo ${WASI_SDK_PATH}
@@ -210,17 +211,26 @@ Thread model: posix
 InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-15.0/bin
 ```
 
-cmake / make
+### Clone source
+
+Require `--recursive`
 
 ```
 git clone --recursive https://github.com/h1romas4/libymfm.wasm
 cd libymfm.wasm
+```
+
+### Build C/C++ (ymfm)
+
+```
 mkdir build && cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake  ..
 make -j4
 ```
 
-### Web Browser Interface (`examples/web`)
+### Build Rust
+
+#### Web Browser Interface (`examples/web`)
 
 Install wasm-bindgen require (`--version 0.2.78`)
 
@@ -233,7 +243,6 @@ Rust build and wasm-bindgen
 Always add the **+nightly** flag.
 
 ```
-rustup target add wasm32-wasi
 cargo +nightly build --release --target wasm32-wasi --features bindgen
 wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
 ```
@@ -246,7 +255,33 @@ npm install
 npm run start
 ```
 
-### WASI Commnad Line Interface (`examples/libymfm-cli`)
+#### Python Binding (`examples/python`)
+
+Rust build and copy .wasm to Python project
+
+Always add the **+nightly** flag.
+
+```
+rustup target add wasm32-wasi
+cargo +nightly build --release --target wasm32-wasi
+cp -p target/wasm32-wasi/release/libymfm.wasm ./examples/python/src/wasm/
+```
+
+Run Python
+
+```
+cd examples/python
+# Install require
+pip3 install -r requirements.txt
+# Simple VGM Player
+python src/sample_vgmplay.py
+# Pyxel impliments example
+python src/sample_pyxel.py
+# Sound chip direct access example
+python src/sample_direct.py
+```
+
+#### WASI Commnad Line Interface (`examples/libymfm-cli`)
 
 Pacth `Cargo.toml`
 
@@ -281,33 +316,7 @@ cd examples/libymfm-cli
 cargo +nightly build --target=wasm32-wasi --release
 ```
 
-### Python Binding (`examples/python`)
-
-Rust build and copy .wasm to Python project
-
-Always add the **+nightly** flag.
-
-```
-rustup target add wasm32-wasi
-cargo +nightly build --release --target wasm32-wasi
-cp -p target/wasm32-wasi/release/libymfm.wasm ./examples/python/src/wasm/
-```
-
-Run Python
-
-```
-cd examples/python
-# Install require
-pip3 install -r requirements.txt
-# Simple VGM Player
-python src/sample_vgmplay.py
-# Pyxel impliments example
-python src/sample_pyxel.py
-# Sound chip direct access example
-python src/sample_direct.py
-```
-
-### Native Debug & Test
+#### Native Debug & Test
 
 Since Rust currently does not allow create-type switching, the following modification to the source code is required for native debugging.
 
