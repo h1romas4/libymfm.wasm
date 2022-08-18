@@ -120,7 +120,7 @@ cd examples/python
 pip install -r requirements.txt
 ```
 
-VGM Play Example:
+VGM Play Example: [sample_vgmplay.py](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/python/src/sample_vgmplay.py)
 
 ```python
 #
@@ -248,9 +248,40 @@ npm run start
 
 ### WASI Commnad Line Interface (`examples/libymfm-cli`)
 
-@see [libymfm command line interface](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/libymfm-cli/README.md)
+Pacth `Cargo.toml`
 
-### Python Binding Test (`examples/python`)
+```
+[lib]
+# https://github.com/rust-lang/rust/pull/79997
+# https://github.com/bazelbuild/rules_rust/issues/771
+# crate-type = ["bin"] # disable this line
+crate-type = ["cdylib", "rlib"] # enable this line
+path = "src/rust/lib.rs"
+```
+
+Pacth `src/rust/lib.rs`
+
+```
+// #![no_main] // disable this line
+```
+
+Pacth `.cargo/config`
+
+```
+[target.wasm32-wasi]
+rustflags = [
+  "-Ctarget-feature=+bulk-memory",
+  # "-Z", "wasi-exec-model=reactor", # disable this line
+```
+
+Build
+
+```
+cd examples/libymfm-cli
+cargo +nightly build --target=wasm32-wasi --release
+```
+
+### Python Binding (`examples/python`)
 
 Rust build and copy .wasm to Python project
 
