@@ -68,7 +68,7 @@ Source code:
 
 Options
 
-```
+```bash
 $ wasmer run libymfm-cli.wasm -- -h
 libymfm-cli 0.12.0
 Hiromasa Tanaka <h1romas4@gmail.com>
@@ -92,20 +92,20 @@ ARGS:
 
 Example 1 - Specify output file name
 
-```
+```bash
 $ wasmer run libymfm-cli.wasm --mapdir /:./docs/vgm -- /ym2612.vgm -o ym2612.pcm
 $ ffplay -f f32le -ar 44100 -ac 2 ./docs/vgm/ym2612.pcm
 ```
 
 Example 2 - Direct play
 
-```
+```bash
 $ wasmer run libymfm-cli.wasm --mapdir /:./docs/vgm -- /ym2612.vgm | ffplay -f f32le -ar 44100 -ac 2 -i -
 ```
 
 Example 3 - Specify samplig rate
 
-```
+```bash
 $ wasmer run libymfm-cli.wasm --mapdir /:./docs/vgm -- /ym2612.vgm -r 96000 | ffplay -f f32le -ar 96000 -ac 2 -i -
 ```
 
@@ -124,7 +124,7 @@ pip install -r requirements.txt
 
 Run examples
 
-```
+```bash
 # Simple VGM Player
 python src/sample_vgmplay.py
 # Pyxel impliments example
@@ -189,7 +189,7 @@ Other Examples:
 
 Build require Rust 2021 edition and +nightly.
 
-```
+```bash
 rustup install nightly
 rustup target add wasm32-wasi
 ```
@@ -202,7 +202,7 @@ Setup enviroment values:
 
 `.bashrc`
 
-```
+```bash
 export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-16.0
 export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
 export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
@@ -210,7 +210,7 @@ export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroo
 
 Verify:
 
-```
+```bash
 $ echo ${WASI_SDK_PATH}
 /home/hiromasa/devel/toolchain/wasi-sdk-16.0
 $ ls -alF ${WASI_SDK_PATH}
@@ -228,14 +228,14 @@ InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-15.0/bin
 
 Require `--recursive`
 
-```
+```bash
 git clone --recursive https://github.com/h1romas4/libymfm.wasm
 cd libymfm.wasm
 ```
 
 ### Build C/C++ (ymfm)
 
-```
+```bash
 mkdir build && cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake  ..
 make -j4
@@ -247,7 +247,7 @@ make -j4
 
 Install wasm-bindgen require (`--version 0.2.78`)
 
-```
+```bash
 cargo install wasm-bindgen-cli --version 0.2.78
 ```
 
@@ -255,14 +255,14 @@ Rust build and wasm-bindgen
 
 Always add the **+nightly** flag.
 
-```
+```bash
 cargo +nightly build --release --target wasm32-wasi --features bindgen
 wasm-bindgen target/wasm32-wasi/release/libymfm.wasm --out-dir ./examples/web/src/wasm/
 ```
 
 npm
 
-```
+```bash
 cd examples/web
 npm install
 npm run start
@@ -274,12 +274,14 @@ Rust build and copy .wasm to Python project
 
 Always add the **+nightly** flag.
 
-```
+```bash
 cargo +nightly build --release --target wasm32-wasi
 cp -p target/wasm32-wasi/release/libymfm.wasm ./examples/python/src/wasm/
 ```
 
 #### WASI Commnad Line Interface (`examples/libymfm-cli`)
+
+Building the WASI command line interface requires disabling the library's `WASI reactor` mode, so the build requires a patch of the source code.
 
 Pacth `Cargo.toml`
 
@@ -309,9 +311,16 @@ rustflags = [
 
 Build
 
-```
+```bash
 cd examples/libymfm-cli
 cargo +nightly build --target=wasm32-wasi --release
+```
+
+Verify:
+
+```bash
+ls -laF target/wasm32-wasi/release/*.wasm
+-rwxrwxr-x  2 hiromasa hiromasa 3292594  7月 26 21:31 libymfm-cli.wasm*
 ```
 
 #### Native Debug & Test
@@ -321,8 +330,6 @@ Since Rust currently does not allow create-type switching, the following modific
 > [Cargo --crate-type CLI Argument](https://github.com/rust-lang/rfcs/pull/3180/files)
 
 It is also required if you want to use this library as a simple native library.
-
-These are the codes needed to make the library the "WASI Library".
 
 Pacth `Cargo.toml`
 
@@ -343,13 +350,13 @@ Pacth `src/rust/lib.rs`
 
 Buile or test on native
 
-```
+```bash
 mkdir build && cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/x86-64.cmake ..
 make -j4
 ```
 
-```
+```bash
 cargo build --release
 cargo test ym2612_1 -- --nocapture
 ```
