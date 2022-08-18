@@ -279,20 +279,6 @@ cargo +nightly build --release --target wasm32-wasi
 cp -p target/wasm32-wasi/release/libymfm.wasm ./examples/python/src/wasm/
 ```
 
-Run Python
-
-```
-cd examples/python
-# Install require
-pip3 install -r requirements.txt
-# Simple VGM Player
-python src/sample_vgmplay.py
-# Pyxel impliments example
-python src/sample_pyxel.py
-# Sound chip direct access example
-python src/sample_direct.py
-```
-
 #### WASI Commnad Line Interface (`examples/libymfm-cli`)
 
 Pacth `Cargo.toml`
