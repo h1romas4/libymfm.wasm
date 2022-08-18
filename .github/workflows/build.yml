@@ -14,11 +14,20 @@ jobs:
         submodules: recursive
         token: ${{secrets.GITHUB_TOKEN}}
 
+    - name: Cache cargo-and-npm
+      id: cache-cargo-and-npm
+      uses: actions/cache@v3
+      with:
+        path:
+          ~/.cargo
+          ./examples/web/node_modules
+        key: ${{ runner.os }}-cargo-and-npm
+
     - name: Cache wasi-sdk-16
       id: cache-wasi-sdk-16
       uses: actions/cache@v3
       with:
-        path: ~/wasi-sdk-16.0
+        path: ./wasi-sdk-16.0
         key: ${{ runner.os }}-wasi-sdk-16
 
     - name: wasi-sdk Toolchain Setup
