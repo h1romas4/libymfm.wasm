@@ -262,7 +262,6 @@ Rust build and copy .wasm to Python project
 Always add the **+nightly** flag.
 
 ```
-rustup target add wasm32-wasi
 cargo +nightly build --release --target wasm32-wasi
 cp -p target/wasm32-wasi/release/libymfm.wasm ./examples/python/src/wasm/
 ```
