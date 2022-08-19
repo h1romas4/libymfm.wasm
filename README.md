@@ -186,10 +186,6 @@ pygame.quit()
 chip_stream.drop_vgm_instance(VGM_INDEX)
 ```
 
-Other Examples:
-
-> [https://github.com/h1romas4/libymfm.wasm/tree/main/examples/python](https://github.com/h1romas4/libymfm.wasm/tree/main/examples/python)
-
 ## Build
 
 ### Setup Rust toolchaine
