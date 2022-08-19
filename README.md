@@ -124,13 +124,20 @@ pip install -r requirements.txt
 
 Run examples
 
+- Simple VGM Player - [src/sample_vgmplay.py](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/python/src/sample_vgmplay.py)
+- Simple XGM Player - [src/sample_xgmplay.py](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/python/src/sample_xgmplay.py)
+- Sound chip direct access example - [src/sample_direct.py](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/python/src/sample_direct.py)
+- Pyxel impliments example - [src/sample_pyxel.py](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/python/src/sample_pyxel.py)
+
 ```bash
 # Simple VGM Player
 python src/sample_vgmplay.py
-# Pyxel impliments example
-python src/sample_pyxel.py
+# Simple XGM Player
+python src/sample_xgmplay.py
 # Sound chip direct access example
 python src/sample_direct.py
+# Pyxel impliments example
+python src/sample_pyxel.py
 ```
 
 VGM Play Example: [sample_vgmplay.py](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/python/src/sample_vgmplay.py)
