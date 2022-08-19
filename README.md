@@ -8,7 +8,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 >
 > BSD-licensed Yamaha FM sound cores (OPM, OPN, OPL, and others)
 
-We provide high-level and low-level WebAssembly interfaces to sound chips.
+`libymfm.wasm` provide high-level and low-level WebAssembly interfaces to ymfm's sound chips and additional sound chips.
 
 The high-level interface provides the vgm/xgm sequencer, while the low-level interface provides direct access to the sound chip.
 Both can get PCM binary at a specified sampling rate and number of frames.
