@@ -21,10 +21,6 @@ jobs:
         path: ./wasi-sdk-16.0
         key: ${{ runner.os }}-wasi-sdk-16
 
-    - name: Cache cargo
-      id: cache-cargo
-      uses: Swatinem/rust-cache@v2
-
     - name: wasi-sdk Toolchain Setup
       if: steps.cache-wasi-sdk-16.outputs.cache-hit != 'true'
       run: |
