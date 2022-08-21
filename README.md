@@ -192,6 +192,35 @@ libymfm.wasm has a super basic `extern c` Wasm interface.
 
 > [src/rust/wasm/basic.rs](https://github.com/h1romas4/libymfm.wasm/blob/main/src/rust/wasm/basic.rs)
 
+```rust
+#[no_mangle]
+pub extern "C" fn vgm_create(
+    vgm_index_id: u32,
+    output_sampling_rate: u32,
+    output_sample_chunk_size: u32,
+    memory_index_id: u32,
+) -> bool {
+    let vgmplay = VgmPlay::new(
+        SoundSlot::new(
+            driver::VGM_TICK_RATE,
+            output_sampling_rate,
+            output_sample_chunk_size as usize,
+        ),
+        get_memory_bank()
+            .borrow_mut()
+            .get(memory_index_id as usize)
+            .unwrap(),
+    );
+    if vgmplay.is_err() {
+        return false;
+    }
+    get_vgm_bank()
+        .borrow_mut()
+        .insert(vgm_index_id as usize, vgmplay.unwrap());
+    true
+}
+```
+
 As with the Python Binding example, you could easily create an interface.
 
 > [examples/python/src/wasm/chipstream.py](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/python/src/wasm/chipstream.py)
