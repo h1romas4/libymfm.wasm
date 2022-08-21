@@ -186,6 +186,16 @@ pygame.quit()
 chip_stream.drop_vgm_instance(VGM_INDEX)
 ```
 
+## Bindings from other computer languages
+
+libymfm.wasm has a super basic `extern c` Wasm interface.
+
+> [src/rust/wasm/basic.rs](https://github.com/h1romas4/libymfm.wasm/blob/main/src/rust/wasm/basic.rs)
+
+As with the Python Binding example, you could easily create an interface.
+
+> [examples/python/src/wasm/chipstream.py](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/python/src/wasm/chipstream.py)
+
 ## Build
 
 ### Setup Rust toolchaine
