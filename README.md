@@ -221,7 +221,7 @@ pub extern "C" fn vgm_create(
 }
 ```
 
-As with the Python Binding example, you could easily create an interface.
+As with the Python Binding example, you could easily create an interface. It would also be possible to create a more type-structural interface.
 
 > [examples/python/src/wasm/chipstream.py](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/python/src/wasm/chipstream.py)
 
