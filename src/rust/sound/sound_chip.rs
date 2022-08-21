@@ -1,6 +1,6 @@
-use super::RomBusType;
 // license:BSD-3-Clause
 // copyright-holders:Hiromasa Tanaka
+use super::RomBusType;
 use super::rom::RomBank;
 use super::rom::RomIndex;
 use super::stream::SoundStream;

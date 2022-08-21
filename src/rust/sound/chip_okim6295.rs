@@ -1,10 +1,4 @@
 // license:BSD-3-Clause
-use super::{
-    rom::{read_byte, set_rom_bus, Decoder, RomBank, RomBus},
-    sound_chip::SoundChip,
-    stream::{SoundStream, convert_int},
-    RomBusType, RomIndex, SoundChipType,
-};
 /**
  * Rust OKIM 6295 ports by
  *  Hiromasa Tanaka <h1romas4@gmail.com>
@@ -65,6 +59,12 @@ use super::{
 
 ***************************************************************************/
 use std::{cell::RefCell, rc::Rc};
+use super::{
+    rom::{read_byte, set_rom_bus, Decoder, RomBank, RomBus},
+    sound_chip::SoundChip,
+    stream::{SoundStream, convert_int},
+    RomBusType, RomIndex, SoundChipType,
+};
 
 const OKIM6295_VOICES: usize = 4;
 const PIN7_LOW: u8 = 0;
