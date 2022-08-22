@@ -55,7 +55,7 @@ impl XgmPlay {
             xgm_sample_id_max: 0,
             remain_tick_count: 0,
         };
-        // clone vgm_file and soundchip init
+        // clone xgm_file and soundchip init
         xgmplay.init(xgm_file)?;
 
         Ok(xgmplay)
@@ -83,9 +83,9 @@ impl XgmPlay {
     }
 
     ///
-    /// Get VGM meta.
+    /// Get XGM meta.
     ///
-    pub fn get_vgm_meta(&self) -> (&XgmHeader, &Gd3) {
+    pub fn get_xgm_meta(&self) -> (&XgmHeader, &Gd3) {
         (
             self.xgm_header.as_ref().unwrap(/* There always is */),
             self.xgm_gd3.as_ref().unwrap(/* There always is */),
@@ -93,14 +93,14 @@ impl XgmPlay {
     }
 
     ///
-    /// Get VGM header JSON.
+    /// Get XGM header JSON.
     ///
     pub fn get_xgm_header_json(&self) -> String {
         self.xgm_header.as_ref().unwrap(/* There always is */).get_json()
     }
 
     ///
-    /// Get VGM header GD3 JSON.
+    /// Get XGM header GD3 JSON.
     ///
     pub fn get_xgm_gd3_json(&self) -> String {
         self.xgm_gd3.as_ref().unwrap(/* There always is */).get_json()
@@ -119,7 +119,7 @@ impl XgmPlay {
                 }
             }
             if self.remain_tick_count == 0 {
-                self.remain_tick_count = self.parse_vgm(repeat) as usize;
+                self.remain_tick_count = self.parse_xgm(repeat) as usize;
             };
         }
         self.sound_slot.stream();
@@ -141,7 +141,7 @@ impl XgmPlay {
         // try xgz extract to xgm_data
         self.extract(xgm_file);
 
-        // parse vgm header
+        // parse xgm header
         match xgmmeta::parse_xgm_meta(&self.xgm_data) {
             Ok((header, gd3)) => {
                 self.xgm_header = Some(header);
@@ -240,7 +240,7 @@ impl XgmPlay {
         (command & 0xf) + 1
     }
 
-    fn parse_vgm(&mut self, repeat: bool) -> u16 {
+    fn parse_xgm(&mut self, repeat: bool) -> u16 {
         let mut wait: u16 = 0;
 
         let command = self.get_xgm_u8();
@@ -374,7 +374,7 @@ mod tests {
         let mut buffer = Vec::new();
         let _ = file.read_to_end(&mut buffer).unwrap();
 
-        // read vgm
+        // read xgm
         let mut xgmplay = XgmPlay::new(
             SoundSlot::new(/* XGM NTSC */ 60, 44100, MAX_SAMPLE_SIZE),
             &buffer,
