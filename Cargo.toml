@@ -32,7 +32,7 @@ array-macro = "2"
 approx_eq = "0.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = "0.2"
+wasm-bindgen = "=0.2.78"
 console_error_panic_hook = { version = "0.1", optional = true }
 
 [profile.release]
