@@ -451,6 +451,7 @@ Essentially, wasm-bindgen is incompatible with wasm32-wasi.
     - [x] C140
     - [x] C219
     - [x] OKIM6295
+    - [ ] RF5C164
     - [ ] Next to be determined
 - [ ] Examples source
     - [ ] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well. [SharedArrayBuffer posted to AudioWorkletProcessor is not actually shared with the main thread](https://bugs.webkit.org/show_bug.cgi?id=237144)
