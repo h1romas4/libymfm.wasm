@@ -53,9 +53,7 @@ BSD 3-Clause License
 
 [![](https://github.com/h1romas4/libymfm.wasm/raw/main/public/images/ogp.png)](https://chipstream.netlify.app/)
 
-Firefox or Chromium is recommended.
-
-*Currently, Safari now supports SharedArrayBuffer, but it does not work well. It appears that `Atomics.notify` is not working properly. This bug will be fixed in Safari 16. [SharedArrayBuffer posted to AudioWorkletProcessor is not actually shared with the main thread](https://bugs.webkit.org/show_bug.cgi?id=237144)*
+Firefox or Chromium or Safari `16` or higher is recommended.
 
 Source code:
 
@@ -429,6 +427,7 @@ Essentially, wasm-bindgen is incompatible with wasm32-wasi.
     - [x] Is there a problem with the file parser? The beginning of the song may be wrong.
     - [x] Support all data stream (now only support YM2612 and OKIM6285)
     - [x] Support dual chip ROM blocks.
+    - [ ] Add support v1.70 extra header.
     - [ ] Implement more of the unimplemented.
 - [x] XGM driver
     - [x] There is still a bug with multi-channel PCM.
@@ -454,7 +453,7 @@ Essentially, wasm-bindgen is incompatible with wasm32-wasi.
     - [ ] RF5C164
     - [ ] Next to be determined
 - [ ] Examples source
-    - [ ] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well. [SharedArrayBuffer posted to AudioWorkletProcessor is not actually shared with the main thread](https://bugs.webkit.org/show_bug.cgi?id=237144)
+    - [x] Web Frontend: Safari now supports SharedArrayBuffer, but it does not work well. [SharedArrayBuffer posted to AudioWorkletProcessor is not actually shared with the main thread](https://bugs.webkit.org/show_bug.cgi?id=237144)
     - [ ] Web Frontend: Support YM2608 ADPCM ROM (wasmer-js WASI fopen)
     - [ ] Web Frontend: Remove the wasm-bindgen dependency. Provide a TypeScript-based API wrapper.
     - [x] Web Frontend: AudioWorklet
