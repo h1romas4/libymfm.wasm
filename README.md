@@ -396,6 +396,35 @@ cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/x86-64.cmake ..
 make -j4
 ```
 
+If the following compile errors occur:
+
+```
+$ clang++ -v
+Ubuntu clang version 14.0.0-1ubuntu1
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/bin
+Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/11
+Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/8
+Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/9
+Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/11
+
+$ make -j4
+components/ymfm/src/ymfm.h:368:4: error: use of undeclared identifier 'memcpy'; did you mean 'wmemcpy'?
+                        memcpy(&header[36], "data", 4);
+                        ^~~~~~
+                        wmemcpy
+```
+
+Patch `components/ymfm/src/ymfm.h`
+
+```
+#include <string>
+#include <cstring> // add this line
+```
+
+Native debugging can now be performed.
+
 ```bash
 cargo build --release
 cargo test ym2612_1 -- --nocapture
