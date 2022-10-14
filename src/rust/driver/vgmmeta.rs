@@ -86,6 +86,29 @@ pub struct VgmHeader {
     pub reserved08: u32,
     pub reserved09: u32,
     pub reserved10: u32,
+    pub extra_hdr: ExtraHeader,
+}
+
+#[derive(Deserialize, Serialize, Default, Debug)]
+pub struct ExtraHeader {
+    pub header_size: u32,
+    pub chip_clock_ofs: u32,
+    pub chip_volume_ofs: u32,
+    pub chip_clock: Vec<ChipClock>,
+    pub chip_volume: Vec<ChipVolume>,
+}
+
+#[derive(Deserialize, Serialize, Default, Debug)]
+pub struct ChipClock {
+    pub chip_id: u8,
+    pub clock_second_chip: u32,
+}
+
+#[derive(Deserialize, Serialize, Default, Debug)]
+pub struct ChipVolume {
+    pub chip_id: u8,
+    pub flags: u8,
+    pub volume: u16,
 }
 
 ///
@@ -296,6 +319,74 @@ fn parse_vgm_header(i: &[u8]) -> IResult<&[u8], VgmHeader> {
     Ok((i, header))
 }
 
+fn parse_extra_header(mut i: &[u8], mut header: VgmHeader) -> IResult<&[u8], VgmHeader> {
+    let mut extra_hdr = ExtraHeader::default();
+
+    // Header Size
+    (i, extra_hdr.header_size) = le_u32(i)?;
+    // Chip Clock Header
+    if extra_hdr.header_size >= 0x08 {
+        (i, extra_hdr.chip_clock_ofs) = le_u32(i)?;
+        extra_hdr.chip_clock = match parse_extra_header_clock(i) {
+            Ok((_, extra_header_clock)) => extra_header_clock,
+            Err(error) => return Err(error),
+        };
+    }
+    // Chip Volume Header
+    if extra_hdr.header_size >= 0x0c {
+        (i, extra_hdr.chip_volume_ofs) = le_u32(i)?;
+        extra_hdr.chip_volume = match parse_extra_header_volume(i) {
+            Ok((_, extra_header_volume)) => extra_header_volume,
+            Err(error) => return Err(error),
+        };
+    }
+
+    header.extra_hdr = extra_hdr;
+
+    Ok((i, header))
+}
+
+fn parse_extra_header_clock(mut i: &[u8]) -> IResult<&[u8], Vec<ChipClock>> {
+    let mut clock: Vec<ChipClock> = Vec::new();
+    let entry_count;
+
+    (i, entry_count) = le_u8(i)?;
+    for _ in 0..entry_count {
+        let chip_id;
+        let clock_second_chip;
+        (i, chip_id) = le_u8(i)?;
+        (i, clock_second_chip) = le_u32(i)?;
+        clock.push(ChipClock {
+            chip_id,
+            clock_second_chip,
+        });
+    }
+
+    Ok((i, clock))
+}
+
+fn parse_extra_header_volume(mut i: &[u8]) -> IResult<&[u8], Vec<ChipVolume>> {
+    let mut vol: Vec<ChipVolume> = Vec::new();
+    let entry_count;
+
+    (i, entry_count) = le_u8(i)?;
+    for _ in 0..entry_count {
+        let chip_id;
+        let flags;
+        let volume;
+        (i, chip_id) = le_u8(i)?;
+        (i, flags) = le_u8(i)?;
+        (i, volume) = le_u16(i)?;
+        vol.push(ChipVolume {
+            chip_id,
+            flags,
+            volume,
+        });
+    }
+
+    Ok((i, vol))
+}
+
 ///
 /// Parse VGM meta
 ///
@@ -306,13 +397,22 @@ pub(crate) fn parse_vgm_meta(vgmdata: &[u8]) -> Result<(VgmHeader, Gd3), &'stati
         vgm_data_offset = 0xff;
     }
     // The length of vgm_data_offset takes precedence over the length of the header.
-    let mut header = [0_u8; 0x100];
-    header[..vgm_data_offset].copy_from_slice(&vgmdata[..vgm_data_offset]);
+    let mut clean_header = [0_u8; 0x100];
+    clean_header[..vgm_data_offset].copy_from_slice(&vgmdata[..vgm_data_offset]);
 
-    let header = match parse_vgm_header(&header) {
+    let mut header = match parse_vgm_header(&clean_header) {
         Ok((_, header)) => header,
         Err(_) => return Err("vgm header parse error."),
     };
+    // Parse extra header
+    if header.version >= 170 && header.extra_hdr_ofs != 0 {
+        let extra_header = &vgmdata[(0xbc + header.extra_hdr_ofs as usize)..];
+        header = match parse_extra_header(extra_header, header) {
+            Ok((_, header)) => header,
+            Err(_) => return Err("vgm extra header parse error."),
+        }
+    }
+    // Parse GD3
     let gd3 = match parse_gd3(&vgmdata[(0x14 + header.offset_gd3 as usize)..]) {
         Ok((_, gd3)) => gd3,
         Err(_) => Gd3::default(), // blank values
