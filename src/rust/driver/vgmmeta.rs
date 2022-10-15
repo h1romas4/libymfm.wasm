@@ -4,7 +4,7 @@ use nom::bytes::complete::{tag, take};
 use nom::number::complete::{le_u16, le_u32, le_u8};
 use nom::IResult;
 
-use crate::driver::gd3meta::{Gd3, parse_gd3};
+use crate::driver::gd3meta::{parse_gd3, Gd3};
 use crate::driver::meta::Jsonlize;
 
 ///
@@ -319,28 +319,42 @@ fn parse_vgm_header(i: &[u8]) -> IResult<&[u8], VgmHeader> {
     Ok((i, header))
 }
 
-fn parse_extra_header(mut i: &[u8], mut header: VgmHeader) -> IResult<&[u8], VgmHeader> {
+fn parse_extra_header(i: &[u8], mut header: VgmHeader) -> IResult<&[u8], VgmHeader> {
     let mut extra_hdr = ExtraHeader::default();
 
     // Header Size
-    (i, extra_hdr.header_size) = le_u32(i)?;
+    let (j, header_size) = le_u32(i)?;
+    let (j, chip_clock_ofs) = if header_size >= 0x08 {
+        le_u32(j)?
+    } else {
+        (j, 0)
+    };
+    let (_, chip_volume_ofs) = if header_size >= 0x0c {
+        le_u32(j)?
+    } else {
+        (j, 0)
+    };
+
     // Chip Clock Header
-    if extra_hdr.header_size >= 0x08 {
-        (i, extra_hdr.chip_clock_ofs) = le_u32(i)?;
-        extra_hdr.chip_clock = match parse_extra_header_clock(i) {
-            Ok((_, extra_header_clock)) => extra_header_clock,
-            Err(error) => return Err(error),
-        };
+    if chip_clock_ofs != 0 {
+        extra_hdr.chip_clock =
+            match parse_extra_header_clock(&i[(0x04 + chip_clock_ofs as usize)..]) {
+                Ok((_, extra_header_clock)) => extra_header_clock,
+                Err(error) => return Err(error),
+            };
+        extra_hdr.chip_clock_ofs = chip_clock_ofs;
     }
     // Chip Volume Header
-    if extra_hdr.header_size >= 0x0c {
-        (i, extra_hdr.chip_volume_ofs) = le_u32(i)?;
-        extra_hdr.chip_volume = match parse_extra_header_volume(i) {
-            Ok((_, extra_header_volume)) => extra_header_volume,
-            Err(error) => return Err(error),
-        };
+    if chip_volume_ofs != 0 {
+        extra_hdr.chip_volume =
+            match parse_extra_header_volume(&i[(0x08 + chip_volume_ofs as usize)..]) {
+                Ok((_, extra_header_volume)) => extra_header_volume,
+                Err(error) => return Err(error),
+            };
+        extra_hdr.chip_volume_ofs = chip_volume_ofs;
     }
 
+    extra_hdr.header_size = header_size;
     header.extra_hdr = extra_hdr;
 
     Ok((i, header))
@@ -392,7 +406,8 @@ fn parse_extra_header_volume(mut i: &[u8]) -> IResult<&[u8], Vec<ChipVolume>> {
 ///
 pub(crate) fn parse_vgm_meta(vgmdata: &[u8]) -> Result<(VgmHeader, Gd3), &'static str> {
     // clean header
-    let mut vgm_data_offset: usize = (u32::from_le_bytes(vgmdata[0x34..=0x37].try_into().unwrap()) + 0x34) as usize;
+    let mut vgm_data_offset: usize =
+        (u32::from_le_bytes(vgmdata[0x34..=0x37].try_into().unwrap()) + 0x34) as usize;
     if vgm_data_offset >= 0xff {
         vgm_data_offset = 0xff;
     }
@@ -442,7 +457,12 @@ mod tests {
 
     #[test]
     fn test_3() {
-        parse("./docs/vgm/okim6258.vgm")
+        parse("./docs/vgm/ym2203-v170.vgm")
+    }
+
+    #[test]
+    fn test_4() {
+        parse("./docs/vgm/c140-v170.vgm")
     }
 
     fn parse(filepath: &str) {
