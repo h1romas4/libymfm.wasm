@@ -634,7 +634,7 @@ impl VgmPlay {
                 let write_port = self.get_vgm_u8() as u32;
                 let write_reg = self.get_vgm_u8() as u32;
                 // create new stream
-                let sound_chip_type = Self::get_stream_chip_type(chip_type);
+                let sound_chip_type = Self::get_chip_type(chip_type);
                 let sound_chip_index = (chip_type >> 7) as usize;
                 if let Some(sound_chip_type) = sound_chip_type {
                     self.sound_slot.add_data_stream(
@@ -904,7 +904,7 @@ impl VgmPlay {
         }
     }
 
-    fn get_stream_chip_type(chip_type: u8) -> Option<SoundChipType> {
+    fn get_chip_type(chip_type: u8) -> Option<SoundChipType> {
         match chip_type & 0x7f {
             0 => Some(SoundChipType::SN76489),
             1 => Some(SoundChipType::YM2413),
@@ -934,7 +934,7 @@ impl VgmPlay {
             25 => None, // k051649
             26 => None, // k054539
             27 => None, // huc6280
-            28 => None, // c140
+            28 => Some(SoundChipType::C140),
             29 => None, // k053260
             30 => None, // pokey
             31 => None, // qsound
@@ -947,7 +947,7 @@ impl VgmPlay {
             38 => None, // x1_010
             39 => None, // c352
             40 => None, // ga20
-            _ => None,  // not supported stream
+            _ => None,  // not supported
         }
     }
 }
