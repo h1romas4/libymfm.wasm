@@ -456,7 +456,8 @@ Essentially, wasm-bindgen is incompatible with wasm32-wasi.
     - [x] Is there a problem with the file parser? The beginning of the song may be wrong.
     - [x] Support all data stream (now only support YM2612 and OKIM6285)
     - [x] Support dual chip ROM blocks.
-    - [ ] Add support v1.70 extra header.
+    - [x] Add support parse v1.70 extra header.
+    - [ ] Respect the tip volume value of the extra header.
     - [ ] Implement more of the unimplemented.
 - [x] XGM driver
     - [x] There is still a bug with multi-channel PCM.
