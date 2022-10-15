@@ -361,20 +361,8 @@ impl VgmPlay {
         }
     }
 
-    fn set_sound_device_volume(&mut self, volume: &Vec<ChipVolume>) {
-        for chip in volume {
-            if let Some(chip_type) = Self::get_chip_type(chip.chip_id) {
-                #[allow(clippy::single_match)]
-                match chip_type {
-                    SoundChipType::C140 => {
-                        let output_level_rate = ((chip.volume * 2 + 1) / 3) as f32;
-                        self.sound_slot
-                            .set_output_level_rate(chip_type, 0, 2, output_level_rate);
-                    }
-                    _ => {}
-                }
-            }
-        }
+    fn set_sound_device_volume(&mut self, _volume: &[ChipVolume]) {
+        // unsupported chip volumes
     }
 
     fn extract(&mut self, vgm_file: &[u8]) {

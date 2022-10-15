@@ -268,8 +268,8 @@ impl C140 {
 
         /* render to MAME's stream buffer */
         for i in 0..samples as usize {
-            buffer_l[i] = convert_sample_i2f(lmix as i32);
-            buffer_r[i] = convert_sample_i2f(rmix as i32);
+            buffer_l[i] = convert_sample_i2f(lmix as i32 * 4);
+            buffer_r[i] = convert_sample_i2f(rmix as i32 * 4);
         }
     }
 
