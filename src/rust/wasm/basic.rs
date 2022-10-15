@@ -255,6 +255,26 @@ pub extern "C" fn sound_slot_sampling_s16le_ref(sounde_slot_index: u32) -> *cons
 }
 
 #[no_mangle]
+pub extern "C" fn sound_slot_set_output_level_rate(
+    sounde_slot_index: u32,
+    sound_chip_type: u32,
+    sound_chip_index: u32,
+    channel: u32,
+    output_level_rate: f32,
+) {
+    get_sound_slot_bank()
+        .borrow_mut()
+        .get_mut(sounde_slot_index as usize)
+        .unwrap()
+        .set_output_level_rate(
+            get_sound_chip_type(sound_chip_type),
+            sound_chip_index as usize,
+            channel as usize,
+            output_level_rate,
+        );
+}
+
+#[no_mangle]
 pub extern "C" fn sound_slot_add_rom(
     sounde_slot_index: u32,
     sound_chip_type: u32,

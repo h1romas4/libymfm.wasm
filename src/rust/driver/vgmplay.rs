@@ -10,6 +10,8 @@ use crate::driver::vgmmeta;
 use crate::driver::vgmmeta::VgmHeader;
 use crate::sound::{RomBusType, RomIndex, SoundChipType, SoundSlot};
 
+use super::vgmmeta::ChipVolume;
+
 pub const VGM_TICK_RATE: u32 = 44100;
 
 ///
@@ -143,20 +145,30 @@ impl VgmPlay {
         self.extract(vgm_file);
 
         // parse vgm header
+        let vgm_header: VgmHeader;
+        let vgm_gd3: Gd3;
         match vgmmeta::parse_vgm_meta(&self.vgm_data) {
             Ok((header, gd3)) => {
-                self.vgm_header = Some(header);
-                self.vgm_gd3 = Some(gd3);
+                vgm_header = header;
+                vgm_gd3 = gd3;
             }
             Err(message) => return Err(message),
         };
 
-        let header = self.vgm_header.as_ref().unwrap();
+        self.vgm_loop = vgm_header.offset_loop as usize;
+        self.vgm_loop_offset = (0x1c + vgm_header.offset_loop) as usize;
+        self.vgm_pos = (0x34 + vgm_header.vgm_data_offset) as usize;
 
-        self.vgm_loop = header.offset_loop as usize;
-        self.vgm_loop_offset = (0x1c + header.offset_loop) as usize;
-        self.vgm_pos = (0x34 + header.vgm_data_offset) as usize;
+        self.add_sound_device(&vgm_header);
+        self.set_sound_device_volume(&vgm_header.extra_hdr.chip_volume);
 
+        self.vgm_header = Some(vgm_header);
+        self.vgm_gd3 = Some(vgm_gd3);
+
+        Ok(())
+    }
+
+    fn add_sound_device(&mut self, header: &VgmHeader) {
         if header.clock_ym2612 != 0 {
             self.sound_slot.add_sound_device(
                 SoundChipType::YM2612,
@@ -347,8 +359,22 @@ impl VgmPlay {
                 );
             }
         }
+    }
 
-        Ok(())
+    fn set_sound_device_volume(&mut self, volume: &Vec<ChipVolume>) {
+        for chip in volume {
+            if let Some(chip_type) = Self::get_chip_type(chip.chip_id) {
+                #[allow(clippy::single_match)]
+                match chip_type {
+                    SoundChipType::C140 => {
+                        let output_level_rate = ((chip.volume * 2 + 1) / 3) as f32;
+                        self.sound_slot
+                            .set_output_level_rate(chip_type, 0, 2, output_level_rate);
+                    }
+                    _ => {}
+                }
+            }
+        }
     }
 
     fn extract(&mut self, vgm_file: &[u8]) {
@@ -751,8 +777,7 @@ impl VgmPlay {
                     } else {
                         self.hack_sega32x_channel += 1;
                         if self.hack_sega32x_channel == 32 {
-                            self.sound_slot
-                                .write(SoundChipType::PWM, 0, 0, 5);
+                            self.sound_slot.write(SoundChipType::PWM, 0, 0, 5);
                             self.hack_sega32x_channel = -2;
                         }
                     }
