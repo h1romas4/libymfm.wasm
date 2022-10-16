@@ -213,7 +213,7 @@ impl SoundStream for LinearUpSamplingStream {
     ///
     fn is_tick(&mut self) -> Tick {
         if self.output_sampling_pos >= 1_f64 {
-            if self.now_input_sampling_l != None {
+            if self.now_input_sampling_l.is_some() {
                 self.output_sampling_l = self.now_input_sampling_l.unwrap();
                 self.output_sampling_r = self.now_input_sampling_r.unwrap();
             }
@@ -221,7 +221,7 @@ impl SoundStream for LinearUpSamplingStream {
             Tick::One
         } else {
             // No sound is produced until the previous sample is confirmed.
-            if self.prev_input_sampling_l == None {
+            if self.prev_input_sampling_l.is_none() {
                 self.output_sampling_l = 0_f32;
                 self.output_sampling_r = 0_f32;
             } else {

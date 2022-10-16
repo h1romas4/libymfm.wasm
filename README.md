@@ -396,6 +396,35 @@ cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/x86-64.cmake ..
 make -j4
 ```
 
+If the following compile errors occur:
+
+```
+$ clang++ -v
+Ubuntu clang version 14.0.0-1ubuntu1
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/bin
+Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/11
+Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/8
+Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/9
+Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/11
+
+$ make -j4
+components/ymfm/src/ymfm.h:368:4: error: use of undeclared identifier 'memcpy'; did you mean 'wmemcpy'?
+                        memcpy(&header[36], "data", 4);
+                        ^~~~~~
+                        wmemcpy
+```
+
+Patch `components/ymfm/src/ymfm.h`
+
+```
+#include <string>
+#include <cstring> // add this line
+```
+
+Native debugging can now be performed.
+
 ```bash
 cargo build --release
 cargo test ym2612_1 -- --nocapture
@@ -420,14 +449,17 @@ Essentially, wasm-bindgen is incompatible with wasm32-wasi.
 
 - [ ] System
     - [ ] Fix ROM bus architecture.
-    - [ ] Add support sound mixer.
+    - [ ] Add support sound mixers with multi-channel output.
     - [ ] Remove the dependency on wasm-bindgen to have only extern "C" interface.
+    - [ ] Split the sequence parser and player.
 - [x] VGM driver
     - [x] YM2141 clock worng?
     - [x] Is there a problem with the file parser? The beginning of the song may be wrong.
     - [x] Support all data stream (now only support YM2612 and OKIM6285)
     - [x] Support dual chip ROM blocks.
-    - [ ] Add support v1.70 extra header.
+    - [x] Add support parse v1.70 extra header.
+    - [ ] Respect the sound chip volume value of the extra header.
+    - [ ] Respect seccond sound chip clock value of the extra header.
     - [ ] Implement more of the unimplemented.
 - [x] XGM driver
     - [x] There is still a bug with multi-channel PCM.

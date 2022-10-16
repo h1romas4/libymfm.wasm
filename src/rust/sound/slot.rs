@@ -266,6 +266,20 @@ impl SoundSlot {
     }
 
     ///
+    /// Set output level rate
+    ///
+    pub fn set_output_level_rate(&mut self,
+        sound_chip_type: SoundChipType,
+        sound_chip_index: usize,
+        channel: usize,
+        output_level_rate: f32
+    ) {
+        if let Some(sound_device) = self.find_sound_device(sound_chip_type, sound_chip_index) {
+            sound_device.set_output_level_rate(channel, output_level_rate);
+        }
+    }
+
+    ///
     /// Add ROM to sound chip.
     ///
     pub fn add_rom(

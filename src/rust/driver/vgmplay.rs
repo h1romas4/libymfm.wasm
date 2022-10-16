@@ -8,6 +8,7 @@ use crate::driver::gd3meta::Gd3;
 use crate::driver::meta::Jsonlize;
 use crate::driver::vgmmeta;
 use crate::driver::vgmmeta::VgmHeader;
+use crate::driver::vgmmeta::ChipVolume;
 use crate::sound::{RomBusType, RomIndex, SoundChipType, SoundSlot};
 
 pub const VGM_TICK_RATE: u32 = 44100;
@@ -33,7 +34,6 @@ pub struct VgmPlay {
     hack_sega32x_channel: i32,
 }
 
-#[allow(dead_code)]
 impl VgmPlay {
     ///
     /// Create sound driver.
@@ -143,20 +143,30 @@ impl VgmPlay {
         self.extract(vgm_file);
 
         // parse vgm header
+        let vgm_header: VgmHeader;
+        let vgm_gd3: Gd3;
         match vgmmeta::parse_vgm_meta(&self.vgm_data) {
             Ok((header, gd3)) => {
-                self.vgm_header = Some(header);
-                self.vgm_gd3 = Some(gd3);
+                vgm_header = header;
+                vgm_gd3 = gd3;
             }
             Err(message) => return Err(message),
         };
 
-        let header = self.vgm_header.as_ref().unwrap();
+        self.vgm_loop = vgm_header.offset_loop as usize;
+        self.vgm_loop_offset = (0x1c + vgm_header.offset_loop) as usize;
+        self.vgm_pos = (0x34 + vgm_header.vgm_data_offset) as usize;
 
-        self.vgm_loop = header.offset_loop as usize;
-        self.vgm_loop_offset = (0x1c + header.offset_loop) as usize;
-        self.vgm_pos = (0x34 + header.vgm_data_offset) as usize;
+        self.add_sound_device(&vgm_header);
+        self.set_sound_device_volume(&vgm_header.extra_hdr.chip_volume);
 
+        self.vgm_header = Some(vgm_header);
+        self.vgm_gd3 = Some(vgm_gd3);
+
+        Ok(())
+    }
+
+    fn add_sound_device(&mut self, header: &VgmHeader) {
         if header.clock_ym2612 != 0 {
             self.sound_slot.add_sound_device(
                 SoundChipType::YM2612,
@@ -347,8 +357,10 @@ impl VgmPlay {
                 );
             }
         }
+    }
 
-        Ok(())
+    fn set_sound_device_volume(&mut self, _volume: &[ChipVolume]) {
+        // unsupported chip volumes
     }
 
     fn extract(&mut self, vgm_file: &[u8]) {
@@ -634,7 +646,7 @@ impl VgmPlay {
                 let write_port = self.get_vgm_u8() as u32;
                 let write_reg = self.get_vgm_u8() as u32;
                 // create new stream
-                let sound_chip_type = Self::get_stream_chip_type(chip_type);
+                let sound_chip_type = Self::get_chip_type(chip_type);
                 let sound_chip_index = (chip_type >> 7) as usize;
                 if let Some(sound_chip_type) = sound_chip_type {
                     self.sound_slot.add_data_stream(
@@ -751,8 +763,7 @@ impl VgmPlay {
                     } else {
                         self.hack_sega32x_channel += 1;
                         if self.hack_sega32x_channel == 32 {
-                            self.sound_slot
-                                .write(SoundChipType::PWM, 0, 0, 5);
+                            self.sound_slot.write(SoundChipType::PWM, 0, 0, 5);
                             self.hack_sega32x_channel = -2;
                         }
                     }
@@ -904,7 +915,7 @@ impl VgmPlay {
         }
     }
 
-    fn get_stream_chip_type(chip_type: u8) -> Option<SoundChipType> {
+    fn get_chip_type(chip_type: u8) -> Option<SoundChipType> {
         match chip_type & 0x7f {
             0 => Some(SoundChipType::SN76489),
             1 => Some(SoundChipType::YM2413),
@@ -934,7 +945,7 @@ impl VgmPlay {
             25 => None, // k051649
             26 => None, // k054539
             27 => None, // huc6280
-            28 => None, // c140
+            28 => Some(SoundChipType::C140),
             29 => None, // k053260
             30 => None, // pokey
             31 => None, // qsound
@@ -947,7 +958,7 @@ impl VgmPlay {
             38 => None, // x1_010
             39 => None, // c352
             40 => None, // ga20
-            _ => None,  // not supported stream
+            _ => None,  // not supported
         }
     }
 }

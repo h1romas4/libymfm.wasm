@@ -21,6 +21,7 @@ pub enum DataStreamMode {
 pub struct SoundDevice {
     sound_chip: Box<dyn SoundChip>,
     sound_stream: Box<dyn SoundStream>,
+    output_level_rate: f32,
     sound_rom_set: HashMap<RomIndex, Rc<RefCell<RomSet>>>,
     data_stream_mode: DataStreamMode,
     data_stream: HashMap<usize, DataStream>,
@@ -47,6 +48,7 @@ impl SoundDevice {
         Self {
             sound_chip,
             sound_stream,
+            output_level_rate: 1.0,
             sound_rom_set,
             data_stream_mode: DataStreamMode::Parallel,
             data_stream: HashMap::new(),
@@ -78,7 +80,17 @@ impl SoundDevice {
             }
             break;
         }
-        self.sound_stream.drain()
+        // Get sample
+        let (l, r) = self.sound_stream.drain();
+        // Apply output level rate
+        (l * self.output_level_rate, r * self.output_level_rate)
+    }
+
+    ///
+    /// Set output level rate
+    ///
+    pub fn set_output_level_rate(&mut self, _channel: usize, output_level_rate: f32) {
+        self.output_level_rate = output_level_rate;
     }
 
     ///
