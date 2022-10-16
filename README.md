@@ -449,15 +449,17 @@ Essentially, wasm-bindgen is incompatible with wasm32-wasi.
 
 - [ ] System
     - [ ] Fix ROM bus architecture.
-    - [ ] Add support sound mixer.
+    - [ ] Add support sound mixers with multi-channel output.
     - [ ] Remove the dependency on wasm-bindgen to have only extern "C" interface.
+    - [ ] Split the sequence parser and player.
 - [x] VGM driver
     - [x] YM2141 clock worng?
     - [x] Is there a problem with the file parser? The beginning of the song may be wrong.
     - [x] Support all data stream (now only support YM2612 and OKIM6285)
     - [x] Support dual chip ROM blocks.
     - [x] Add support parse v1.70 extra header.
-    - [ ] Respect the tip volume value of the extra header.
+    - [ ] Respect the sound chip volume value of the extra header.
+    - [ ] Respect seccond sound chip clock value of the extra header.
     - [ ] Implement more of the unimplemented.
 - [x] XGM driver
     - [x] There is still a bug with multi-channel PCM.
