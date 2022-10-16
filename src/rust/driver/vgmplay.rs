@@ -8,9 +8,8 @@ use crate::driver::gd3meta::Gd3;
 use crate::driver::meta::Jsonlize;
 use crate::driver::vgmmeta;
 use crate::driver::vgmmeta::VgmHeader;
+use crate::driver::vgmmeta::ChipVolume;
 use crate::sound::{RomBusType, RomIndex, SoundChipType, SoundSlot};
-
-use super::vgmmeta::ChipVolume;
 
 pub const VGM_TICK_RATE: u32 = 44100;
 
@@ -35,7 +34,6 @@ pub struct VgmPlay {
     hack_sega32x_channel: i32,
 }
 
-#[allow(dead_code)]
 impl VgmPlay {
     ///
     /// Create sound driver.
