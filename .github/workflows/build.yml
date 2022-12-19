@@ -18,14 +18,14 @@ jobs:
       id: cache-wasi-sdk-16
       uses: actions/cache@v3
       with:
-        path: ./wasi-sdk-16.0
+        path: ./wasi-sdk-17.0
         key: ${{ runner.os }}-wasi-sdk-16
 
     - name: wasi-sdk Toolchain Setup
       if: steps.cache-wasi-sdk-16.outputs.cache-hit != 'true'
       run: |
-        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/wasi-sdk-16.0-linux.tar.gz
-        tar zxvf wasi-sdk-16.0-linux.tar.gz
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/wasi-sdk-17.0-linux.tar.gz
+        tar zxvf wasi-sdk-17.0-linux.tar.gz
 
     - name: Rust Toolchain Setup
       run: |
@@ -36,7 +36,7 @@ jobs:
 
     - name: Build libymfm
       run: |
-        export WASI_SDK_PATH=$(pwd)/wasi-sdk-16.0
+        export WASI_SDK_PATH=$(pwd)/wasi-sdk-17.0
         export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
         export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
         (mkdir build && cd build && cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake .. && make -j4)
