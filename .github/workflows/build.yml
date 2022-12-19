@@ -14,17 +14,17 @@ jobs:
         submodules: recursive
         token: ${{secrets.GITHUB_TOKEN}}
 
-    - name: Cache wasi-sdk-16
-      id: cache-wasi-sdk-16
+    - name: Cache wasi-sdk-17
+      id: cache-wasi-sdk-17
       uses: actions/cache@v3
       with:
         path: ./wasi-sdk-17.0
-        key: ${{ runner.os }}-wasi-sdk-16
+        key: ${{ runner.os }}-wasi-sdk-17
 
     - name: wasi-sdk Toolchain Setup
-      if: steps.cache-wasi-sdk-16.outputs.cache-hit != 'true'
+      if: steps.cache-wasi-sdk-17.outputs.cache-hit != 'true'
       run: |
-        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/wasi-sdk-17.0-linux.tar.gz
+        wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-17/wasi-sdk-17.0-linux.tar.gz
         tar zxvf wasi-sdk-17.0-linux.tar.gz
 
     - name: Rust Toolchain Setup
