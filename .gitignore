@@ -14,6 +14,7 @@ __pycache__
 *.wav
 *.bin
 !docs/vgm/ym2612.vgm
+!docs/vgm/ym2608_4op_sign_wave.vgm
 !public/vgm/ym2612.vgm
 !examples/python/vgm/ym2612.vgm
 !examples/web/static/vgm/ym2612.vgm
