@@ -236,7 +236,7 @@ rustup target add wasm32-wasi
 
 ### Setup wasi-sdk
 
-Setup [wasi-sdk-17](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-17)
+Setup [wasi-sdk-17](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-17) - The wasi-sdk-17 binary requires Ubuntu 22.04.
 
 Setup enviroment values:
 
