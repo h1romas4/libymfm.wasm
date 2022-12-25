@@ -125,7 +125,7 @@ impl PWM {
                 self.rch_fifo_state = if self.rch_size == PWM_FIFO_SIZE { 0x8000 } else { 0x0000 };
             }
             _ => {
-                panic!("Write at undefined PWM register {:>02x} {:>04x}\n", offset, data);
+                panic!("Write at undefined PWM register {offset:>02x} {data:>04x}\n");
             }
         }
 
@@ -262,7 +262,7 @@ impl SoundChip for PWM {
     }
 
     fn write(&mut self, _: usize, port: u32, data: u32, _: &mut dyn SoundStream) {
-        self.pwm_w(port as u32, data as u16);
+        self.pwm_w(port, data as u16);
     }
 
     fn tick(&mut self, _: usize, sound_stream: &mut dyn SoundStream) {

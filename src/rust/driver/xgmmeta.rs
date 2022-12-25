@@ -133,8 +133,8 @@ mod tests {
         let _ = file.read_to_end(&mut buffer).unwrap();
         let (header, gd3) = parse_xgm_meta(&buffer).unwrap();
 
-        println!("{:#?}", header);
-        println!("{:#?}", gd3);
+        println!("{header:#?}");
+        println!("{gd3:#?}");
         println!("{:#?}", header.get_json());
         println!("{:#?}", gd3.get_json());
     }

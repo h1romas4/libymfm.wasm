@@ -278,12 +278,12 @@ impl C140 {
 
         self.reg[offset] = data;
         if offset < 0x180 {
-            let ch = (offset >> 4) as usize;
+            let ch = offset >> 4;
             let v: &mut C140Voice = &mut self.voi[ch];
 
             if offset & 0xf == 0x5 {
                 if data & 0x80 != 0 {
-                    let vreg = &self.reg[(offset & 0x1f0) as usize..] as *const [u8]
+                    let vreg = &self.reg[(offset & 0x1f0)..] as *const [u8]
                         as *const VoiceRegisters;
                     v.key = 1;
                     v.ptoffset = 0;
@@ -536,12 +536,12 @@ impl C219 {
         self.reg[offset] = data;
         if offset < 0x100 {
             // only 16 voices
-            let ch = (offset >> 4) as usize;
+            let ch = offset >> 4;
             let v: &mut C140Voice = &mut self.voi[ch];
 
             if offset & 0xf == 0x5 {
                 if data & 0x80 != 0 {
-                    let vreg = &self.reg[(offset & 0x1f0) as usize..] as *const [u8]
+                    let vreg = &self.reg[(offset & 0x1f0)..] as *const [u8]
                         as *const VoiceRegisters;
                     v.key = 1;
                     v.ptoffset = 0;

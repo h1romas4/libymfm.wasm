@@ -159,11 +159,11 @@ impl SoundChip for YmFm {
                     );
                 },
                 _ => {
-                    panic!("Not supported RomIndex. {:?}", rom_index);
+                    panic!("Not supported RomIndex. {rom_index:?}");
                 }
             }
         } else {
-            panic!("RomBank not found. {:?}", rom_index);
+            panic!("RomBank not found. {rom_index:?}");
         }
     }
 

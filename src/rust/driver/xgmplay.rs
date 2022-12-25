@@ -368,7 +368,7 @@ mod tests {
     }
 
     fn play(filepath: &str) {
-        println!("Play start! {}", filepath);
+        println!("Play start! {filepath}");
 
         let mut file = File::open(filepath).unwrap();
         let mut buffer = Vec::new();
@@ -398,6 +398,6 @@ mod tests {
                 }
             }
         }
-        println!("Play end! {} (xgm instance drop)", filepath);
+        println!("Play end! {filepath} (xgm instance drop)");
     }
 }

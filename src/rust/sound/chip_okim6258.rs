@@ -187,25 +187,17 @@ impl OKIM6258 {
     }
 
     fn clock_adpcm(&mut self, nibble: u8) -> i16 {
-        let max: i32 = (1 << (self.output_bits - 1)) as i32 - 1;
+        let max: i32 = (1 << (self.output_bits - 1)) - 1;
         let min: i32 = -(1 << (self.output_bits - 1) as i32);
 
         self.signal += self.diff_lookup[(self.step * 16 + (nibble & 15) as i32) as usize];
 
         /* clamp to the maximum */
-        if self.signal > max {
-            self.signal = max;
-        } else if self.signal < min {
-            self.signal = min;
-        }
+        self.signal = self.signal.clamp(min, max);
 
         /* adjust the step size and clamp */
         self.step += INDEX_SHIFT[(nibble & 7) as usize];
-        if self.step > 48 {
-            self.step = 48;
-        } else if self.step < 0 {
-            self.step = 0;
-        }
+        self.step = self.step.clamp(0, 48);
 
         // println!("{:>3x}, {:3}, {:3}, {}", self.data_in, nibble, self.step, self.signal);
         // printf("%3x, %3d, %3d, %3d, %d\n", m_data_in, nibble, m_step, m_signal);
@@ -242,11 +234,11 @@ impl OKIM6258 {
             /* loop over all nibbles and compute the difference */
             #[allow(clippy::needless_range_loop)]
             for nib in 0..16 {
-                self.diff_lookup[(step * 16 + nib) as usize] = nbl2bit[nib][0]
+                self.diff_lookup[(step * 16 + nib)] = nbl2bit[nib][0]
                     * (stepval * nbl2bit[nib][1]
                         + stepval / 2 * nbl2bit[nib][2]
                         + stepval / 4 * nbl2bit[nib][3]
-                        + stepval / 8) as i32;
+                        + stepval / 8);
             }
         }
     }

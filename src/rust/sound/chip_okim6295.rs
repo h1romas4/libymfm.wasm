@@ -113,19 +113,11 @@ impl OkiAdpcmState {
         self.signal += self.diff_lookup[(self.step * 16 + (nibble & 15) as i32) as usize];
 
         // clamp to the maximum
-        if self.signal > 2047 {
-            self.signal = 2047
-        } else if self.signal < -2048 {
-            self.signal = -2048
-        }
+        self.signal = self.signal.clamp(-2048, 2047);
 
         // adjust the step size and clamp
         self.step += (self.index_shift[(nibble & 7) as usize]) as i32;
-        if self.step > 48 {
-            self.step = 48;
-        } else if self.step < 0 {
-            self.step = 0;
-        }
+        self.step = self.step.clamp(0, 48);
 
         // return the signal
         self.signal
@@ -182,11 +174,11 @@ impl OkiAdpcmState {
             // loop over all nibbles and compute the difference
             #[allow(clippy::needless_range_loop)]
             for nib in 0..16 {
-                self.diff_lookup[(step * 16 + nib) as usize] = nbl2bit[nib][0]
+                self.diff_lookup[(step * 16 + nib)] = nbl2bit[nib][0]
                     * (stepval * nbl2bit[nib][1]
                         + stepval / 2 * nbl2bit[nib][2]
                         + stepval / 4 * nbl2bit[nib][3]
-                        + stepval / 8) as i32;
+                        + stepval / 8);
             }
         }
     }
@@ -223,7 +215,7 @@ impl OkiVoice {
         // fetch the next sample byte
         let nibble = read_byte(
             rombank,
-            (self.base_offset + self.sample as usize / 2) as usize,
+            self.base_offset + self.sample as usize / 2,
         ) >> (((self.sample & 1) << 2) ^ 4);
         // output to the buffer, scaling by the volume
         // signal in range -2048..2047
@@ -297,7 +289,7 @@ impl OKIM6295 {
 
         let divisor = if self.pin7_state != 0 { 132 } else { 165 };
 
-        (self.clock / divisor) as u32
+        self.clock / divisor
     }
 
     pub fn device_reset(&mut self) {
@@ -308,7 +300,7 @@ impl OKIM6295 {
 
     pub fn device_clock_changed(&mut self) -> u32 {
         let divisor = if self.pin7_state != 0 { 132 } else { 165 };
-        (self.clock / divisor) as u32
+        self.clock / divisor
     }
 
     pub fn sound_stream_update(&mut self, buffer_l: &mut [f32], buffer_r: &mut [f32]) {
@@ -431,10 +423,10 @@ impl Decoder for OKIM6295RomDecoder {
     fn decode(&self, rombank: &super::rom::RomSet, address: usize) -> u32 {
         rombank.read(if self.nmk112_enable != 0 {
             if address < 0x400 && (self.nmk112_enable & 0x80) != 0 {
-                ((self.nmk112_bank[((address >> 8) & 0x3) as usize]) as usize) << 16
+                ((self.nmk112_bank[((address >> 8) & 0x3)]) as usize) << 16
                     | address & 0x3ff
             } else {
-                ((self.nmk112_bank[((address >> 16) & 0x3) as usize]) as usize) << 16
+                ((self.nmk112_bank[((address >> 16) & 0x3)]) as usize) << 16
                     | address & 0xffff
             }
         } else {

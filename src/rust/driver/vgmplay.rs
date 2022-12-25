@@ -582,7 +582,7 @@ impl VgmPlay {
                 data_length &= 0x7fffffff;
                 // data position
                 let data_block_pos = self.vgm_pos;
-                self.vgm_pos += data_length as usize;
+                self.vgm_pos += data_length;
                 // handle data block
                 if (0x00..=0x3f).contains(&data_type) {
                     // add data block (support uncompressed)
@@ -837,7 +837,7 @@ impl VgmPlay {
             0xe0 => {
                 // YM2612 data block 0
                 let pcm_pos = self.get_vgm_u32() as usize;
-                self.ym2612_pcm_pos = pcm_pos as usize;
+                self.ym2612_pcm_pos = pcm_pos;
                 self.ym2612_pcm_offset = 0;
             }
             // unsupport
@@ -1100,7 +1100,7 @@ mod tests {
     }
 
     fn play(filepath: &str) {
-        println!("Play start! {}", filepath);
+        println!("Play start! {filepath}");
 
         let mut file = File::open(filepath).unwrap();
         let mut buffer = Vec::new();
@@ -1128,6 +1128,6 @@ mod tests {
                 }
             }
         }
-        println!("Play end! {} (vgm instance drop)", filepath);
+        println!("Play end! {filepath} (vgm instance drop)");
     }
 }

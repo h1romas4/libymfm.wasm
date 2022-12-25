@@ -247,7 +247,7 @@ impl SN76496 {
             self.count[i] = 0;
         }
 
-        self.RNG = self.feedback_mask as u32;
+        self.RNG = self.feedback_mask;
         self.output[3] = self.RNG & 1;
 
         self.stereo_mask = 0xff; // all channels enabled
@@ -282,21 +282,20 @@ impl SN76496 {
     pub fn write(&mut self, data: u8) {
         let n: i32;
         let r: i32;
-        let c: i32;
 
         if data & 0x80 != 0 {
             r = (data as i32 & 0x70) >> 4;
             self.last_register = r;
             if (self.ncr_style_psg && r == 6) && (data & 0x04 != self.register[6] as u8 & 0x04) {
                 // NCR-style PSG resets the LFSR only on a mode write which actually changes the state of bit 2 of register 6
-                self.RNG = self.feedback_mask as u32;
+                self.RNG = self.feedback_mask;
             }
             self.register[r as usize] = (self.register[r as usize] & 0x3f0) | (data as i32 & 0x0f);
         } else {
             r = self.last_register;
         }
 
-        c = r >> 1;
+        let c: i32 = 1 >> r;
         match r {
             0 | 2 | 4 => {
                 // tone 0: frequency

@@ -192,7 +192,7 @@ impl LinearUpSamplingStream {
     fn calc_sample(&self, prev_sample: f32, now_sample: f32) -> f32 {
         let output_pos = self.output_sampling_pos + self.output_sampling_step;
         (prev_sample as f64
-            + (output_pos - self.output_sampling_step as f64)
+            + (output_pos - self.output_sampling_step)
                 * (now_sample as f64 - prev_sample as f64)) as f32
     }
 
@@ -436,12 +436,7 @@ pub fn convert_sample_i2f(i32_sample: i32) -> f32 {
     } else {
         f32_sample = i32_sample as f32 / 32767_f32;
     }
-    if f32_sample > 1_f32 {
-        f32_sample = 1_f32;
-    }
-    if f32_sample < -1_f32 {
-        f32_sample = -1_f32;
-    }
+    f32_sample = f32_sample.clamp(-1_f32, 1_f32);
     f32_sample
 }
 
@@ -450,12 +445,7 @@ pub fn convert_sample_i2f(i32_sample: i32) -> f32 {
 ///
 pub fn convert_sample_f2i(f32_sample: f32) -> i16 {
     let mut float: f32 = f32_sample * 32768_f32;
-    if float > 32767_f32 {
-        float = 32767_f32
-    }
-    if float < -32768_f32 {
-        float = -32768_f32;
-    }
+    float = float.clamp(-32768_f32, 32767_f32);
     float as i16
 }
 
@@ -539,7 +529,7 @@ mod tests {
     }
 
     fn assert_sampling((l, r): (f32, f32), (tl, tr): (f32, f32)) {
-        println!("({}, {}) ({}, {})", l, r, tl, tr);
+        println!("({l}, {r}) ({tl}, {tr})");
         // #[allow(clippy::float_cmp)]
         // assert_approx_eq!(l as f64, tl as f64);
         // #[allow(clippy::float_cmp)]

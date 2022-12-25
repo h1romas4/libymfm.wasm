@@ -121,7 +121,7 @@ fn parse_vgm_header(i: &[u8]) -> IResult<&[u8], VgmHeader> {
     let version = version
         .iter()
         .rev()
-        .map(|n| format!("{:02X}", n))
+        .map(|n| format!("{n:02X}"))
         .collect::<String>();
     let version = version.parse().unwrap_or(0);
     let (i, clock_sn76489) = le_u32(i)?;
@@ -472,8 +472,8 @@ mod tests {
         let _ = file.read_to_end(&mut buffer).unwrap();
         let (header, gd3) = parse_vgm_meta(&buffer).unwrap();
 
-        println!("{:#?}", header);
-        println!("{:#?}", gd3);
+        println!("{header:#?}");
+        println!("{gd3:#?}");
         println!("{:#?}", header.get_json());
         println!("{:#?}", gd3.get_json());
     }
