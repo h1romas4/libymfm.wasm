@@ -295,7 +295,7 @@ impl SN76496 {
             r = self.last_register;
         }
 
-        let c: i32 = 1 >> r;
+        let c: i32 = r >> 1;
         match r {
             0 | 2 | 4 => {
                 // tone 0: frequency
