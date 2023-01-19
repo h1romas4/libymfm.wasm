@@ -68,7 +68,7 @@ Options
 
 ```bash
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.14.0
+libymfm-cli 0.15.0
 Hiromasa Tanaka <h1romas4@gmail.com>
 libymfm CLI
 
@@ -236,14 +236,14 @@ rustup target add wasm32-wasi
 
 ### Setup wasi-sdk
 
-Setup [wasi-sdk-17](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-17) - `wasi-sdk-17.0-linux.tar.gz` requires Ubuntu 22.04.
+Setup [wasi-sdk-19](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-19) - `wasi-sdk-19.0-linux.tar.gz` requires Ubuntu 22.04.
 
 Setup enviroment values:
 
 `.bashrc`
 
 ```bash
-export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-17.0
+export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-19.0
 export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
 export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
 ```
@@ -252,16 +252,16 @@ Verify:
 
 ```bash
 $ echo ${WASI_SDK_PATH}
-/home/hiromasa/devel/toolchain/wasi-sdk-17.0
+/home/hiromasa/devel/toolchain/wasi-sdk-19.0
 $ ls -alF ${WASI_SDK_PATH}
 drwxr-xr-x 2 hiromasa hiromasa 4096 12月  3  2020 bin/
 drwxr-xr-x 3 hiromasa hiromasa 4096 12月  3  2020 lib/
 drwxr-xr-x 6 hiromasa hiromasa 4096 12月  3  2020 share/
 $ ${WASI_SDK_PATH}/bin/clang -v
-clang version 15.0.6 (https://github.com/llvm/llvm-project 088f33605d8a61ff519c580a71b1dd57d16a03f8)
+clang version 15.0.7
 Target: wasm32-unknown-wasi
 Thread model: posix
-InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-17.0/bin
+InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-19.0/bin
 ```
 
 ### Clone source

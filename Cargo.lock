@@ -100,7 +100,7 @@ dependencies = [
 
 [[package]]
 name = "libymfm"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "approx_eq",
  "array-macro",
