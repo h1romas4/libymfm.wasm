@@ -10,8 +10,7 @@ This repository is an experimental WebAssembly build of the [ymfm](https://githu
 
 `libymfm.wasm` provide high-level and low-level WebAssembly interfaces to ymfm's sound chips and additional sound chips.
 
-The high-level interface provides the vgm/xgm sequencer, while the low-level interface provides direct access to the sound chip.
-Both can get PCM binary at a specified sampling rate and number of frames.
+The high-level interface provides the vgm/xgm sequencer, while the low-level interface provides direct access to the sound chip. Both can retrieve PCM binary at a given sample rate and number of frames.
 
 The WebAssembly interface can be called from many computer languages by using Wasmer.
 
@@ -219,7 +218,7 @@ pub extern "C" fn vgm_create(
 }
 ```
 
-As with the Python Binding example, you could easily create an interface. It would also be possible to create a more type-structural interface.
+As with the Python binding example, you could easily create an interface. It would also be possible to create a more type-structured interface.
 
 > [examples/python/src/wasm/chipstream.py](https://github.com/h1romas4/libymfm.wasm/blob/main/examples/python/src/wasm/chipstream.py)
 
@@ -321,7 +320,7 @@ cp -p target/wasm32-wasi/release/libymfm.wasm ./examples/python/src/wasm/
 
 #### WASI Commnad Line Interface (`examples/libymfm-cli`)
 
-Building the WASI command line interface requires disabling the library's `WASI reactor` mode, so the build requires a patch of the source code.
+Building the WASI command-line interface requires disabling `WASI reactor` mode of the library, so the build requires a patch to the source code.
 
 Pacth `Cargo.toml`
 
