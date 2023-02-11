@@ -205,6 +205,11 @@ protected:
         return (offset < data.size()) ? data[offset] : 0;
     }
 
+    virtual void ymfm_external_write(ymfm::access_class type, uint32_t address, uint8_t data) override
+    {
+        write_data(type, address, 1, &data);
+    }
+
     // internal state
     ChipType m_chip;
     uint32_t m_clock;
