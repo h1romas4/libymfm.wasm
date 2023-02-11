@@ -24,7 +24,7 @@ bindgen = ["console_error_panic_hook"]
 
 [dependencies]
 flate2 = "1.0"
-nom = "5"
+nom = "7"
 serde = "1"
 serde_json = "1"
 serde_derive = "1"
