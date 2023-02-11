@@ -174,7 +174,7 @@ impl OkiAdpcmState {
             // loop over all nibbles and compute the difference
             #[allow(clippy::needless_range_loop)]
             for nib in 0..16 {
-                self.diff_lookup[(step * 16 + nib)] = nbl2bit[nib][0]
+                self.diff_lookup[step * 16 + nib] = nbl2bit[nib][0]
                     * (stepval * nbl2bit[nib][1]
                         + stepval / 2 * nbl2bit[nib][2]
                         + stepval / 4 * nbl2bit[nib][3]
@@ -423,10 +423,10 @@ impl Decoder for OKIM6295RomDecoder {
     fn decode(&self, rombank: &super::rom::RomSet, address: usize) -> u32 {
         rombank.read(if self.nmk112_enable != 0 {
             if address < 0x400 && (self.nmk112_enable & 0x80) != 0 {
-                ((self.nmk112_bank[((address >> 8) & 0x3)]) as usize) << 16
+                ((self.nmk112_bank[(address >> 8) & 0x3]) as usize) << 16
                     | address & 0x3ff
             } else {
-                ((self.nmk112_bank[((address >> 16) & 0x3)]) as usize) << 16
+                ((self.nmk112_bank[(address >> 16) & 0x3]) as usize) << 16
                     | address & 0xffff
             }
         } else {

@@ -234,7 +234,7 @@ impl OKIM6258 {
             /* loop over all nibbles and compute the difference */
             #[allow(clippy::needless_range_loop)]
             for nib in 0..16 {
-                self.diff_lookup[(step * 16 + nib)] = nbl2bit[nib][0]
+                self.diff_lookup[step * 16 + nib] = nbl2bit[nib][0]
                     * (stepval * nbl2bit[nib][1]
                         + stepval / 2 * nbl2bit[nib][2]
                         + stepval / 4 * nbl2bit[nib][3]
