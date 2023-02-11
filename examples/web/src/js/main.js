@@ -223,6 +223,9 @@ const sample = async () => {
     });
     const response = await fetch('./vgm/ym2612.vgm');
     const bytes = await response.arrayBuffer();
+    // The sample music starts playing by clicking on it.
+    isAudioContextOpen = true;
+    // Play sample music
     play(bytes, 'vgm', musicMeta);
 }
 
