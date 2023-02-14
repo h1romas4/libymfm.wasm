@@ -292,7 +292,7 @@ cargo install wasm-bindgen-cli --version 0.2.78
 
 Rust build and wasm-bindgen
 
-Always add the **+nightly** flag.
+Always add the **+nightly** flag. (`-Z wasi-exec-model=reactor` flag is used, so nightly must be specified)
 
 ```bash
 cargo +nightly build --release --target wasm32-wasi --features bindgen
@@ -311,7 +311,7 @@ npm run start
 
 Rust build and copy .wasm to Python project
 
-Always add the **+nightly** flag.
+Always add the **+nightly** flag. (`-Z wasi-exec-model=reactor` flag is used, so nightly must be specified)
 
 ```bash
 cargo +nightly build --release --target wasm32-wasi
