@@ -22,6 +22,7 @@ add_source_files(
 )
 
 add_compile_flags(CXX
+    -O3
     -std=c++14
     -fno-exceptions
     -Wno-array-bounds
