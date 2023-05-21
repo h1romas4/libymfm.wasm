@@ -67,7 +67,7 @@ Options
 
 ```bash
 $ wasmer run libymfm-cli.wasm -- -h
-libymfm-cli 0.16.0
+libymfm-cli 0.17.0
 Hiromasa Tanaka <h1romas4@gmail.com>
 libymfm CLI
 
@@ -359,7 +359,7 @@ Verify:
 
 ```bash
 ls -laF target/wasm32-wasi/release/*.wasm
--rwxrwxr-x  2 hiromasa hiromasa 3292594  7月 26 21:31 libymfm-cli.wasm*
+-rwxrwxr-x 2 hiromasa hiromasa 2924223  5月 21 14:56 target/wasm32-wasi/release/libymfm-cli.wasm*
 ```
 
 #### Native Debug & Test
