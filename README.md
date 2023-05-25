@@ -278,6 +278,9 @@ cd libymfm.wasm
 mkdir build && cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake  ..
 make -j4
+cd ..
+ls -laF dist/ | grep libymfm
+-rw-rw-r--  1 hiromasa hiromasa 480942  5月 25 13:21 libymfm.a
 ```
 
 ### Build Rust
@@ -393,6 +396,9 @@ Buile or test on native
 mkdir build && cd build
 cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/x86-64.cmake ..
 make -j4
+cd ..
+ls -laF dist/ | grep libymfm
+-rw-rw-r--  1 hiromasa hiromasa 680784  5月 25 13:23 libymfm.a
 ```
 
 Native debugging can now be performed.
