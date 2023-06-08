@@ -1,6 +1,6 @@
 [package]
 name = "libymfm-cli"
-version = "0.17.0"
+version = "0.18.0"
 authors = ["Hiromasa Tanaka <h1romas4@gmail.com>"]
 description = "libymfm CLI"
 edition = "2021"
@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 libymfm = { path = "../../", default-features = false }
 clap = "2"
+
+[profile.release]
+opt-level = 3

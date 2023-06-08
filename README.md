@@ -251,16 +251,16 @@ Verify:
 
 ```bash
 $ echo ${WASI_SDK_PATH}
-/home/hiromasa/devel/toolchain/wasi-sdk-19.0
+/home/hiromasa/devel/toolchain/wasi-sdk-20.0
 $ ls -alF ${WASI_SDK_PATH}
 drwxr-xr-x 2 hiromasa hiromasa 4096 12月  3  2020 bin/
 drwxr-xr-x 3 hiromasa hiromasa 4096 12月  3  2020 lib/
 drwxr-xr-x 6 hiromasa hiromasa 4096 12月  3  2020 share/
 $ ${WASI_SDK_PATH}/bin/clang -v
-clang version 15.0.7
+clang version 16.0.0
 Target: wasm32-unknown-wasi
 Thread model: posix
-InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-19.0/bin
+InstalledDir: /home/hiromasa/devel/toolchain/wasi-sdk-20.0/bin
 ```
 
 ### Clone source
