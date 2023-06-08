@@ -235,14 +235,14 @@ rustup target add wasm32-wasi
 
 ### Setup wasi-sdk
 
-Setup [wasi-sdk-19](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-19) - `wasi-sdk-19.0-linux.tar.gz` requires Ubuntu 22.04.
+Setup [wasi-sdk-20](https://github.com/WebAssembly/wasi-sdk/releases/tag/wasi-sdk-20) - `wasi-sdk-20.0-linux.tar.gz` requires Ubuntu 22.04.
 
 Setup enviroment values:
 
 `.bashrc`
 
 ```bash
-export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-19.0
+export WASI_SDK_PATH=/home/hiromasa/devel/toolchain/wasi-sdk-20.0
 export CARGO_TARGET_WASM32_WASI_LINKER=${WASI_SDK_PATH}/bin/lld
 export CARGO_TARGET_WASM32_WASI_RUSTFLAGS="-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi"
 ```
