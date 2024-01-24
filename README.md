@@ -391,10 +391,8 @@ Pacth `src/rust/lib.rs`
 Buile or test on native
 
 ```bash
-mkdir build && cd build
-cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/x86-64.cmake ..
-make -j4
-cd ..
+cmake -DCMAKE_TOOLCHAIN_FILE=./cmake/x86-64.cmake -S . -B build
+cmake --build build --parallel $(nproc)
 ls -laF dist/ | grep libymfm
 -rw-rw-r--  1 hiromasa hiromasa 680784  5月 25 13:23 libymfm.a
 ```
