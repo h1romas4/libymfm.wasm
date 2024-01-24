@@ -275,10 +275,8 @@ cd libymfm.wasm
 ### Build C/C++ (ymfm)
 
 ```bash
-mkdir build && cd build
-cmake -DCMAKE_TOOLCHAIN_FILE=../cmake/wasi.cmake  ..
-make -j4
-cd ..
+cmake -DCMAKE_TOOLCHAIN_FILE=./cmake/wasi.cmake -S . -B build
+cmake --build build --parallel $(nproc)
 ls -laF dist/ | grep libymfm
 -rw-rw-r--  1 hiromasa hiromasa 480942  5月 25 13:21 libymfm.a
 ```
